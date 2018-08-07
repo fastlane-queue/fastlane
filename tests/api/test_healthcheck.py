@@ -5,7 +5,7 @@ from redis.exceptions import ConnectionError
 def test_healthcheck1(client):
     """Test healthcheck works if redis is live"""
 
-    rv = client.get('/healthcheck/')
+    rv = client.get('/healthcheck', follow_redirects=True)
     expect(rv.data).to_equal('WORKING')
 
 
@@ -17,4 +17,4 @@ def test_healthcheck2(client):
     with expect.error_to_happen(
             ConnectionError,
             message="FakeRedis is emulating a connection error."):
-        client.get('/healthcheck/')
+        client.get('/healthcheck', follow_redirects=True)

@@ -9,6 +9,10 @@ ifndef COMPOSE
 endif
 	@poetry develop
 
+setup-ci:
+	@pip install poetry
+	@poetry develop
+
 deps:
 ifdef COMPOSE
 	@echo "Starting dependencies..."
@@ -31,3 +35,7 @@ watch:
 
 run:
 	@easyq api
+
+coverage:
+	@coverage html
+	@open htmlcov/index.html

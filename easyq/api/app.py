@@ -2,6 +2,8 @@ import fakeredis
 from flask import Flask
 from flask_redis import FlaskRedis
 
+import easyq.api.rqb as rqb
+from easyq.api.enqueue import bp as enqueue
 from easyq.api.healthcheck import bp as healthcheck
 
 
@@ -18,7 +20,11 @@ class Application:
         self.app.config.update(self.config.items)
         self.connect_redis()
 
+        self.app.register_blueprint(rqb.bp)
+        rqb.init_app(self.app)
+
         self.app.register_blueprint(healthcheck)
+        self.app.register_blueprint(enqueue)
 
     def connect_redis(self):
         if self.app.testing:
