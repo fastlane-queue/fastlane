@@ -23,8 +23,8 @@ ifdef COMPOSE
 	@docker-compose --project-name easyq rm -f
 endif
 
-test: deps
-	@poetry run pytest --quiet --nf --cov=easyq tests/
+test:
+	@poetry run pytest -sv --quiet --nf --cov=easyq tests/
 
 watch:
 	@poetry run ptw -c -w -- --quiet --nf --cov=easyq tests/
