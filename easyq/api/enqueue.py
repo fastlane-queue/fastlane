@@ -13,7 +13,8 @@ bp = Blueprint('enqueue', __name__)
 def enqueue():
     container = request.form['container']
     command = request.form['command']
-    result = current_app.job_queue.enqueue(run_job, container, command)
+    result = current_app.job_queue.enqueue(
+        run_job, container, command, timeout=-1)
 
     return dumps({
         "job": result.id,

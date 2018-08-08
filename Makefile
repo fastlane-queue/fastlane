@@ -36,6 +36,9 @@ watch:
 run:
 	@easyq api
 
+worker:
+	@easyq worker
+
 coverage:
 	@coverage html
 	@open htmlcov/index.html

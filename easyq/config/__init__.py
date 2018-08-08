@@ -10,3 +10,6 @@ Config.define('SECRET_KEY',
 
 Config.define('REDIS_URL', 'redis://localhost:10100/0',
               'Redis connection string', 'Redis')
+
+Config.define('EXECUTOR', 'easyq.worker.docker_executor',
+              'Module full name where to find the Executor class', 'Worker')
