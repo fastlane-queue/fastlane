@@ -8,10 +8,8 @@ from easyq.api.healthcheck import bp as healthcheck
 
 
 class Application:
-    def __init__(self, config, host, port, testing=False):
+    def __init__(self, config, testing=False):
         self.config = config
-        self.host = host
-        self.port = port
         self.create_app(testing)
 
     def create_app(self, testing):
@@ -19,9 +17,7 @@ class Application:
         self.app.testing = testing
         self.app.config.update(self.config.items)
         self.connect_redis()
-
-        self.app.register_blueprint(rqb.bp)
-        rqb.init_app(self.app)
+        self.connect_queue()
 
         self.app.register_blueprint(healthcheck)
         self.app.register_blueprint(enqueue)
@@ -37,8 +33,13 @@ class Application:
 
         self.app.redis.init_app(self.app)
 
-    def run(self):
-        self.app.run(self.host, self.port)
+    def connect_queue(self):
+        self.app.queue = None
+        self.app.register_blueprint(rqb.bp)
+        rqb.init_app(self.app)
+
+    def run(self, host, port):
+        self.app.run(host, port)
 
     def _mock_redis(self, connected):
         def handle():

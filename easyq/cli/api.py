@@ -20,5 +20,5 @@ class APIHandler:
         self.click.echo(
             f'Running easyq API at {self.host}:{self.port} in ${self.config.ENV}'
         )
-        app = Application(self.config, self.host, self.port)
-        app.run()
+        app = Application(self.config)
+        app.run(self.host, self.port)
