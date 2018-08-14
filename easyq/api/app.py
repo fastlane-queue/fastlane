@@ -7,6 +7,7 @@ from flask_redis import FlaskRedis
 import easyq.api.rqb as rqb
 from easyq.api.enqueue import bp as enqueue
 from easyq.api.healthcheck import bp as healthcheck
+from easyq.models import db
 
 
 class Application:
@@ -20,6 +21,7 @@ class Application:
         self.app.config.update(self.config.items)
         self.connect_redis()
         self.connect_queue()
+        self.connect_db()
         self.load_executor()
 
         self.app.register_blueprint(healthcheck)
@@ -40,6 +42,9 @@ class Application:
         self.app.queue = None
         self.app.register_blueprint(rqb.bp)
         rqb.init_app(self.app)
+
+    def connect_db(self):
+        db.init_app(self.app)
 
     def load_executor(self):
         executor_module = __import__(self.config.EXECUTOR)

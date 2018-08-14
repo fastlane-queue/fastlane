@@ -1,8 +1,10 @@
 from flask import current_app
+from rq import get_current_job
 
 
 def run_job(container, command):
     tag = 'latest'
+    job = get_current_job(current_app.redis)
 
     if ':' in container:
         container, tag = container.split(':')

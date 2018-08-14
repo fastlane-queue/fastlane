@@ -12,6 +12,8 @@ derpconf = "^0.8.2"
 flask = "^1.0"
 flask-redis = "^0.3.0"
 docker = "^3.4"
+flask-mongoengine = "^0.9.5"
+ujson = "^1.35"
 
 [tool.poetry.dev-dependencies]
 pytest = "^3.0"
@@ -22,6 +24,7 @@ jedi = "^0.12.1"
 ipdb = "^0.11.0"
 preggy = "^1.4"
 fakeredis = "^0.12.0"
+mongomock = "^3.10"
 
 [tool.poetry.scripts]
 eq = 'easyq.cli:main'

@@ -14,10 +14,10 @@ def test_enqueue1(client):
     rv = client.post('/jobs', data=data, follow_redirects=True)
 
     obj = loads(rv.data)
-    expect(obj['job']).not_to_be_null()
+    expect(obj['jobId']).not_to_be_null()
     expect(obj['status']).to_equal("queued")
 
-    hash_key = f'rq:job:{obj["job"]}'
+    hash_key = f'rq:job:{obj["jobId"]}'
     app = client.application
 
     res = app.redis.exists(hash_key)
@@ -36,10 +36,10 @@ def test_enqueue1(client):
     expect(res).to_be_true()
 
     res = app.redis.hget(hash_key, 'origin')
-    expect(res).to_equal('default')
+    expect(res).to_equal('jobs')
 
     res = app.redis.hget(hash_key, 'description')
     expect(res).to_equal("easyq.worker.job.run_job('ubuntu', 'ls')")
 
     res = app.redis.hget(hash_key, 'timeout')
-    expect(res).to_equal('180')
+    expect(res).to_equal('-1')

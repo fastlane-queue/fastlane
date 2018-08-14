@@ -13,3 +13,9 @@ Config.define('REDIS_URL', 'redis://localhost:10100/0',
 
 Config.define('EXECUTOR', 'easyq.worker.docker_executor',
               'Module full name where to find the Executor class', 'Worker')
+
+Config.define('MONGODB_SETTINGS', {
+    'host': 'localhost',
+    'port': 10101,
+    'serverSelectionTimeoutMS': 100,
+}, 'MongoDB socket timeout in ms', 'Models')

@@ -4,6 +4,7 @@ except ImportError:
     from json import dumps
 from flask import Blueprint, current_app, request
 
+from easyq.models.job import Job
 from easyq.worker.job import run_job
 
 bp = Blueprint('enqueue', __name__)
@@ -13,10 +14,13 @@ bp = Blueprint('enqueue', __name__)
 def enqueue():
     container = request.form['container']
     command = request.form['command']
+
     result = current_app.job_queue.enqueue(
         run_job, container, command, timeout=-1)
 
+    Job.create_job(result.id)
+
     return dumps({
-        "job": result.id,
+        "jobId": result.id,
         "status": result._status,
     })

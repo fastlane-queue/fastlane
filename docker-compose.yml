@@ -1,6 +1,12 @@
 version: '2'
 
 services:
+  mongo:
+    image: mongo
+    ports:
+      - "10101:27017"
+    volumes:
+      - /tmp/easyq/mongo:/data/db
   redis:
     image: redis
     ports:
