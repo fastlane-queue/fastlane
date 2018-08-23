@@ -38,6 +38,9 @@ class Application:
         self.app.register_blueprint(enqueue)
 
     def configure_logging(self):
+        if self.app.testing:
+            structlog.reset_defaults
+
         disabled = [
             'docker.utils.config',
             'docker.auth',
@@ -59,7 +62,7 @@ class Application:
             JSONRenderer()
         ]
 
-        structlog.configure_once(
+        structlog.configure(
             processors=chain,
             context_class=dict,
             logger_factory=structlog.stdlib.LoggerFactory(),
