@@ -1,8 +1,13 @@
-from functools import reduce
+import logging
+import sys
 
 import fakeredis
+import structlog
 from flask import Flask
 from flask_redis import FlaskRedis
+from structlog.processors import (JSONRenderer, StackInfoRenderer, TimeStamper,
+                                  format_exc_info)
+from structlog.stdlib import add_log_level, add_logger_name, filter_by_level
 
 import easyq.api.rqb as rqb
 from easyq.api.enqueue import bp as enqueue
@@ -11,14 +16,16 @@ from easyq.models import db
 
 
 class Application:
-    def __init__(self, config, testing=False):
+    def __init__(self, config, log_level, testing=False):
         self.config = config
+        self.log_level = log_level
         self.create_app(testing)
 
     def create_app(self, testing):
         self.app = Flask('easyq')
         self.app.testing = testing
         self.app.config.update(self.config.items)
+        self.configure_logging()
         self.connect_redis()
         self.connect_queue()
         self.connect_db()
@@ -27,7 +34,29 @@ class Application:
         self.app.register_blueprint(healthcheck)
         self.app.register_blueprint(enqueue)
 
+    def configure_logging(self):
+        logging.basicConfig(
+            level=self.log_level, stream=sys.stdout, format="%(message)s")
+
+        chain = [
+            filter_by_level, add_log_level, add_logger_name,
+            TimeStamper(fmt="iso"),
+            StackInfoRenderer(), format_exc_info,
+            JSONRenderer()
+        ]
+
+        structlog.configure_once(
+            processors=chain,
+            context_class=dict,
+            logger_factory=structlog.stdlib.LoggerFactory(),
+            wrapper_class=structlog.stdlib.BoundLogger,
+            cache_logger_on_first_use=True,
+        )
+        self.logger = structlog.get_logger()
+
     def connect_redis(self):
+        self.logger.debug('Connecting to redis...')
+
         if self.app.testing:
             self.app.redis = FlaskRedis.from_custom_provider(
                 fakeredis.FakeStrictRedis)
@@ -36,6 +65,7 @@ class Application:
         else:
             self.app.redis = FlaskRedis()
 
+        self.logger.info('Connection to redis successful')
         self.app.redis.init_app(self.app)
 
     def connect_queue(self):

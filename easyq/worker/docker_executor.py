@@ -13,7 +13,7 @@ class Executor:
         self.client.images.pull(image, tag=tag)
 
     def run(self, image, tag, command):
-        job = self.client.containers.run(
+        container = self.client.containers.run(
             image=f'{image}:{tag}', command=command, detach=True)
 
-        return job.id
+        return container.id

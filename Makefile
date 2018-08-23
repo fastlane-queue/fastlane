@@ -34,7 +34,7 @@ watch:
 	@poetry run ptw -c -w -- --quiet --nf --cov=easyq tests/
 
 run:
-	@easyq api
+	@easyq api -vvv
 
 worker:
 	@easyq worker

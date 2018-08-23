@@ -8,6 +8,13 @@ from easyq.cli.worker import WorkerHandler
 
 ROOT_CONFIG = abspath(join(dirname(__file__), '../config/local.conf'))
 
+LEVELS = {
+    0: 'ERROR',
+    1: 'WARN',
+    2: 'INFO',
+    3: 'DEBUG',
+}
+
 
 @click.group()
 def main():
@@ -17,14 +24,17 @@ def main():
 @click.command()
 @click.option('-b', '--host', default='0.0.0.0')
 @click.option('-p', '--port', default=10000)
+@click.option('-v', '--verbose', default=0, count=True)
 @click.option(
     '-c',
     '--config',
     default=ROOT_CONFIG,
     help='configuration file to use with easyq')
-def api(host, port, config):
+def api(host, port, verbose, config):
     """Runs easyq API in the specified host and port."""
-    handler = APIHandler(click, host, port, config)
+
+    log_level = LEVELS.get(verbose, 'ERROR')
+    handler = APIHandler(click, host, port, config, log_level)
     handler()
 
 

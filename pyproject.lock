@@ -335,52 +335,6 @@ description = "IPython: Productive Interactive Computing"
 name = "ipython"
 optional = false
 platform = "Linux"
-python-versions = "*"
-version = "5.8.0"
-
-[package.dependencies]
-decorator = "*"
-pickleshare = "*"
-prompt-toolkit = ">=1.0.4,<2.0.0"
-pygments = "*"
-setuptools = ">=18.5"
-simplegeneric = ">0.8"
-traitlets = ">=4.2"
-
-[package.dependencies.appnope]
-platform = "darwin"
-version = "*"
-
-[package.dependencies."backports.shutil-get-terminal-size"]
-python = ">=2.7,<2.8"
-version = "*"
-
-[package.dependencies.colorama]
-platform = "win32"
-version = "*"
-
-[package.dependencies.pathlib2]
-python = ">=2.7,<2.8 || >=3.3,<3.4"
-version = "*"
-
-[package.dependencies.pexpect]
-platform = "!=win32"
-version = "*"
-
-[package.dependencies.win-unicode-console]
-platform = "win32"
-python = "<3.6"
-version = ">=0.5"
-
-[package.requirements]
-python = ">=2.7,<2.8"
-
-[[package]]
-category = "dev"
-description = "IPython: Productive Interactive Computing"
-name = "ipython"
-optional = false
-platform = "Linux"
 python-versions = ">=3.3"
 version = "6.5.0"
 
@@ -879,6 +833,18 @@ python-versions = "*"
 version = "1.11.0"
 
 [[package]]
+category = "main"
+description = "Structured Logging for Python"
+name = "structlog"
+optional = false
+platform = "*"
+python-versions = "*"
+version = "18.1.0"
+
+[package.dependencies]
+six = "*"
+
+[[package]]
 category = "dev"
 description = "ANSII Color formatting for output in terminal."
 name = "termcolor"
@@ -1017,7 +983,7 @@ python-versions = "*"
 version = "2.2.1"
 
 [metadata]
-content-hash = "f31bfb9d15b3a711d963f3cedc4ec4011f472e998ab3d98fdfa17b871c512739"
+content-hash = "5d193d88b050a2633f9a7f81427f695ff396fa7118b8e40093056107e835287c"
 platform = "*"
 python-versions = "*"
 
@@ -1049,7 +1015,7 @@ funcsigs = ["330cc27ccbf7f1e992e69fef78261dc7c6569012cf397db8d3de0234e6c937ca", 
 idna = ["156a6814fb5ac1fc6850fb002e0852d56c0c8d2531923a51032d1b70760e186e", "684a38a6f903c1d71d6d5fac066b58d7768af4de2b832e426ec79c30daa94a16"]
 ipaddress = ["64b28eec5e78e7510698f6d4da08800a5c575caa4a286c93d651c5d3ff7b6794", "b146c751ea45cad6188dd6cf2d9b757f6f4f8d6ffb96a023e6f2e26eea02a72c"]
 ipdb = ["7081c65ed7bfe7737f83fa4213ca8afd9617b42ff6b3f1daf9a3419839a2a00a"]
-ipython = ["0371b7e4bd74954a35086eac949beeac5b1c9f5ce231e2e77df2286a293765e3", "37101b8cbe072fe17bff100bc03d096404e4a9a0357097aeb5b61677c042cab1", "4bac649857611baaaf76bc82c173aa542f7486446c335fe1a6c05d0d491c8906", "007dcd929c14631f83daff35df0147ea51d1af420da303fd078343878bd5fb62", "b0f2ef9eada4a68ef63ee10b6dde4f35c840035c50fd24265f8052c98947d5a4"]
+ipython = ["007dcd929c14631f83daff35df0147ea51d1af420da303fd078343878bd5fb62", "b0f2ef9eada4a68ef63ee10b6dde4f35c840035c50fd24265f8052c98947d5a4"]
 ipython-genutils = ["72dd37233799e619666c9f639a9da83c34013a73e8bbc79a7a6348d93c61fab8", "eb2e116e75ecef9d4d228fdc66af54269afa26ab4463042e33785b887c628ba8"]
 itsdangerous = ["cbb3fcf8d3e33df861709ecaf89d9e6629cff0a217bc2848f1b41cd30d360519"]
 jedi = ["b409ed0f6913a701ed474a614a3bb46e6953639033e31f769ca7581da5bd1ec1", "c254b135fb39ad76e78d4d8f92765ebc9bf92cbc76f49e97ade1d5f5121e1f6f"]
@@ -1085,6 +1051,7 @@ scandir = ["01babbf0fea42a135f6e24747cac63225399d97a67a9a7eedc1f0510b63122db", "
 sentinels = ["7be0704d7fe1925e397e92d18669ace2f619c92b5d4eb21a89f31e026f9ff4b1"]
 simplegeneric = ["dc972e06094b9af5b855b3df4a646395e43d1c9d0d39ed345b7393560d0b9173"]
 six = ["70e8a77beed4562e7f14fe23a786b54f6296e34344c23bc42f07b15018ff98e9", "832dc0e10feb1aa2c68dcc57dbb658f1c7e65b9b61af69048abc87a2db00a0eb"]
+structlog = ["0b0d9b2e34c82d33f540252b9c8853c50521ccf7d7b5e2f30172a0850cba77dd", "ff1e7aae015b346060c03b1cc4a1f29d428de7d858eaf06ea93ee35ac51071a0"]
 termcolor = ["1d6d69ce66211143803fbc56652b41d73b4a400a2891d7bf7a1cdf4c02de613b"]
 traitlets = ["9c4bd2d267b7153df9152698efb1050a5d84982d3384a37b2c1f7723ba3e7835", "c6cb5e6f57c5a9bdaa40fa71ce7b4af30298fbab9ece9815b5d995ab6217c7d9"]
 typing = ["3a887b021a77b292e151afb75323dea88a7bc1b3dfa92176cff8e44c8b68bddf", "b2c689d54e1144bbcfd191b0832980a21c2dbcf7b5ff7a66248a60c90e951eb8", "d400a9344254803a2368533e4533a4200d21eb7b6b729c173bc38201a74db3f2"]
