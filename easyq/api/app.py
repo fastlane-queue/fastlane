@@ -9,6 +9,7 @@ from structlog.processors import (JSONRenderer, StackInfoRenderer, TimeStamper,
                                   format_exc_info)
 from structlog.stdlib import add_log_level, add_logger_name, filter_by_level
 
+import easyq.api.metrics as metrics
 import easyq.api.rqb as rqb
 from easyq.api.enqueue import bp as enqueue
 from easyq.api.healthcheck import bp as healthcheck
@@ -31,10 +32,23 @@ class Application:
         self.connect_db()
         self.load_executor()
 
+        metrics.init_app(self.app)
+        self.app.register_blueprint(metrics.bp)
         self.app.register_blueprint(healthcheck)
         self.app.register_blueprint(enqueue)
 
     def configure_logging(self):
+        disabled = [
+            'docker.utils.config',
+            'docker.auth',
+            'werkzeug',
+        ]
+
+        for logger in disabled:
+            log = logging.getLogger(logger)
+            log.disabled = True
+        self.app.logger.disabled = True
+
         logging.basicConfig(
             level=self.log_level, stream=sys.stdout, format="%(message)s")
 
@@ -53,6 +67,7 @@ class Application:
             cache_logger_on_first_use=True,
         )
         self.logger = structlog.get_logger()
+        self.app.logger = self.logger
 
     def connect_redis(self):
         self.logger.debug('Connecting to redis...')

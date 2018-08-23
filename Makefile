@@ -2,7 +2,7 @@ COMPOSE := $(shell command -v docker-compose 2> /dev/null)
 POETRY := $(shell command -v poetry 2> /dev/null)
 
 setup:
-ifndef COMPOSE
+ifndef POETRY
 	@echo "You must have poetry installed (https://github.com/sdispater/poetry)."
 	@echo
 	@exit 1
