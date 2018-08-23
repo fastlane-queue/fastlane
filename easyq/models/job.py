@@ -29,7 +29,21 @@ class Job(db.Document):
 
     @classmethod
     def create_job(cls, job_id):
+        if job_id is None or job_id == "":
+            raise RuntimeError(
+                "Job ID is required and can't be None or empty.")
+
         j = cls(job_id=job_id, status=Job.Status.enqueued)
         j.save()
+
+        return j
+
+    @classmethod
+    def get_by_job_id(cls, job_id):
+        if job_id is None or job_id == "":
+            raise RuntimeError(
+                "Job ID is required and can't be None or empty.")
+
+        j = cls.objects(job_id=job_id).first()
 
         return j

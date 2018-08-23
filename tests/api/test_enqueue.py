@@ -2,6 +2,8 @@ from json import loads
 
 from preggy import expect
 
+from easyq.models.job import Job
+
 
 def test_enqueue1(client):
     """Test enqueue a job works"""
@@ -43,3 +45,7 @@ def test_enqueue1(client):
 
     res = app.redis.hget(hash_key, 'timeout')
     expect(res).to_equal('-1')
+
+    obj = Job.get_by_job_id(obj["jobId"])
+    expect(obj).not_to_be_null()
+    expect(obj.status).to_equal(Job.Status.enqueued)

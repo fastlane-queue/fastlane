@@ -15,7 +15,4 @@ def client():
     app.config['TESTING'] = True
     client = app.app.test_client()
 
-    # with flaskr.app.app_context():
-    # flaskr.init_db()
-
     yield client
