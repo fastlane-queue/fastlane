@@ -2,7 +2,7 @@ from json import loads
 
 from preggy import expect
 
-from easyq.models.job import Job
+from easyq.models.task import Task
 
 
 def test_enqueue1(client):
@@ -13,7 +13,7 @@ def test_enqueue1(client):
         "command": "ls",
     }
 
-    rv = client.post('/jobs', data=data, follow_redirects=True)
+    rv = client.post('/tasks', data=data, follow_redirects=True)
 
     obj = loads(rv.data)
     expect(obj['jobId']).not_to_be_null()
@@ -38,14 +38,15 @@ def test_enqueue1(client):
     expect(res).to_be_true()
 
     res = app.redis.hget(hash_key, 'origin')
-    expect(res).to_equal('jobs')
+    expect(res).to_equal('tasks')
 
     res = app.redis.hget(hash_key, 'description')
-    expect(res).to_equal("easyq.worker.job.run_job('ubuntu', 'ls')")
+    expect(res).to_equal(f"easyq.worker.job.add_task('{obj['taskId']}')")
 
     res = app.redis.hget(hash_key, 'timeout')
     expect(res).to_equal('-1')
 
-    obj = Job.get_by_job_id(obj["jobId"])
-    expect(obj).not_to_be_null()
-    expect(obj.status).to_equal(Job.Status.enqueued)
+    task = Task.get_by_task_id(obj['taskId'])
+    expect(task).not_to_be_null()
+    expect(task.jobs).to_be_empty()
+    expect(task.done).to_be_false()

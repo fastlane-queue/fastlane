@@ -1,26 +1,30 @@
+from uuid import uuid4
+
+from flask import Blueprint, current_app, request
+
+from easyq.models.task import Task
+from easyq.worker.job import add_task
+
 try:
     from ujson import dumps
 except ImportError:
     from json import dumps
-from flask import Blueprint, current_app, request
-
-from easyq.models.job import Job
-from easyq.worker.job import run_job
 
 bp = Blueprint('enqueue', __name__)
 
 
-@bp.route('/jobs', methods=('POST', ))
-def enqueue():
+@bp.route('/tasks', methods=('POST', ))
+def create_task():
     container = request.form['container']
     command = request.form['command']
 
-    result = current_app.job_queue.enqueue(
-        run_job, container, command, timeout=-1)
+    task_id = str(uuid4())
+    Task.create_task(task_id, container, command)
 
-    Job.create_job(result.id)
+    result = current_app.task_queue.enqueue(add_task, task_id, timeout=-1)
 
     return dumps({
+        "taskId": task_id,
         "jobId": result.id,
         "status": result._status,
     })
