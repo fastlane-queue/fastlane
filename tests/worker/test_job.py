@@ -8,8 +8,8 @@ import easyq.worker.job as job_mod
 from easyq.models.task import Task
 
 
-def test_run_job(client):
-    '''Test run job does not fail if no job available'''
+def test_add_task(client):
+    '''Test adding a new task'''
     with client.application.app_context():
         app = client.application
         app.redis.flushall()
