@@ -1,10 +1,15 @@
 from flask import Blueprint
-from rq import Queue
+
+from flask_rq2 import RQ
+
+rq = RQ()
 
 bp = Blueprint('rq', __name__)
 
 
 def init_app(app):
-    app.task_queue = Queue('tasks', connection=app.redis)
-    app.job_queue = Queue('jobs', connection=app.redis)
-    app.monitor_queue = Queue('monitor', connection=app.redis)
+    rq.init_app(app)
+
+    app.task_queue = rq.get_queue('tasks')
+    app.job_queue = rq.get_queue('jobs')
+    app.monitor_queue = rq.get_queue('monitor')

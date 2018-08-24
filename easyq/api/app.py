@@ -26,6 +26,8 @@ class Application:
         self.app = Flask('easyq')
         self.app.testing = testing
         self.app.config.update(self.config.items)
+        self.app.original_config = self.config
+        self.app.log_level = self.log_level
         self.configure_logging()
         self.connect_redis()
         self.connect_queue()

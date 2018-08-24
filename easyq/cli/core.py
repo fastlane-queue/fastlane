@@ -53,20 +53,30 @@ def api(host, port, verbose, config):
     help='''Process the 'monitor' queue?''',
     is_flag=True)
 @click.option(
+    '-t',
+    '--no-tasks',
+    default=False,
+    help='''Process the 'tasks' queue?''',
+    is_flag=True)
+@click.option('-v', '--verbose', default=0, count=True)
+@click.option(
     '-c',
     '--config',
     default=ROOT_CONFIG,
     help='configuration file to use with easyq')
-def worker(id, no_jobs, no_monitor, config):
+def worker(id, no_jobs, no_monitor, no_tasks, verbose, config):
     """Runs an easyq Worker with the specified queue name and starts processing."""
     jobs = not no_jobs
     monitor = not no_monitor
+    tasks = not no_tasks
 
-    if not jobs and not monitor:
-        click.echo('Worker must monitor at least one queue: jobs or monitor')
+    if not tasks and not jobs and not monitor:
+        click.echo(
+            'Worker must monitor at least one queue: tasks, jobs or monitor')
         sys.exit(1)
 
-    handler = WorkerHandler(click, id, jobs, monitor, config)
+    log_level = LEVELS.get(verbose, 'ERROR')
+    handler = WorkerHandler(click, id, tasks, jobs, monitor, config, log_level)
     handler()
 
 
