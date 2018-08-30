@@ -5,22 +5,32 @@ from preggy import expect
 from rq import Queue, SimpleWorker
 
 import easyq.worker.job as job_mod
-from easyq.models.task import Task
+from easyq.models.task import Job, Task
 
 
-def test_add_task(client):
-    '''Test adding a new task'''
+def test_run_job(client):
+    '''Test running a new job for a task'''
     with client.application.app_context():
         app = client.application
         app.redis.flushall()
 
         task_id = str(uuid4())
+        job_id = str(uuid4())
         t = Task.create_task(task_id, 'container', 'command')
+        t.create_job(job_id)
+        t.save()
+
+        container_id = str(uuid4())
         exec_mock = MagicMock()
-        client.application.executor = exec_mock()
+        exec_mock.run.return_value = container_id
+
+        exec_class_mock = MagicMock()
+        exec_class_mock.Executor.return_value = exec_mock
+        client.application.executor_module = exec_class_mock
+
         queue = Queue(
-            'tasks', is_async=False, connection=client.application.redis)
-        queue.enqueue(job_mod.add_task, t.task_id)
+            'jobs', is_async=False, connection=client.application.redis)
+        result = queue.enqueue(job_mod.run_job, t.task_id, job_id)
 
         worker = SimpleWorker([queue], connection=queue.connection)
         worker.work(burst=True)
@@ -30,7 +40,7 @@ def test_add_task(client):
         expect(t.jobs[0].image).to_equal(t.image)
         expect(t.jobs[0].command).to_equal(t.command)
 
-        hash_key = f'rq:job:{t.jobs[0].job_id}'
+        hash_key = f'rq:job:{result.id}'
 
         res = app.redis.exists(hash_key)
         expect(res).to_be_true()
@@ -41,11 +51,10 @@ def test_add_task(client):
         res = app.redis.hexists(hash_key, 'data')
         expect(res).to_be_true()
 
-        job_id = t.jobs[0].job_id
         keys = app.redis.keys()
         next_job_id = [
             key for key in keys if key.decode('utf-8').startswith('rq:job')
-            and not key.decode('utf-8').endswith(job_id)
+            and not key.decode('utf-8').endswith(result.id)
         ]
         expect(next_job_id).to_length(1)
         next_job_id = next_job_id[0]
@@ -60,11 +69,14 @@ def test_add_task(client):
         expect(res).to_be_true()
 
         res = app.redis.hget(next_job_id, 'origin')
-        expect(res).to_equal('jobs')
+        expect(res).to_equal('monitor')
 
         res = app.redis.hget(next_job_id, 'description')
         expect(res).to_equal(
-            f"easyq.worker.job.run_job('{task_id}', '{job_id}')")
+            f"easyq.worker.job.monitor_job('{task_id}', '{job_id}')")
 
         res = app.redis.hget(next_job_id, 'timeout')
         expect(res).to_equal('-1')
+
+        t.reload()
+        expect(t.jobs[0].status).to_equal(Job.Status.running)

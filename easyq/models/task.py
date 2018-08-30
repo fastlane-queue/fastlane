@@ -10,6 +10,8 @@ from easyq.models.job import Job
 
 
 class Task(db.Document):
+    meta = {'collection': 'tasks'}
+
     created_at = DateTimeField(required=True)
     last_modified_at = DateTimeField(
         required=True, default=datetime.datetime.now)

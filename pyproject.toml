@@ -15,6 +15,8 @@ docker = "^3.4"
 flask-mongoengine = "^0.9.5"
 ujson = "^1.35"
 structlog = "^18.1"
+python-dateutil = "^2.7"
+rq-scheduler = "^0.8.3"
 
 [tool.poetry.dev-dependencies]
 pytest = "^3.0"

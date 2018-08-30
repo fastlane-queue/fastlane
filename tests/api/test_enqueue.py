@@ -1,25 +1,31 @@
 from json import loads
+from uuid import uuid4
 
 from preggy import expect
 
+from easyq.models import db
 from easyq.models.task import Task
 
 
 def test_enqueue1(client):
     """Test enqueue a job works"""
+    task_id = str(uuid4())
 
     data = {
-        "container": "ubuntu",
+        "image": "ubuntu",
         "command": "ls",
     }
 
-    rv = client.post('/tasks', data=data, follow_redirects=True)
+    rv = client.post(f'/tasks/{task_id}', data=data, follow_redirects=True)
 
     obj = loads(rv.data)
-    expect(obj['jobId']).not_to_be_null()
+    job_id = obj['jobId']
+    expect(job_id).not_to_be_null()
+    expect(obj['queueJobId']).not_to_be_null()
     expect(obj['status']).to_equal("queued")
 
-    hash_key = f'rq:job:{obj["jobId"]}'
+    queue_job_id = obj["queueJobId"]
+    hash_key = f'rq:job:{queue_job_id}'
     app = client.application
 
     res = app.redis.exists(hash_key)
@@ -38,15 +44,66 @@ def test_enqueue1(client):
     expect(res).to_be_true()
 
     res = app.redis.hget(hash_key, 'origin')
-    expect(res).to_equal('tasks')
+    expect(res).to_equal('jobs')
 
     res = app.redis.hget(hash_key, 'description')
-    expect(res).to_equal(f"easyq.worker.job.add_task('{obj['taskId']}')")
+    expect(res).to_equal(
+        f"easyq.worker.job.run_job('{obj['taskId']}', '{job_id}')")
 
     res = app.redis.hget(hash_key, 'timeout')
     expect(res).to_equal('-1')
 
     task = Task.get_by_task_id(obj['taskId'])
     expect(task).not_to_be_null()
-    expect(task.jobs).to_be_empty()
-    expect(task.done).to_be_false()
+    expect(task.jobs).not_to_be_empty()
+
+    j = task.jobs[0]
+    expect(j.job_id).to_equal(job_id)
+    expect(j.status).to_equal('enqueued')
+    expect(j.image).to_equal('ubuntu')
+    expect(j.command).to_equal('ls')
+    expect(j.container_id).to_be_null()
+
+    q = 'rq:queue:jobs'
+    res = app.redis.llen(q)
+    expect(res).to_equal(1)
+
+    res = app.redis.lpop(q)
+    expect(res).to_equal(queue_job_id)
+
+    with client.application.app_context():
+        count = Task.objects.count()
+        expect(count).to_equal(1)
+
+
+def test_enqueue2(client):
+    """Test enqueue a job with the same task does not create a new task"""
+
+    task_id = str(uuid4())
+
+    data = {
+        "image": "ubuntu",
+        "command": "ls",
+    }
+
+    rv = client.post(f'/tasks/{task_id}', data=data, follow_redirects=True)
+    obj = loads(rv.data)
+    job_id = obj['jobId']
+    expect(job_id).not_to_be_null()
+    expect(obj['queueJobId']).not_to_be_null()
+    expect(obj['status']).to_equal("queued")
+
+    rv = client.post(f'/tasks/{task_id}', data=data, follow_redirects=True)
+    obj = loads(rv.data)
+    job_id = obj['jobId']
+    expect(job_id).not_to_be_null()
+    expect(obj['queueJobId']).not_to_be_null()
+    expect(obj['status']).to_equal("queued")
+
+    task = Task.get_by_task_id(obj['taskId'])
+    expect(task).not_to_be_null()
+    expect(task.jobs).not_to_be_empty()
+
+    with client.application.app_context():
+        count = Task.objects.count()
+        expect(count).to_equal(1)

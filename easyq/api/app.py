@@ -13,6 +13,7 @@ import easyq.api.metrics as metrics
 import easyq.api.rqb as rqb
 from easyq.api.enqueue import bp as enqueue
 from easyq.api.healthcheck import bp as healthcheck
+from easyq.api.task import bp as task_api
 from easyq.models import db
 
 
@@ -38,6 +39,7 @@ class Application:
         self.app.register_blueprint(metrics.bp)
         self.app.register_blueprint(healthcheck)
         self.app.register_blueprint(enqueue)
+        self.app.register_blueprint(task_api)
 
     def configure_logging(self):
         if self.app.testing:
@@ -46,11 +48,18 @@ class Application:
         disabled = [
             'docker.utils.config',
             'docker.auth',
+            'docker.api.build',
+            'docker.api.swarm',
+            'docker.api.image',
+            'rq.worker',
             'werkzeug',
+            'requests',
+            'urllib3',
         ]
 
         for logger in disabled:
             log = logging.getLogger(logger)
+            log.setLevel(logging.ERROR)
             log.disabled = True
         self.app.logger.disabled = True
 
@@ -97,13 +106,21 @@ class Application:
         db.init_app(self.app)
 
     def load_executor(self):
-        executor_module = __import__(self.config.EXECUTOR)
+        '''Can't be loaded eagerly due to fork of jobs'''
 
-        if '.' in self.config.EXECUTOR:
-            for part in self.config.EXECUTOR.split('.')[1:]:
-                executor_module = getattr(executor_module, part)
+        def _loads():
+            if getattr(self.app, 'executor_module', None) is None:
+                executor_module = __import__(self.config.EXECUTOR)
 
-        self.app.executor = executor_module.Executor(self.app)
+                if '.' in self.config.EXECUTOR:
+                    for part in self.config.EXECUTOR.split('.')[1:]:
+                        executor_module = getattr(executor_module, part)
+
+                self.app.executor_module = executor_module
+
+            return self.app.executor_module.Executor(self.app)
+
+        self.app.load_executor = _loads
 
     def run(self, host, port):
         self.app.run(host, port)

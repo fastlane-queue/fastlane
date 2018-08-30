@@ -4,6 +4,7 @@ import pytest
 
 from easyq.api.app import Application
 from easyq.config import Config
+from easyq.models.task import Task
 
 ROOT_CONFIG = abspath(join(dirname(__file__), 'testing.conf'))
 
@@ -14,5 +15,7 @@ def client():
     app = Application(conf, log_level='ERROR', testing=True)
     app.config['TESTING'] = True
     client = app.app.test_client()
+
+    Task.objects.delete()
 
     yield client

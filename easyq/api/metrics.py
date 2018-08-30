@@ -1,4 +1,5 @@
 import time
+from uuid import uuid4
 
 from flask import Blueprint, current_app, g, request
 
@@ -8,6 +9,9 @@ bp = Blueprint('metrics', __name__)
 def init_app(app):
     @app.before_request
     def start_timer():
+        request_id = request.headers.get('X-Request-ID', str(uuid4()))
+        g.logger = current_app.logger.bind(request_id=request_id)
+        g.request_id = request_id
         g.start = time.time()
 
     @app.after_request
@@ -30,7 +34,7 @@ def init_app(app):
             'host': host,
         }
 
-        request_id = request.headers.get('X-Request-ID')
+        request_id = g.request_id
 
         if request_id:
             log_params['request_id'] = request_id
