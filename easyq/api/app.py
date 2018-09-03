@@ -27,6 +27,8 @@ class Application:
         self.app = Flask('easyq')
         self.app.testing = testing
         self.app.config.update(self.config.items)
+        self.app.config.DEBUG = self.config.DEBUG
+        self.app.config.ENV = self.config.ENV
         self.app.original_config = self.config
         self.app.log_level = self.log_level
         self.configure_logging()
@@ -43,7 +45,7 @@ class Application:
 
     def configure_logging(self):
         if self.app.testing:
-            structlog.reset_defaults
+            structlog.reset_defaults()
 
         disabled = [
             'docker.utils.config',
@@ -67,20 +69,24 @@ class Application:
             level=self.log_level, stream=sys.stdout, format="%(message)s")
 
         chain = [
-            filter_by_level, add_log_level, add_logger_name,
+            filter_by_level,
+            add_log_level,
+            add_logger_name,
             TimeStamper(fmt="iso"),
-            StackInfoRenderer(), format_exc_info,
-            JSONRenderer()
+            StackInfoRenderer(),
+
+            format_exc_info,
+            JSONRenderer(indent=1, sort_keys=True),
         ]
 
-        structlog.configure(
+        log = structlog.wrap_logger(
+            logging.getLogger(__name__),
             processors=chain,
             context_class=dict,
-            logger_factory=structlog.stdlib.LoggerFactory(),
             wrapper_class=structlog.stdlib.BoundLogger,
-            cache_logger_on_first_use=True,
+            # cache_logger_on_first_use=True,
         )
-        self.logger = structlog.get_logger()
+        self.logger = log
         self.app.logger = self.logger
 
     def connect_redis(self):
