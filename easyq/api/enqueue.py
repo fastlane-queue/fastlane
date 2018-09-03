@@ -25,10 +25,9 @@ def create_task(task_id):
         image=image, command=command, upsert=True, new=True)
     logger.info('Task created successfully.')
 
-    job_id = str(uuid4())
-    logger.debug('Creating job...', job_id=job_id)
-    task.create_job(job_id)
-    task.save()
+    logger.debug('Creating job...')
+    j = task.create_job()
+    job_id = str(j.id)
     logger.debug('Job created successfully...', job_id=job_id)
 
     logger.debug('Enqueuing job execution...')

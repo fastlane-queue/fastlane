@@ -58,11 +58,7 @@ def test_enqueue1(client):
     expect(task.jobs).not_to_be_empty()
 
     j = task.jobs[0]
-    expect(j.job_id).to_equal(job_id)
-    expect(j.status).to_equal('enqueued')
-    expect(j.image).to_equal('ubuntu')
-    expect(j.command).to_equal('ls')
-    expect(j.container_id).to_be_null()
+    expect(str(j.id)).to_equal(job_id)
 
     q = 'rq:queue:jobs'
     res = app.redis.llen(q)

@@ -5,7 +5,8 @@ from preggy import expect
 from rq import Queue, SimpleWorker
 
 import easyq.worker.job as job_mod
-from easyq.models.task import Job, Task
+from easyq.models.job import Job
+from easyq.models.task import Task
 
 
 def test_run_job(client):
@@ -15,9 +16,9 @@ def test_run_job(client):
         app.redis.flushall()
 
         task_id = str(uuid4())
-        job_id = str(uuid4())
         t = Task.create_task(task_id, 'container', 'command')
-        t.create_job(job_id)
+        j = t.create_job()
+        job_id = j.job_id
         t.save()
 
         container_id = str(uuid4())

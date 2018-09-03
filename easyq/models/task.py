@@ -1,23 +1,20 @@
 import datetime
-from uuid import uuid4
 
 import mongoengine.errors
-from mongoengine import (BooleanField, DateTimeField, EmbeddedDocumentField,
-                         ListField, StringField)
+from bson.objectid import ObjectId
+from mongoengine import (BooleanField, DateTimeField, ListField,
+                         ReferenceField, StringField)
 
 from easyq.models import db
-from easyq.models.job import Job
 
 
 class Task(db.Document):
-    meta = {'collection': 'tasks'}
-
     created_at = DateTimeField(required=True)
     last_modified_at = DateTimeField(
         required=True, default=datetime.datetime.now)
     task_id = StringField(required=True)
     done = BooleanField(required=True, default=False)
-    jobs = ListField(EmbeddedDocumentField(Job))
+    jobs = ListField(ReferenceField('Job'))
     pattern = StringField(required=False)
     image = StringField(required=True)
     command = StringField(required=True)
@@ -63,29 +60,25 @@ class Task(db.Document):
             raise RuntimeError(
                 "Task ID is required and can't be None or empty.")
 
-        t = cls.objects(task_id=task_id).first()
+        t = cls.objects(task_id=task_id).no_dereference().first()
 
         return t
 
-    def create_job(self, job_id):
+    def create_job(self):
+        from easyq.models.job import Job
+
+        job_id = ObjectId()
         j = Job(
-            job_id=job_id,
+            id=job_id,
+            job_id=str(job_id),
             status=Job.Status.enqueued,
             image=self.image,
             command=self.command,
         )
+        j.task = self
+        j.save()
 
-        if not j.created_at:
-            j.created_at = datetime.datetime.now()
-        j.last_modified_at = datetime.datetime.now()
         self.jobs.append(j)
         self.save()
 
         return j
-
-    def get_job_by_job_id(self, job_id):
-        for job in self.jobs:
-            if job.job_id == job_id:
-                return job
-
-        return None
