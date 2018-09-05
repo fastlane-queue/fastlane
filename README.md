@@ -63,3 +63,25 @@ Just pre-install everything you need in the container image, including the appli
 EasyQ supports versioning of containers. You can run the latest version, or just specify a tag to run (`stable` or `0.1.3` for instance).
 
 And that's where `/app/my-script.py` comes from. It was pre-installed in the container when it was published to the `my.docker.repo.com` container repository.
+
+That also answers the second and third questions. All the dependencies get pre-installed with the container.
+
+## Tasks and Jobs in EasyQ
+
+TBW.
+
+## Jobs Lifecycle
+
+TBW.
+
+## Jobs Options
+
+TBW.
+
+## API
+
+TBW.
+
+## EasyQ Workers
+
+TBW.
