@@ -33,23 +33,37 @@ def run_job(task_id, job_id):
         logger.debug(
             'Job status changed successfully.', status=Job.Status.pulling)
 
-        logger.info(
-            'Downloading updated container image...', image=image, tag=tag)
-        executor.pull(image, tag)
-        logger.info('Image downloaded successfully.', image=image, tag=tag)
+        try:
+            logger.info(
+                'Downloading updated container image...', image=image, tag=tag)
+            executor.pull(image, tag)
+            logger.info('Image downloaded successfully.', image=image, tag=tag)
+        except Exception as err:
+            logger.error('Failed to download image.', error=err)
+            job.error = str(err)
+            job.status = Job.Status.failed
+            job.save()
+            raise err
 
         logger.info(
             'Running command in container...',
             image=image,
             tag=tag,
             command=job.command)
-        container_id = executor.run(image, tag, job.command)
-        logger.info(
-            'Container started successfully.',
-            image=image,
-            tag=tag,
-            command=job.command,
-            container_id=container_id)
+        try:
+            container_id = executor.run(image, tag, job.command)
+            logger.info(
+                'Container started successfully.',
+                image=image,
+                tag=tag,
+                command=job.command,
+                container_id=container_id)
+        except Exception as err:
+            logger.error('Failed to run command', error=err)
+            job.error = str(err)
+            job.status = Job.Status.failed
+            job.save()
+            raise err
 
         logger.debug('Changing job status...', status=Job.Status.running)
         job.container_id = container_id
@@ -104,6 +118,7 @@ def monitor_job(task_id, job_id):
             return
 
         job.status = Job.Status.done
+        job.exit_code = result.exit_code
         job.log = result.log.decode('utf-8')
         job.error = result.error.decode('utf-8')
 

@@ -1,7 +1,7 @@
 import datetime
 
 import mongoengine.errors
-from mongoengine import DateTimeField, ReferenceField, StringField
+from mongoengine import DateTimeField, IntField, ReferenceField, StringField
 
 from easyq.models import db
 
@@ -27,6 +27,7 @@ class Job(db.Document):
 
     log = StringField(required=False)
     error = StringField(required=False)
+    exit_code = IntField(required=False)
 
     def _validate(self):
         errors = {}
@@ -60,6 +61,7 @@ class Job(db.Document):
             'command': self.command,
             'containerId': self.container_id,
             'status': self.status,
+            'exitCode': self.exit_code,
         }
 
         if include_log:

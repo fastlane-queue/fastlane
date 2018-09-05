@@ -1,6 +1,4 @@
-from uuid import uuid4
-
-from flask import Blueprint, current_app, g, request
+from flask import Blueprint, current_app, g, make_response, request
 
 from easyq.models.task import Task
 from easyq.worker.job import run_job
@@ -15,8 +13,15 @@ bp = Blueprint('enqueue', __name__)
 
 @bp.route('/tasks/<task_id>', methods=('POST', ))
 def create_task(task_id):
-    image = request.form['image']
-    command = request.form['command']
+    details = request.json
+    image = details.get('image', None)
+    command = details.get('command', None)
+
+    if image is None or command is None:
+        return make_response(
+            'image and command must be filled in the request.',
+            400,
+        )
 
     logger = g.logger.bind(task_id=task_id, image=image, command=command)
 
