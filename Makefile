@@ -30,6 +30,9 @@ endif
 test:
 	@poetry run pytest -sv --quiet --nf --cov=easyq tests/
 
+focus:
+	@poetry run pytest -sv --quiet --nf -m focus --cov=easyq tests/
+
 watch:
 	@poetry run ptw -c -w -- --quiet --nf --cov=easyq tests/
 

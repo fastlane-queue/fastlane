@@ -9,7 +9,7 @@ Instead of the tedious, repetitive work of yesteryear where you had to implement
 Aside from freedom, EasyQ also provides:
 
 * Ad-Hoc execution of jobs (run job right now);
-* Scheduled execution of jobs (run job next sunday at 6am);
+* Scheduled execution of jobs (run job next sunday at 6am, or run in 10 minutes from now);
 * Crontab execution of jobs (run job at "*/10 * * * *" - every ten minutes);
 * Docker Container Runner;
 * Kubernetes Container Runner;
@@ -17,6 +17,7 @@ Aside from freedom, EasyQ also provides:
 * Structured Logging;
 * Monitoring of job completion;
 * Configurable retries per job;
+* Configurable global and task-scoped limits for number of running jobs;
 * API to retrieve job and task details;
 * Admin to inspect tasks and jobs;
 * Admin to inspect health of queueing system (error queue, size of queues, etc).

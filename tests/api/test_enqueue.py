@@ -1,9 +1,9 @@
-from json import loads
+from datetime import datetime, timedelta, timezone
+from json import dumps, loads
 from uuid import uuid4
 
 from preggy import expect
 
-from easyq.models import db
 from easyq.models.task import Task
 
 
@@ -16,13 +16,16 @@ def test_enqueue1(client):
         "command": "ls",
     }
 
-    rv = client.post(f'/tasks/{task_id}', data=data, follow_redirects=True)
+    rv = client.post(
+        f'/tasks/{task_id}', data=dumps(data), follow_redirects=True)
+
+    expect(rv.status_code).to_equal(200)
 
     obj = loads(rv.data)
     job_id = obj['jobId']
     expect(job_id).not_to_be_null()
     expect(obj['queueJobId']).not_to_be_null()
-    expect(obj['status']).to_equal("queued")
+    expect(obj['status']).to_equal("enqueued")
 
     queue_job_id = obj["queueJobId"]
     hash_key = f'rq:job:{queue_job_id}'
@@ -82,19 +85,27 @@ def test_enqueue2(client):
         "command": "ls",
     }
 
-    rv = client.post(f'/tasks/{task_id}', data=data, follow_redirects=True)
-    obj = loads(rv.data)
-    job_id = obj['jobId']
-    expect(job_id).not_to_be_null()
-    expect(obj['queueJobId']).not_to_be_null()
-    expect(obj['status']).to_equal("queued")
+    options = dict(
+        data=dumps(data),
+        headers={'Content-Type': 'application/json'},
+        follow_redirects=True)
 
-    rv = client.post(f'/tasks/{task_id}', data=data, follow_redirects=True)
+    rv = client.post(f'/tasks/{task_id}', **options)
+    expect(rv.status_code).to_equal(200)
+
     obj = loads(rv.data)
     job_id = obj['jobId']
     expect(job_id).not_to_be_null()
     expect(obj['queueJobId']).not_to_be_null()
-    expect(obj['status']).to_equal("queued")
+    expect(obj['status']).to_equal("enqueued")
+
+    rv = client.post(f'/tasks/{task_id}', **options)
+    expect(rv.status_code).to_equal(200)
+    obj = loads(rv.data)
+    job_id = obj['jobId']
+    expect(job_id).not_to_be_null()
+    expect(obj['queueJobId']).not_to_be_null()
+    expect(obj['status']).to_equal("enqueued")
 
     task = Task.get_by_task_id(obj['taskId'])
     expect(task).not_to_be_null()
@@ -103,3 +114,86 @@ def test_enqueue2(client):
     with client.application.app_context():
         count = Task.objects.count()
         expect(count).to_equal(1)
+
+
+def test_enqueue3(client):
+    """Test enqueue a job at a future specific time"""
+
+    app = client.application
+    app.redis.flushall()
+
+    task_id = str(uuid4())
+
+    time = int(datetime.now(tz=timezone.utc).timestamp())
+
+    data = {
+        "image": "ubuntu",
+        "command": "ls",
+        "startAt": time,
+    }
+    options = dict(
+        data=dumps(data),
+        headers={'Content-Type': 'application/json'},
+        follow_redirects=True)
+
+    rv = client.post(f'/tasks/{task_id}', **options)
+    expect(rv.status_code).to_equal(200)
+    obj = loads(rv.data)
+    job_id = obj['jobId']
+    expect(job_id).not_to_be_null()
+    expect(obj['queueJobId']).to_be_null()
+    expect(obj['status']).to_equal("enqueued")
+
+    # res = app.redis.keys()
+    res = app.redis.zrange(b'rq:scheduler:scheduled_jobs', 0, -1)
+    expect(res).to_length(1)
+
+    res = app.redis.zscore('rq:scheduler:scheduled_jobs', res[0])
+    expect(res).to_equal(time)
+
+
+def test_enqueue4(client):
+    """Test enqueue a job in an hour"""
+
+    cases = (
+        ("48h", timedelta(hours=48)),
+        ("1h", timedelta(hours=1)),
+        ("5m", timedelta(minutes=5)),
+        ("30s", timedelta(seconds=30)),
+    )
+
+    for (start_in, delta) in cases:
+        enqueue_in(client, start_in, delta)
+
+
+def enqueue_in(client, start_in, delta):
+    app = client.application
+    app.redis.flushall()
+
+    task_id = str(uuid4())
+
+    data = {
+        "image": "ubuntu",
+        "command": "ls",
+        "startIn": start_in,
+    }
+    options = dict(
+        data=dumps(data),
+        headers={'Content-Type': 'application/json'},
+        follow_redirects=True)
+
+    rv = client.post(f'/tasks/{task_id}', **options)
+    expect(rv.status_code).to_equal(200)
+    obj = loads(rv.data)
+    job_id = obj['jobId']
+    expect(job_id).not_to_be_null()
+    expect(obj['queueJobId']).to_be_null()
+    expect(obj['status']).to_equal("enqueued")
+
+    # res = app.redis.keys()
+    res = app.redis.zrange(b'rq:scheduler:scheduled_jobs', 0, -1)
+    expect(res).to_length(1)
+
+    time = int((datetime.now(tz=timezone.utc) + delta).timestamp())
+    res = app.redis.zscore('rq:scheduler:scheduled_jobs', res[0])
+    expect(res).to_equal(time)

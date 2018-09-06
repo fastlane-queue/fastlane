@@ -1,12 +1,16 @@
+from datetime import datetime, timezone
+
 from flask import Blueprint, current_app, g, make_response, request
+from rq_scheduler import Scheduler
 
 from easyq.models.task import Task
+from easyq.utils import parse_time
 from easyq.worker.job import run_job
 
 try:
-    from ujson import dumps
+    from ujson import dumps, loads
 except ImportError:
-    from json import dumps
+    from json import dumps, loads
 
 bp = Blueprint('enqueue', __name__)
 
@@ -14,6 +18,19 @@ bp = Blueprint('enqueue', __name__)
 @bp.route('/tasks/<task_id>', methods=('POST', ))
 def create_task(task_id):
     details = request.json
+
+    if details is None and request.data is not None:
+        details = loads(request.data)
+
+    if details is None or details == '':
+        msg = 'Failed to enqueue task because JSON body could not be parsed.'
+        g.logger.warn(msg)
+
+        return make_response(
+            msg,
+            400,
+        )
+
     image = details.get('image', None)
     command = details.get('command', None)
 
@@ -35,14 +52,37 @@ def create_task(task_id):
     job_id = str(j.id)
     logger.debug('Job created successfully...', job_id=job_id)
 
-    logger.debug('Enqueuing job execution...')
-    result = current_app.job_queue.enqueue(
-        run_job, task_id, job_id, timeout=-1)
-    logger.info('Job execution enqueued successfully.')
+    queue_job_id = None
+
+    start_at = details.get('startAt', None)
+    start_in = parse_time(details.get('startIn', None))
+    cron = details.get('cron', None)
+
+    if start_at is not None:
+        dt = datetime.utcfromtimestamp(int(start_at))
+        logger.debug('Enqueuing job execution in the future...', start_at=dt)
+        scheduler = Scheduler('jobs', connection=current_app.redis)
+        scheduler.enqueue_at(dt, run_job, task_id, job_id)
+        logger.info('Job execution enqueued successfully.', start_at=dt)
+    elif start_in is not None:
+        dt = datetime.now(tz=timezone.utc) + start_in
+        logger.debug('Enqueuing job execution in the future...', start_at=dt)
+        scheduler = Scheduler('jobs', connection=current_app.redis)
+        scheduler.enqueue_at(dt, run_job, task_id, job_id)
+        logger.info('Job execution enqueued successfully.', start_at=dt)
+        pass
+    elif cron is not None:
+        pass
+    else:
+        logger.debug('Enqueuing job execution...')
+        result = current_app.job_queue.enqueue(
+            run_job, task_id, job_id, timeout=-1)
+        queue_job_id = result.id
+        logger.info('Job execution enqueued successfully.')
 
     return dumps({
         "taskId": task_id,
         "jobId": job_id,
-        "queueJobId": result.id,
-        "status": result._status,
+        "queueJobId": queue_job_id,
+        "status": j.status,
     })
