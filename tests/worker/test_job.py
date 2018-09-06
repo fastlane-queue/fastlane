@@ -16,7 +16,7 @@ def test_run_job(client):
         app.redis.flushall()
 
         task_id = str(uuid4())
-        t = Task.create_task(task_id, 'container', 'command')
+        t = Task.create_task(task_id)
         j = t.create_job()
         job_id = j.job_id
         t.save()
@@ -31,15 +31,21 @@ def test_run_job(client):
 
         queue = Queue(
             'jobs', is_async=False, connection=client.application.redis)
-        result = queue.enqueue(job_mod.run_job, t.task_id, job_id)
+        result = queue.enqueue(job_mod.run_job, t.task_id, job_id, 'image',
+                               'command')
 
         worker = SimpleWorker([queue], connection=queue.connection)
         worker.work(burst=True)
 
         t.reload()
         expect(t.jobs).to_length(1)
-        expect(t.jobs[0].image).to_equal(t.image)
-        expect(t.jobs[0].command).to_equal(t.command)
+
+        job = t.jobs[0]
+        expect(job.executions).to_length(1)
+
+        execution = job.executions[0]
+        expect(execution.image).to_equal('image')
+        expect(execution.command).to_equal('command')
 
         hash_key = f'rq:job:{result.id}'
 
@@ -74,10 +80,11 @@ def test_run_job(client):
 
         res = app.redis.hget(next_job_id, 'description')
         expect(res).to_equal(
-            f"easyq.worker.job.monitor_job('{task_id}', '{job_id}')")
+            f"easyq.worker.job.monitor_job('{task_id}', '{job_id}', '{execution.execution_id}')"
+        )
 
         res = app.redis.hget(next_job_id, 'timeout')
         expect(res).to_equal('-1')
 
         t.reload()
-        expect(t.jobs[0].status).to_equal(Job.Status.running)
+        expect(t.jobs[0].executions[0].status).to_equal(Job.Status.running)

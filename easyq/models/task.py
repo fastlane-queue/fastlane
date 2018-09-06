@@ -13,11 +13,7 @@ class Task(db.Document):
     last_modified_at = DateTimeField(
         required=True, default=datetime.datetime.now)
     task_id = StringField(required=True)
-    done = BooleanField(required=True, default=False)
     jobs = ListField(ReferenceField('Job'))
-    pattern = StringField(required=False)
-    image = StringField(required=True)
-    command = StringField(required=True)
 
     def _validate(self):
         errors = {}
@@ -25,14 +21,6 @@ class Task(db.Document):
         if self.task_id == "":
             errors["task_id"] = mongoengine.errors.ValidationError(
                 'Field is required', field_name="task_id")
-
-        if self.image == "":
-            errors["image"] = mongoengine.errors.ValidationError(
-                'Field is required', field_name="image")
-
-        if self.command == "":
-            errors["command"] = mongoengine.errors.ValidationError(
-                'Field is required', field_name="command")
 
         if errors:
             message = 'ValidationError (%s:%s) ' % (self._class_name, self.pk)
@@ -48,8 +36,8 @@ class Task(db.Document):
         return super(Task, self).save(*args, **kwargs)
 
     @classmethod
-    def create_task(cls, task_id, image, command):
-        t = cls(task_id=task_id, image=image, command=command, done=False)
+    def create_task(cls, task_id):
+        t = cls(task_id=task_id)
         t.save()
 
         return t
@@ -71,9 +59,6 @@ class Task(db.Document):
         j = Job(
             id=job_id,
             job_id=str(job_id),
-            status=Job.Status.enqueued,
-            image=self.image,
-            command=self.command,
         )
         j.task = self
         j.save()

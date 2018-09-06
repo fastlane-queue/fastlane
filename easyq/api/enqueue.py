@@ -44,7 +44,7 @@ def create_task(task_id):
 
     logger.debug('Creating task...')
     task = Task.objects(task_id=task_id).modify(
-        image=image, command=command, upsert=True, new=True)
+        task_id=task_id, upsert=True, new=True)
     logger.info('Task created successfully.')
 
     logger.debug('Creating job...')
@@ -84,5 +84,4 @@ def create_task(task_id):
         "taskId": task_id,
         "jobId": job_id,
         "queueJobId": queue_job_id,
-        "status": j.status,
     })

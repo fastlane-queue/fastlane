@@ -25,7 +25,6 @@ def test_enqueue1(client):
     job_id = obj['jobId']
     expect(job_id).not_to_be_null()
     expect(obj['queueJobId']).not_to_be_null()
-    expect(obj['status']).to_equal("enqueued")
 
     queue_job_id = obj["queueJobId"]
     hash_key = f'rq:job:{queue_job_id}'
@@ -97,7 +96,6 @@ def test_enqueue2(client):
     job_id = obj['jobId']
     expect(job_id).not_to_be_null()
     expect(obj['queueJobId']).not_to_be_null()
-    expect(obj['status']).to_equal("enqueued")
 
     rv = client.post(f'/tasks/{task_id}', **options)
     expect(rv.status_code).to_equal(200)
@@ -105,7 +103,6 @@ def test_enqueue2(client):
     job_id = obj['jobId']
     expect(job_id).not_to_be_null()
     expect(obj['queueJobId']).not_to_be_null()
-    expect(obj['status']).to_equal("enqueued")
 
     task = Task.get_by_task_id(obj['taskId'])
     expect(task).not_to_be_null()
@@ -142,7 +139,6 @@ def test_enqueue3(client):
     job_id = obj['jobId']
     expect(job_id).not_to_be_null()
     expect(obj['queueJobId']).to_be_null()
-    expect(obj['status']).to_equal("enqueued")
 
     # res = app.redis.keys()
     res = app.redis.zrange(b'rq:scheduler:scheduled_jobs', 0, -1)
@@ -188,7 +184,6 @@ def enqueue_in(client, start_in, delta):
     job_id = obj['jobId']
     expect(job_id).not_to_be_null()
     expect(obj['queueJobId']).to_be_null()
-    expect(obj['status']).to_equal("enqueued")
 
     # res = app.redis.keys()
     res = app.redis.zrange(b'rq:scheduler:scheduled_jobs', 0, -1)
