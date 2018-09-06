@@ -1,12 +1,7 @@
-from flask import Blueprint, abort, g, jsonify
+from flask import Blueprint, abort, g, jsonify, url_for
 
 from easyq.models.job import Job
 from easyq.models.task import Task
-
-try:
-    from ujson import dumps
-except ImportError:
-    from json import dumps
 
 bp = Blueprint('task', __name__)
 
@@ -25,9 +20,23 @@ def get_task(task_id):
         return
     logger.debug('Task retrieved successfully...')
 
-    return dumps({
+    jobs = []
+
+    for job_id in task.jobs:
+        url = url_for(
+            "task.get_job",
+            task_id=task_id,
+            job_id=str(job_id.id),
+            _external=True)
+        job = {
+            "id": str(job_id.id),
+            "url": url,
+        }
+        jobs.append(job)
+
+    return jsonify({
         "taskId": task_id,
-        "jobs": [str(j.id) for j in task.jobs],
+        "jobs": jobs,
     })
 
 
@@ -47,8 +56,19 @@ def get_job(task_id, job_id):
 
     details = job.to_dict(include_log=True, include_error=True),
 
+    task_url = url_for("task.get_task", task_id=task_id, _external=True)
+
+    jobs_url = url_for(
+        "task.get_job", task_id=task_id, job_id=job_id, _external=True)
+
     return jsonify({
-        "taskId": task_id,
-        "jobId": job_id,
+        "task": {
+            "id": task_id,
+            "url": task_url,
+        },
+        "job": {
+            "id": job_id,
+            "url": jobs_url,
+        },
         "details": details,
     })
