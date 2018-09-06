@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from flask import current_app
 from rq_scheduler import Scheduler
@@ -9,7 +9,8 @@ from easyq.worker import ExecutionResult
 
 def run_job(task_id, job_id, image, command):
     app = current_app
-    logger = app.logger.bind(task_id=task_id, job_id=job_id)
+    logger = app.logger.bind(
+        task_id=task_id, job_id=job_id, image=image, command=command)
 
     try:
         executor = app.load_executor()
@@ -33,8 +34,10 @@ def run_job(task_id, job_id, image, command):
         logger.debug(
             'Job status changed successfully.', status=Job.Status.pulling)
 
+        logger.info('Started processing job.')
+
         try:
-            logger.info(
+            logger.debug(
                 'Downloading updated container image...', image=image, tag=tag)
             executor.pull(image, tag)
             logger.info('Image downloaded successfully.', image=image, tag=tag)
@@ -45,7 +48,7 @@ def run_job(task_id, job_id, image, command):
             job.save()
             raise err
 
-        logger.info(
+        logger.debug(
             'Running command in container...',
             image=image,
             tag=tag,
@@ -94,12 +97,12 @@ def monitor_job(task_id, job_id, execution_id):
 
             return False
 
-        if job.container_id is None:
+        execution = job.get_execution_by_id(execution_id)
+
+        if execution.metadata.get('container_id', None) is None:
             logger.error('Job does not have container id. Can\'t proceed.')
 
             return False
-
-        execution = job.get_execution_by_id(execution_id)
 
         result = executor.get_result(execution.metadata['container_id'])
         logger.info(
@@ -116,10 +119,12 @@ def monitor_job(task_id, job_id, execution_id):
                 seconds=1)
 
             interval = timedelta(seconds=5)
-            scheduler.enqueue_in(interval, monitor_job, task_id, job_id)
+            scheduler.enqueue_in(interval, monitor_job, task_id, job_id,
+                                 execution_id)
 
             return
 
+        execution.finished_at = datetime.utcnow()
         execution.status = Job.Status.done
         execution.exit_code = result.exit_code
         execution.log = result.log.decode('utf-8')
@@ -127,11 +132,11 @@ def monitor_job(task_id, job_id, execution_id):
 
         logger.debug(
             'Job finished. Storing job details in mongo db.',
-            status=job.status,
+            status=execution.status,
             log=result.log,
             error=result.error,
         )
-        execution.save()
+        job.save()
         logger.info(
             'Job details stored in mongo db.',
             status=execution.status,

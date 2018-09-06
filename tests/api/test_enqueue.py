@@ -50,7 +50,8 @@ def test_enqueue1(client):
 
     res = app.redis.hget(hash_key, 'description')
     expect(res).to_equal(
-        f"easyq.worker.job.run_job('{obj['taskId']}', '{job_id}')")
+        f"easyq.worker.job.run_job('{obj['taskId']}', '{job_id}', 'ubuntu', 'ls')"
+    )
 
     res = app.redis.hget(hash_key, 'timeout')
     expect(res).to_equal('-1')

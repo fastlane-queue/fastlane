@@ -58,23 +58,13 @@ class WorkerHandler:
 
                 app.logger.debug('Processing enqueued items...')
 
-                interval = 5
+                interval = 0.1
 
                 while True:
-                    # try:
-
                     for queue in self.queues:
                         app.logger.debug(
                             'Processing scheduler...', queue=queue)
                         schedulers[queue].move_jobs()
-
-                    # except ValueError as exc:
-                    # if exc.message == "There's already an active RQ scheduler":
-                    # app.logger.debug(
-                    # "An RQ scheduler instance is already running. Retrying in the future.",
-                    # )
-                    # else:
-                    # raise
 
                     app.logger.debug('Processing queues...')
                     worker.work(burst=True)

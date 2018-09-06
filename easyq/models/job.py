@@ -24,13 +24,16 @@ class JobExecution(db.EmbeddedDocument):
     def to_dict(self, include_log=False, include_error=False):
         res = {
             'createdAt': self.created_at.isoformat(),
-            'lastModifiedAt': self.last_modified_at.isoformat(),
+            'finishedAt': None,
             'image': self.image,
             'command': self.command,
             'metadata': self.metadata,
             'status': self.status,
             'exitCode': self.exit_code,
         }
+
+        if self.finished_at is not None:
+            res['finishedAt'] = self.finished_at.isoformat()
 
         if include_log:
             res['log'] = self.log
@@ -81,20 +84,14 @@ class Job(db.Document):
 
     def to_dict(self, include_log=False, include_error=False):
         executions = [
-            ex.to_dict(include_log, include_error) for ex in self.executions()
+            ex.to_dict(include_log, include_error) for ex in self.executions
         ]
         res = {
             'createdAt': self.created_at.isoformat(),
             'lastModifiedAt': self.last_modified_at.isoformat(),
-            'taskId': self.task.id,
+            'taskId': self.task.task_id,
             'executions': executions,
         }
-
-        if include_log:
-            res['log'] = self.log
-
-        if include_error:
-            res['error'] = self.error
 
         return res
 

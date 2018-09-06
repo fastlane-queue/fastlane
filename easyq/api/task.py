@@ -1,4 +1,4 @@
-from flask import Blueprint, abort, g
+from flask import Blueprint, abort, g, jsonify
 
 from easyq.models.job import Job
 from easyq.models.task import Task
@@ -45,8 +45,10 @@ def get_job(task_id, job_id):
         return
     logger.debug('Job retrieved successfully...')
 
-    return dumps({
+    details = job.to_dict(include_log=True, include_error=True),
+
+    return jsonify({
         "taskId": task_id,
         "jobId": job_id,
-        "details": job.to_dict(include_log=True, include_error=True),
+        "details": details,
     })
