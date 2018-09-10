@@ -41,7 +41,7 @@ run:
 
 worker:
 	@#This env must be set in MacOS to ensure that docker py works
-	@OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES easyq worker -vvv
+	@OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES easyq worker -vv
 
 coverage:
 	@coverage html

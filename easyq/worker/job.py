@@ -39,7 +39,7 @@ def run_job(task_id, job_id, image, command):
         try:
             logger.debug(
                 'Downloading updated container image...', image=image, tag=tag)
-            executor.pull(image, tag)
+            executor.update_image(job.task, job, ex, image, tag)
             logger.info('Image downloaded successfully.', image=image, tag=tag)
         except Exception as err:
             logger.error('Failed to download image.', error=err)
@@ -54,7 +54,8 @@ def run_job(task_id, job_id, image, command):
             tag=tag,
             command=command)
         try:
-            container_id = executor.run(image, tag, command)
+            executor.run(job.task, job, ex, image, tag, command)
+            container_id = ex.metadata['container_id']
             logger.info(
                 'Container started successfully.',
                 image=image,
@@ -69,7 +70,6 @@ def run_job(task_id, job_id, image, command):
             raise err
 
         logger.debug('Changing job status...', status=Job.Status.running)
-        ex.metadata['container_id'] = container_id
         ex.status = Job.Status.running
         job.save()
         logger.debug(
@@ -98,13 +98,7 @@ def monitor_job(task_id, job_id, execution_id):
             return False
 
         execution = job.get_execution_by_id(execution_id)
-
-        if execution.metadata.get('container_id', None) is None:
-            logger.error('Job does not have container id. Can\'t proceed.')
-
-            return False
-
-        result = executor.get_result(execution.metadata['container_id'])
+        result = executor.get_result(job.task, job, execution)
         logger.info(
             'Container result obtained.',
             container_status=result.status,

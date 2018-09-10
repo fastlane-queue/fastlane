@@ -21,23 +21,28 @@ class Executor:
         if client is None:
             self.client = docker.from_env()
 
-    def pull(self, image, tag):
+    def update_image(self, task, job, execution, image, tag):
         self.client.images.pull(image, tag=tag)
 
-    def run(self, image, tag, command):
+    def run(self, task, job, execution, image, tag, command):
         container = self.client.containers.run(
             image=f'{image}:{tag}', command=command, detach=True)
 
-        return container.id
+        execution.metadata['container_id'] = container.id
+
+        return True
 
     def convert_date(self, dt):
         return parse(dt)
 
-    def get_result(self, container_id):
+    def get_result(self, task, job, execution):
+        container_id = execution.metadata['container_id']
         container = self.client.containers.get(container_id)
 
         # container.attrs['State']
-        # {'Status': 'exited', 'Running': False, 'Paused': False, 'Restarting': False, 'OOMKilled': False, 'Dead': False, 'Pid': 0, 'ExitCode': 0, 'Error': '', 'StartedAt': '2018-08-27T17:14:14.1951232Z', 'FinishedAt': '2018-08-27T17:14:14.2707026Z'}
+        # {'Status': 'exited', 'Running': False, 'Paused': False, 'Restarting': False,
+        # 'OOMKilled': False, 'Dead': False, 'Pid': 0, 'ExitCode': 0, 'Error': '',
+        # 'StartedAt': '2018-08-27T17:14:14.1951232Z', 'FinishedAt': '2018-08-27T17:14:14.2707026Z'}
 
         result = ExecutionResult(
             STATUS.get(container.status, ExecutionResult.Status.done))
