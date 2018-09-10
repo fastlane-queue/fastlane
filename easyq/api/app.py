@@ -2,6 +2,7 @@ import logging
 import sys
 
 import fakeredis
+import rq_dashboard
 import structlog
 from flask import Flask
 from flask_redis import FlaskRedis
@@ -26,6 +27,7 @@ class Application:
     def create_app(self, testing):
         self.app = Flask('easyq')
         self.app.testing = testing
+        self.app.config.from_object(rq_dashboard.default_settings)
         self.app.config.update(self.config.items)
         self.app.config.DEBUG = self.config.DEBUG
         self.app.config.ENV = self.config.ENV
@@ -42,6 +44,7 @@ class Application:
         self.app.register_blueprint(healthcheck)
         self.app.register_blueprint(enqueue)
         self.app.register_blueprint(task_api)
+        self.app.register_blueprint(rq_dashboard.blueprint, url_prefix="/rq")
 
     def configure_logging(self):
         if self.app.testing:

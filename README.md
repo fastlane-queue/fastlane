@@ -21,7 +21,7 @@ Aside from freedom, EasyQ also provides:
 - [ ] Configurable global and task-scoped limits for number of running jobs;
 - [x] API to retrieve job and task details;
 - [ ] Admin to inspect tasks and jobs;
-- [ ] Admin to inspect health of queueing system (error queue, size of queues, etc).
+- [x] Admin to inspect health of queueing system (error queue, size of queues, etc).
 
 EasyQ is by design a system with no authentication and authorization.
 

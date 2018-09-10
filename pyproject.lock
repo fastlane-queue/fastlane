@@ -21,6 +21,22 @@ python-versions = "*"
 version = "0.26.2"
 
 [[package]]
+category = "main"
+description = "Better dates and times for Python"
+name = "arrow"
+optional = false
+platform = "*"
+python-versions = "*"
+version = "0.12.1"
+
+[package.dependencies]
+python-dateutil = "*"
+
+[package.dependencies."backports.functools_lru_cache"]
+python = ">=2.7,<2.8"
+version = ">=1.2.1"
+
+[[package]]
 category = "dev"
 description = "Atomic file writes."
 name = "atomicwrites"
@@ -49,6 +65,18 @@ version = "0.1.0"
 
 [package.requirements]
 python = ">=3.3"
+
+[[package]]
+category = "main"
+description = "backports.functools_lru_cache"
+name = "backports.functools-lru-cache"
+optional = false
+platform = "*"
+python-versions = ">=2.6"
+version = "1.5"
+
+[package.requirements]
+python = ">=2.7,<2.8"
 
 [[package]]
 category = "dev"
@@ -340,6 +368,52 @@ version = ">=5.0.0,<6.0.0"
 [[package.dependencies.ipython]]
 python = ">=3.3"
 version = ">=5.0.0"
+
+[[package]]
+category = "dev"
+description = "IPython: Productive Interactive Computing"
+name = "ipython"
+optional = false
+platform = "Linux"
+python-versions = "*"
+version = "5.8.0"
+
+[package.dependencies]
+decorator = "*"
+pickleshare = "*"
+prompt-toolkit = ">=1.0.4,<2.0.0"
+pygments = "*"
+setuptools = ">=18.5"
+simplegeneric = ">0.8"
+traitlets = ">=4.2"
+
+[package.dependencies.appnope]
+platform = "darwin"
+version = "*"
+
+[package.dependencies."backports.shutil-get-terminal-size"]
+python = ">=2.7,<2.8"
+version = "*"
+
+[package.dependencies.colorama]
+platform = "win32"
+version = "*"
+
+[package.dependencies.pathlib2]
+python = ">=2.7,<2.8 || >=3.3,<3.4"
+version = "*"
+
+[package.dependencies.pexpect]
+platform = "!=win32"
+version = "*"
+
+[package.dependencies.win-unicode-console]
+platform = "win32"
+python = "<3.6"
+version = ">=0.5"
+
+[package.requirements]
+python = ">=2.7,<2.8"
 
 [[package]]
 category = "dev"
@@ -816,6 +890,21 @@ redis = ">=2.7.0"
 
 [[package]]
 category = "main"
+description = "rq-dashboard is a general purpose, lightweight, web interface to monitor your RQ queues, jobs, and workers in realtime."
+name = "rq-dashboard"
+optional = false
+platform = "any"
+python-versions = "*"
+version = "0.3.12"
+
+[package.dependencies]
+Flask = "*"
+arrow = "*"
+redis = "*"
+rq = ">=0.3.8"
+
+[[package]]
+category = "main"
 description = "Provides job scheduling capabilities to RQ (Redis Queue)"
 name = "rq-scheduler"
 optional = false
@@ -1020,16 +1109,18 @@ python-versions = "*"
 version = "2.2.1"
 
 [metadata]
-content-hash = "044e3d24a3a9d3646a7d091f522b06f3cb9ce64a4c82828afa104957bf85208f"
+content-hash = "f6add5095efbbbf078061c28da143a458e2f17c7aca0e6d9b4cf283bfd2fb23f"
 platform = "*"
 python-versions = "*"
 
 [metadata.hashes]
 appnope = ["5b26757dc6f79a3b7dc9fab95359328d5747fcb2409d331ea66d0272b90ab2a0", "8b995ffe925347a2138d7ac0fe77155e4311a0ea6d6da4f5128fe4b3cbe5ed71"]
 argh = ["a9b3aaa1904eeb78e32394cd46c6f37ac0fb4af6dc488daa58971bdc7d7fcaf3", "e9535b8c84dc9571a48999094fda7f33e63c3f1b74f3e5f3ac0105a58405bb65"]
+arrow = ["a558d3b7b6ce7ffc74206a86c147052de23d3d4ef0e17c210dd478c53575c4cd"]
 atomicwrites = ["240831ea22da9ab882b551b31d4225591e5e447a68c5e188db5b89ca1d487585", "a24da68318b08ac9c9c45029f4a10371ab5b20e4226738e150e6e7c571630ae6"]
 attrs = ["4b90b09eeeb9b88c35bc642cbac057e45a5fd85367b985bd2809c62b7b939265", "e0d0eb91441a3b53dab4d9b743eafc1ac44476296a2053b6ca3af0b139faf87b"]
 backcall = ["38ecd85be2c1e78f77fd91700c76e14667dc21e2713b63876c0eb901196e01e4", "bbbf4b1e5cd2bdb08f915895b51081c041bac22394fdfcfdfbe9f14b77c08bf2"]
+"backports.functools-lru-cache" = ["9d98697f088eb1b0fa451391f91afb5e3ebde16bbdb272819fd091151fda4f1a", "f0b0e4eba956de51238e17573b7087e852dfe9854afd2e9c873f73fc0ca0a6dd"]
 "backports.shutil-get-terminal-size" = ["0975ba55054c15e346944b38956a4c9cbee9009391e41b86c68990effb8c1f64", "713e7a8228ae80341c70586d1cc0a8caa5207346927e23d09dcbcaf18eadec80"]
 "backports.ssl-match-hostname" = ["502ad98707319f4a51fa2ca1c677bd659008d27ded9f6380c79e8932e38dcdf2"]
 certifi = ["13e698f54293db9f89122b0581843a782ad0934a4fe0172d2a980ba77fc61bb7", "9fa520c1bacfb634fa7af20a76bcbd3d5fb390481724c597da32c719a7dca4b0"]
@@ -1053,7 +1144,7 @@ funcsigs = ["330cc27ccbf7f1e992e69fef78261dc7c6569012cf397db8d3de0234e6c937ca", 
 idna = ["156a6814fb5ac1fc6850fb002e0852d56c0c8d2531923a51032d1b70760e186e", "684a38a6f903c1d71d6d5fac066b58d7768af4de2b832e426ec79c30daa94a16"]
 ipaddress = ["64b28eec5e78e7510698f6d4da08800a5c575caa4a286c93d651c5d3ff7b6794", "b146c751ea45cad6188dd6cf2d9b757f6f4f8d6ffb96a023e6f2e26eea02a72c"]
 ipdb = ["7081c65ed7bfe7737f83fa4213ca8afd9617b42ff6b3f1daf9a3419839a2a00a"]
-ipython = ["007dcd929c14631f83daff35df0147ea51d1af420da303fd078343878bd5fb62", "b0f2ef9eada4a68ef63ee10b6dde4f35c840035c50fd24265f8052c98947d5a4"]
+ipython = ["0371b7e4bd74954a35086eac949beeac5b1c9f5ce231e2e77df2286a293765e3", "37101b8cbe072fe17bff100bc03d096404e4a9a0357097aeb5b61677c042cab1", "4bac649857611baaaf76bc82c173aa542f7486446c335fe1a6c05d0d491c8906", "007dcd929c14631f83daff35df0147ea51d1af420da303fd078343878bd5fb62", "b0f2ef9eada4a68ef63ee10b6dde4f35c840035c50fd24265f8052c98947d5a4"]
 ipython-genutils = ["72dd37233799e619666c9f639a9da83c34013a73e8bbc79a7a6348d93c61fab8", "eb2e116e75ecef9d4d228fdc66af54269afa26ab4463042e33785b887c628ba8"]
 itsdangerous = ["cbb3fcf8d3e33df861709ecaf89d9e6629cff0a217bc2848f1b41cd30d360519"]
 jedi = ["b409ed0f6913a701ed474a614a3bb46e6953639033e31f769ca7581da5bd1ec1", "c254b135fb39ad76e78d4d8f92765ebc9bf92cbc76f49e97ade1d5f5121e1f6f"]
@@ -1086,6 +1177,7 @@ pyyaml = ["3d7da3009c0f3e783b2c873687652d83b1bbfd5c88e9813fb7e5b03c0dd3108b", "3
 redis = ["8a1900a9f2a0a44ecf6e8b5eb3e967a9909dfed219ad66df094f27f7d6f330fb", "a22ca993cea2962dbb588f9f30d0015ac4afcc45bee27d3978c0dbe9e97c6c0f"]
 requests = ["63b52e3c866428a224f97cab011de738c36aec0185aa91cfacd418b5d58911d1", "ec22d826a36ed72a7358ff3fe56cbd4ba69dd7a6718ffd450ff0e9df7a47ce6a"]
 rq = ["5dd83625ca64b0dbf668ee65a8d38f3f5132aa9b64de4d813ff76f97db194b60", "7ac5989a27bdff713dd40517498c1b3bf720f8ebc47305055496f653a29da899"]
+rq-dashboard = ["c7923e07b831d83d9b7a4136a314f4d44305318ab250c584ab12844f1a99c7cc"]
 rq-scheduler = ["6cad6b6d29eae55d4585e2ac9be3b8a36b3f18c87a494fc508a4fa19b9c845d6", "fc51da3d4ad1a047cada3b97a96afea21a3102ea5aa5b79ed2ea97d8ffdf8821"]
 scandir = ["01babbf0fea42a135f6e24747cac63225399d97a67a9a7eedc1f0510b63122db", "0f0059d907817cd3c07f1b658611aabd1af0a4bdc4bb7b211dfd8962d5bd46ba", "11e3bd756b13db4baca364985575eeef4781ce35ce66e2324811091b39b97cdb", "49345923704d611458335872925802620fcf895e1c67074dd8ea715e579f2581", "7f94d5967d61d1b5e415840b3a8995cb00a90893b9628451745e57a3749546d6", "8231e327a3a1c090b4f09ba40cc0b75a85939812d0e8f4c83acd745df3ed6c23", "8d5011d3a99042c4d90e8adda0052d4475aae3d57bb927012267a6c59186d870", "9f703e6b8eb53211d39c0f10e5c02f86e9a989fd44913b5c992259312d9bd59d", "b009e15a3d73376a84f8d8fad9b5ab6d9f96cb7606bdb867a4c882f10508e57e", "b0e0b4e6de8f8aae41a9fb4834127ee125668c363a79c62eb9f9c77de58e7b71", "f70d557a271ee9973087dc704daea205c95f021ee149f1605592bb0b1571ad78"]
 sentinels = ["7be0704d7fe1925e397e92d18669ace2f619c92b5d4eb21a89f31e026f9ff4b1"]

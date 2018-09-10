@@ -17,6 +17,7 @@ ujson = "^1.35"
 structlog = "^18.1"
 python-dateutil = "^2.7"
 rq-scheduler = "^0.8.3"
+rq-dashboard = "^0.3.12"
 
 [tool.poetry.dev-dependencies]
 pytest = "^3.0"
