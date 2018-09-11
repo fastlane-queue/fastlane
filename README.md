@@ -11,6 +11,7 @@ Aside from freedom, EasyQ also provides:
 - [x] Ad-Hoc execution of jobs (run job right now);
 - [x] Scheduled execution of jobs (run job next sunday at 6am, or run in 10 minutes from now);
 - [x] Crontab execution of jobs (run job at "*/10 * * * *" - every ten minutes);
+- [ ] Configurable retries per job;
 - [ ] Configurable exponential back-off for retries and failures in monitoring of jobs;
 - [x] Docker Container Runner;
 - [ ] Kubernetes Container Runner;
@@ -19,7 +20,6 @@ Aside from freedom, EasyQ also provides:
 - [x] Monitoring of job completion;
 - [ ] Job Expiration;
 - [ ] Stop a recurring job;
-- [ ] Configurable retries per job;
 - [ ] Configurable global and task-scoped limits for number of running jobs;
 - [x] API to retrieve job and task details;
 - [ ] Admin to inspect tasks and jobs;

@@ -62,29 +62,38 @@ def create_task(task_id):
     if start_at is not None:
         dt = datetime.utcfromtimestamp(int(start_at))
         logger.debug('Enqueuing job execution in the future...', start_at=dt)
-        scheduler = Scheduler('jobs', connection=current_app.redis)
-        scheduler.enqueue_at(dt, run_job, task_id, job_id, image, command)
+        result = scheduler.enqueue_at(dt, run_job, task_id, job_id, image,
+                                      command)
+        j.metadata['enqueued_id'] = result.id
+        j.save()
         logger.info('Job execution enqueued successfully.', start_at=dt)
     elif start_in is not None:
         dt = datetime.now(tz=timezone.utc) + start_in
         logger.debug('Enqueuing job execution in the future...', start_at=dt)
-        scheduler.enqueue_at(dt, run_job, task_id, job_id, image, command)
+        result = scheduler.enqueue_at(dt, run_job, task_id, job_id, image,
+                                      command)
+        j.metadata['enqueued_id'] = result.id
+        j.save()
         logger.info('Job execution enqueued successfully.', start_at=dt)
     elif cron is not None:
         logger.debug('Enqueuing job execution using cron...', cron=cron)
-        scheduler.cron(
+        result = scheduler.cron(
             cron,  # A cron string (e.g. "0 0 * * 0")
             func=run_job,
             args=[task_id, job_id, image, command],
             repeat=None,
             queue_name='jobs',
         )
+        j.metadata['enqueued_id'] = result.id
+        j.save()
         logger.info('Job execution enqueued successfully.', cron=cron)
     else:
         logger.debug('Enqueuing job execution...')
         result = current_app.job_queue.enqueue(
             run_job, task_id, job_id, image, command, timeout=-1)
         queue_job_id = result.id
+        j.metadata['enqueued_id'] = result.id
+        j.save()
         logger.info('Job execution enqueued successfully.')
 
     return dumps({

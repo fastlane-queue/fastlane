@@ -59,6 +59,7 @@ class Job(db.Document):
     executions = ListField(EmbeddedDocumentField(JobExecution))
     task = ReferenceField(
         'Task', required=True, reverse_delete_rule=mongoengine.CASCADE)
+    metadata = DictField(required=False)
 
     def save(self, *args, **kwargs):
         if self.executions is None:

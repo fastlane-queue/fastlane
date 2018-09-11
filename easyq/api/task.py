@@ -69,6 +69,7 @@ def get_job(task_id, job_id):
         "job": {
             "id": job_id,
             "url": jobs_url,
+            "metadata": job.metadata,
         },
         "details": details,
     })
