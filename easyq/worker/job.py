@@ -18,6 +18,8 @@ def run_job(task_id, job_id, image, command):
         job = Job.get_by_id(task_id, job_id)
 
         if job is None:
+            logger.error('Job was not found with task id and job id.')
+
             return False
 
         tag = 'latest'
@@ -55,13 +57,12 @@ def run_job(task_id, job_id, image, command):
             command=command)
         try:
             executor.run(job.task, job, ex, image, tag, command)
-            container_id = ex.metadata['container_id']
             logger.info(
                 'Container started successfully.',
                 image=image,
                 tag=tag,
                 command=command,
-                container_id=container_id)
+            )
         except Exception as err:
             logger.error('Failed to run command', error=err)
             ex.error = str(err)

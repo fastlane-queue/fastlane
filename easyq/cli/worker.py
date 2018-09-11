@@ -56,16 +56,16 @@ class WorkerHandler:
                     schedulers[queue] = QueueScheduler(queue, app=app.app)
                 app.schedulers = schedulers
 
-                app.logger.debug('Processing enqueued items...')
+                # app.logger.debug('Processing enqueued items...')
 
                 interval = 0.1
 
                 while True:
                     for queue in self.queues:
-                        app.logger.debug(
-                            'Processing scheduler...', queue=queue)
+                        # app.logger.debug(
+                        # 'Processing scheduler...', queue=queue)
                         schedulers[queue].move_jobs()
 
-                    app.logger.debug('Processing queues...')
+                    # app.logger.debug('Processing queues...')
                     worker.work(burst=True)
                     time.sleep(interval)

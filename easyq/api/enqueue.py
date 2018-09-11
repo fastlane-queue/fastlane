@@ -57,6 +57,7 @@ def create_task(task_id):
     start_at = details.get('startAt', None)
     start_in = parse_time(details.get('startIn', None))
     cron = details.get('cron', None)
+    scheduler = Scheduler('jobs', connection=current_app.redis)
 
     if start_at is not None:
         dt = datetime.utcfromtimestamp(int(start_at))
@@ -67,12 +68,18 @@ def create_task(task_id):
     elif start_in is not None:
         dt = datetime.now(tz=timezone.utc) + start_in
         logger.debug('Enqueuing job execution in the future...', start_at=dt)
-        scheduler = Scheduler('jobs', connection=current_app.redis)
         scheduler.enqueue_at(dt, run_job, task_id, job_id, image, command)
         logger.info('Job execution enqueued successfully.', start_at=dt)
-        pass
     elif cron is not None:
-        pass
+        logger.debug('Enqueuing job execution using cron...', cron=cron)
+        scheduler.cron(
+            cron,  # A cron string (e.g. "0 0 * * 0")
+            func=run_job,
+            args=[task_id, job_id, image, command],
+            repeat=None,
+            queue_name='jobs',
+        )
+        logger.info('Job execution enqueued successfully.', cron=cron)
     else:
         logger.debug('Enqueuing job execution...')
         result = current_app.job_queue.enqueue(

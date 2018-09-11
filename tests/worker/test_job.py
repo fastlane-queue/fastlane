@@ -21,9 +21,7 @@ def test_run_job(client):
         job_id = j.job_id
         t.save()
 
-        container_id = str(uuid4())
         exec_mock = MagicMock()
-        exec_mock.run.return_value = container_id
 
         exec_class_mock = MagicMock()
         exec_class_mock.Executor.return_value = exec_mock
