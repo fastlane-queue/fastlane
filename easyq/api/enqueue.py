@@ -48,7 +48,11 @@ def create_task(task_id):
     logger.info('Task created successfully.')
 
     logger.debug('Creating job...')
+    retries = details.get('retries', 0)
     j = task.create_job()
+    j.metadata['retries'] = retries
+    j.metadata['retry_count'] = 0
+    j.save()
     job_id = str(j.id)
     logger.debug('Job created successfully...', job_id=job_id)
 
@@ -59,19 +63,19 @@ def create_task(task_id):
     cron = details.get('cron', None)
     scheduler = Scheduler('jobs', connection=current_app.redis)
 
+    args = [task_id, job_id, image, command]
+
     if start_at is not None:
         dt = datetime.utcfromtimestamp(int(start_at))
         logger.debug('Enqueuing job execution in the future...', start_at=dt)
-        result = scheduler.enqueue_at(dt, run_job, task_id, job_id, image,
-                                      command)
+        result = scheduler.enqueue_at(dt, run_job, *args)
         j.metadata['enqueued_id'] = result.id
         j.save()
         logger.info('Job execution enqueued successfully.', start_at=dt)
     elif start_in is not None:
         dt = datetime.now(tz=timezone.utc) + start_in
         logger.debug('Enqueuing job execution in the future...', start_at=dt)
-        result = scheduler.enqueue_at(dt, run_job, task_id, job_id, image,
-                                      command)
+        result = scheduler.enqueue_at(dt, run_job, *args)
         j.metadata['enqueued_id'] = result.id
         j.save()
         logger.info('Job execution enqueued successfully.', start_at=dt)
@@ -80,7 +84,7 @@ def create_task(task_id):
         result = scheduler.cron(
             cron,  # A cron string (e.g. "0 0 * * 0")
             func=run_job,
-            args=[task_id, job_id, image, command],
+            args=args,
             repeat=None,
             queue_name='jobs',
         )
@@ -90,8 +94,7 @@ def create_task(task_id):
         logger.info('Job execution enqueued successfully.', cron=cron)
     else:
         logger.debug('Enqueuing job execution...')
-        result = current_app.job_queue.enqueue(
-            run_job, task_id, job_id, image, command, timeout=-1)
+        result = current_app.job_queue.enqueue(run_job, *args, timeout=-1)
         queue_job_id = result.id
         j.metadata['enqueued_id'] = result.id
         j.save()

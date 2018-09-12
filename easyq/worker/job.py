@@ -1,3 +1,4 @@
+import math
 from datetime import datetime, timedelta
 
 from flask import current_app
@@ -118,6 +119,26 @@ def monitor_job(task_id, job_id, execution_id):
                                  execution_id)
 
             return
+
+        if result.exit_code != 0 and 'retry_count' in job.metadata and job.metadata['retry_count'] < job.metadata['retries']:
+            retry_logger = logger.bind(
+                exit_code=result.exit_code,
+                retry_count=job.metadata['retry_count'],
+                retries=job.metadata['retries'])
+            retry_logger.debug('Job failed. Enqueuing job retry...')
+            job.metadata['retry_count'] += 1
+
+            scheduler = Scheduler('jobs', connection=current_app.redis)
+
+            args = [task_id, job_id, execution.image, execution.command]
+            dt = datetime.utcnow() + timedelta(
+                seconds=math.pow(2, job.metadata['retry_count']))
+            enqueued = scheduler.enqueue_at(dt, run_job, *args)
+
+            job.metadata['enqueued_id'] = enqueued.id
+            job.save()
+
+            retry_logger.info('Job execution enqueued successfully.')
 
         execution.finished_at = datetime.utcnow()
         execution.status = Job.Status.done
