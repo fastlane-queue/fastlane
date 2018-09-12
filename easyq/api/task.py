@@ -1,4 +1,5 @@
-from flask import Blueprint, abort, g, jsonify, url_for
+from flask import Blueprint, abort, current_app, g, jsonify, url_for
+from rq_scheduler import Scheduler
 
 from easyq.models.job import Job
 from easyq.models.task import Task
@@ -69,7 +70,45 @@ def get_job(task_id, job_id):
         "job": {
             "id": job_id,
             "url": jobs_url,
+            "status": job.status,
             "metadata": job.metadata,
         },
         "details": details,
+    })
+
+
+@bp.route('/tasks/<task_id>/jobs/<job_id>/stop', methods=('POST', ))
+def stop_job(task_id, job_id):
+
+    logger = g.logger.bind(task_id=task_id, job_id=job_id)
+
+    logger.debug('Getting job...')
+    job = Job.get_by_id(task_id=task_id, job_id=job_id)
+
+    if job is None:
+        logger.error('Job not found in task.')
+        abort(404)
+
+        return
+
+    scheduler = Scheduler('jobs', connection=current_app.redis)
+
+    if 'enqueued_id' not in job.metadata or job.metadata['enqueued_id'] not in scheduler:
+        msg = 'Could not stop job since it\'s not recurring.'
+        logger.error(msg)
+        abort(400)
+
+        return msg
+
+    scheduler.cancel(job.metadata['enqueued_id'])
+
+    job.status = Job.Status.stopped
+    job.save()
+
+    return jsonify({
+        'taskId': task_id,
+        'job': {
+            'id': job_id,
+            'status': job.status
+        }
     })

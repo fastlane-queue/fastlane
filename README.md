@@ -19,7 +19,7 @@ Aside from freedom, EasyQ also provides:
 - [x] Structured Logging;
 - [x] Monitoring of job completion;
 - [ ] Job Expiration;
-- [ ] Stop a recurring job;
+- [x] Stop a recurring job;
 - [ ] Configurable global and task-scoped limits for number of running jobs;
 - [x] API to retrieve job and task details;
 - [ ] Admin to inspect tasks and jobs;

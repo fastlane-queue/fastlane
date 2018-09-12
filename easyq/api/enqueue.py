@@ -85,6 +85,7 @@ def create_task(task_id):
             queue_name='jobs',
         )
         j.metadata['enqueued_id'] = result.id
+        j.metadata['cron'] = cron
         j.save()
         logger.info('Job execution enqueued successfully.', cron=cron)
     else:

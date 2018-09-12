@@ -51,6 +51,7 @@ class Job(db.Document):
         running = 'running'
         done = 'done'
         failed = 'failed'
+        stopped = 'stopped'
 
     created_at = DateTimeField(required=True)
     last_modified_at = DateTimeField(
@@ -60,6 +61,7 @@ class Job(db.Document):
     task = ReferenceField(
         'Task', required=True, reverse_delete_rule=mongoengine.CASCADE)
     metadata = DictField(required=False)
+    status = StringField(required=True, default='enqueued')
 
     def save(self, *args, **kwargs):
         if self.executions is None:
@@ -91,6 +93,7 @@ class Job(db.Document):
             'createdAt': self.created_at.isoformat(),
             'lastModifiedAt': self.last_modified_at.isoformat(),
             'taskId': self.task.task_id,
+            'status': self.status,
             'executions': executions,
         }
 
