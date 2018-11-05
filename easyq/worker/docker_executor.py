@@ -1,3 +1,5 @@
+import random
+
 import docker
 from dateutil.parser import parse
 
@@ -6,29 +8,58 @@ from easyq.worker import ExecutionResult
 # https://docs.docker.com/engine/reference/commandline/ps/#examples
 # One of created, restarting, running, removing, paused, exited, or dead
 STATUS = {
-    'created': ExecutionResult.Status.created,
-    'exited': ExecutionResult.Status.done,
-    'dead': ExecutionResult.Status.failed,
-    'running': ExecutionResult.Status.running,
+    "created": ExecutionResult.Status.created,
+    "exited": ExecutionResult.Status.done,
+    "dead": ExecutionResult.Status.failed,
+    "running": ExecutionResult.Status.running,
 }
 
 
-class Executor:
-    def __init__(self, app, client=None):
-        self.app = app
-        self.client = client
+class DockerPool:
+    def __init__(self, docker_hosts):
+        self.docker_hosts = docker_hosts
 
-        if client is None:
-            self.client = docker.from_env()
+        self.clients = {}
+        self.__init_clients()
+
+    def __init_clients(self):
+        for host, port in self.docker_hosts:
+            cl = docker.DockerClient(base_url=f"{host}:{port}")
+            self.clients[f"{host}:{port}"] = (host, port, cl)
+
+    def get_client(self, host=None, port=None):
+        if host is None and port is None:
+            item = random.randint(0, len(self.clients) - 1)
+
+            return tuple(self.clients.values())[item]
+
+        return self.clients.get(f"{host}:{port}")
+
+
+class Executor:
+    def __init__(self, app, pool=None):
+        self.app = app
+        self.pool = pool
+
+        if pool is None:
+            self.pool = DockerPool(self.app.config["DOCKER_HOSTS"])
 
     def update_image(self, task, job, execution, image, tag):
-        self.client.images.pull(image, tag=tag)
+        host, port, cl = self.pool.get_client()
+        cl.images.pull(image, tag=tag)
+        execution.metadata["docker_host"] = host
+        execution.metadata["docker_port"] = port
 
     def run(self, task, job, execution, image, tag, command):
-        container = self.client.containers.run(
-            image=f'{image}:{tag}', command=command, detach=True)
+        h = execution.metadata["docker_host"]
+        p = execution.metadata["docker_port"]
+        host, port, cl = self.pool.get_client(h, p)
 
-        execution.metadata['container_id'] = container.id
+        container = cl.containers.run(
+            image=f"{image}:{tag}", command=command, detach=True
+        )
+
+        execution.metadata["container_id"] = container.id
 
         return True
 
@@ -36,8 +67,12 @@ class Executor:
         return parse(dt)
 
     def get_result(self, task, job, execution):
-        container_id = execution.metadata['container_id']
-        container = self.client.containers.get(container_id)
+        h = execution.metadata["docker_host"]
+        p = execution.metadata["docker_port"]
+        host, port, cl = self.pool.get_client(h, p)
+
+        container_id = execution.metadata["container_id"]
+        container = cl.containers.get(container_id)
 
         # container.attrs['State']
         # {'Status': 'exited', 'Running': False, 'Paused': False, 'Restarting': False,
@@ -45,19 +80,25 @@ class Executor:
         # 'StartedAt': '2018-08-27T17:14:14.1951232Z', 'FinishedAt': '2018-08-27T17:14:14.2707026Z'}
 
         result = ExecutionResult(
-            STATUS.get(container.status, ExecutionResult.Status.done))
+            STATUS.get(container.status, ExecutionResult.Status.done)
+        )
 
-        state = container.attrs['State']
-        result.exit_code = state['ExitCode']
-        result.error = state['Error']
-        result.started_at = self.convert_date(state['StartedAt'])
+        state = container.attrs["State"]
+        result.exit_code = state["ExitCode"]
+        result.error = state["Error"]
+        result.started_at = self.convert_date(state["StartedAt"])
 
-        if result.status == ExecutionResult.Status.done or result.status == ExecutionResult.Status.failed:
-            result.finished_at = self.convert_date(state['FinishedAt'])
+        if (
+            result.status == ExecutionResult.Status.done
+            or result.status == ExecutionResult.Status.failed
+        ):
+            result.finished_at = self.convert_date(state["FinishedAt"])
             result.log = container.logs(stdout=True, stderr=False)
 
-            if result.error != '':
-                result.error += f'\n\nstderr:\n{container.logs(stdout=False, stderr=True)}'
+            if result.error != "":
+                result.error += (
+                    f"\n\nstderr:\n{container.logs(stdout=False, stderr=True)}"
+                )
             else:
                 result.error = container.logs(stdout=False, stderr=True)
 

@@ -6,8 +6,13 @@ import rq_dashboard
 import structlog
 from flask import Flask
 from flask_redis import FlaskRedis
-from structlog.processors import (JSONRenderer, StackInfoRenderer, TimeStamper,
-                                  format_exc_info)
+from structlog.processors import (
+    JSONRenderer,
+    StackInfoRenderer,
+    TimeStamper,
+
+    format_exc_info,
+)
 from structlog.stdlib import add_log_level, add_logger_name, filter_by_level
 
 import easyq.api.metrics as metrics
@@ -25,7 +30,7 @@ class Application:
         self.create_app(testing)
 
     def create_app(self, testing):
-        self.app = Flask('easyq')
+        self.app = Flask("easyq")
         self.app.testing = testing
         self.app.config.from_object(rq_dashboard.default_settings)
         self.app.config.update(self.config.items)
@@ -51,15 +56,15 @@ class Application:
             structlog.reset_defaults()
 
         disabled = [
-            'docker.utils.config',
-            'docker.auth',
-            'docker.api.build',
-            'docker.api.swarm',
-            'docker.api.image',
-            'rq.worker',
-            'werkzeug',
-            'requests',
-            'urllib3',
+            "docker.utils.config",
+            "docker.auth",
+            "docker.api.build",
+            "docker.api.swarm",
+            "docker.api.image",
+            "rq.worker",
+            "werkzeug",
+            "requests",
+            "urllib3",
         ]
 
         for logger in disabled:
@@ -69,7 +74,8 @@ class Application:
         self.app.logger.disabled = True
 
         logging.basicConfig(
-            level=self.log_level, stream=sys.stdout, format="%(message)s")
+            level=self.log_level, stream=sys.stdout, format="%(message)s"
+        )
 
         chain = [
             filter_by_level,
@@ -93,17 +99,16 @@ class Application:
         self.app.logger = self.logger
 
     def connect_redis(self):
-        self.logger.debug('Connecting to redis...')
+        self.logger.debug("Connecting to redis...")
 
         if self.app.testing:
-            self.app.redis = FlaskRedis.from_custom_provider(
-                fakeredis.FakeStrictRedis)
+            self.app.redis = FlaskRedis.from_custom_provider(fakeredis.FakeStrictRedis)
             self.app.redis.connect = self._mock_redis(True)
             self.app.redis.disconnect = self._mock_redis(False)
         else:
             self.app.redis = FlaskRedis()
 
-        self.logger.info('Connection to redis successful')
+        self.logger.info("Connection to redis successful")
         self.app.redis.init_app(self.app)
 
     def connect_queue(self):
@@ -115,14 +120,14 @@ class Application:
         db.init_app(self.app)
 
     def load_executor(self):
-        '''Can't be loaded eagerly due to fork of jobs'''
+        """Can't be loaded eagerly due to fork of jobs"""
 
         def _loads():
-            if getattr(self.app, 'executor_module', None) is None:
+            if getattr(self.app, "executor_module", None) is None:
                 executor_module = __import__(self.config.EXECUTOR)
 
-                if '.' in self.config.EXECUTOR:
-                    for part in self.config.EXECUTOR.split('.')[1:]:
+                if "." in self.config.EXECUTOR:
+                    for part in self.config.EXECUTOR.split(".")[1:]:
                         executor_module = getattr(executor_module, part)
 
                 self.app.executor_module = executor_module

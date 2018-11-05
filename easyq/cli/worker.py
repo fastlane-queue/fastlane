@@ -18,10 +18,10 @@ class WorkerHandler:
         self.queues = []
 
         if jobs:
-            self.queues.append('jobs')
+            self.queues.append("jobs")
 
         if monitor:
-            self.queues.append('monitor')
+            self.queues.append("monitor")
 
         self.load_config()
 
@@ -38,14 +38,13 @@ class WorkerHandler:
 
             if self.worker_id is None:
                 app.logger.warn(
-                    'The worker id was not set for this worker and a random one will be used.'
+                    "The worker id was not set for this worker and a random one will be used."
                 )
                 self.worker_id = str(uuid4())
 
-            app.logger = app.logger.bind(
-                worker_id=self.worker_id, queues=self.queues)
+            app.logger = app.logger.bind(worker_id=self.worker_id, queues=self.queues)
             app.app.logger = app.logger
-            worker_kw['name'] = self.worker_id
+            worker_kw["name"] = self.worker_id
 
             worker = Worker(self.queues, **worker_kw)
 
