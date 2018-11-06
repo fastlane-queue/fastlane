@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from flask import current_app
 from rq_scheduler import Scheduler
 
-from easyq.models.job import Job
+from easyq.models.job import Job, JobExecution
 from easyq.worker import ExecutionResult
 
 
@@ -31,12 +31,18 @@ def run_job(task_id, job_id, image, command):
 
         logger = logger.bind(image=image, tag=tag)
 
-        logger.debug("Changing job status...", status=Job.Status.pulling)
+        logger.debug("Changing job status...", status=JobExecution.Status.pulling)
         ex = job.create_execution(image=image, command=command)
-        ex.status = Job.Status.pulling
+        ex.status = JobExecution.Status.pulling
         job.save()
-        logger.debug("Job status changed successfully.", status=Job.Status.pulling)
+        logger.debug(
+            "Job status changed successfully.", status=JobExecution.Status.pulling
+        )
+    except Exception as err:
+        logger.error("Failed to create job execution. Skipping job...", error=err)
+        raise err
 
+    try:
         logger.info("Started processing job.")
 
         try:
@@ -46,7 +52,7 @@ def run_job(task_id, job_id, image, command):
         except Exception as err:
             logger.error("Failed to download image.", error=err)
             ex.error = str(err)
-            ex.status = Job.Status.failed
+            ex.status = JobExecution.Status.failed
             job.save()
             raise err
 
@@ -61,14 +67,16 @@ def run_job(task_id, job_id, image, command):
         except Exception as err:
             logger.error("Failed to run command", error=err)
             ex.error = str(err)
-            ex.status = Job.Status.failed
+            ex.status = JobExecution.Status.failed
             job.save()
             raise err
 
-        logger.debug("Changing job status...", status=Job.Status.running)
-        ex.status = Job.Status.running
+        logger.debug("Changing job status...", status=JobExecution.Status.running)
+        ex.status = JobExecution.Status.running
         job.save()
-        logger.debug("Job status changed successfully.", status=Job.Status.running)
+        logger.debug(
+            "Job status changed successfully.", status=JobExecution.Status.running
+        )
 
         app.monitor_queue.enqueue(
             monitor_job, task_id, job_id, ex.execution_id, timeout=-1
@@ -77,6 +85,10 @@ def run_job(task_id, job_id, image, command):
         return True
     except Exception as err:
         logger.error("Failed to run job", error=err)
+        ex.status = JobExecution.Status.failed
+        ex.error = str(err)
+        job.save()
+
         raise err
 
 
@@ -144,7 +156,7 @@ def monitor_job(task_id, job_id, execution_id):
             retry_logger.info("Job execution enqueued successfully.")
 
         execution.finished_at = datetime.utcnow()
-        execution.status = Job.Status.done
+        execution.status = JobExecution.Status.done
         execution.exit_code = result.exit_code
         execution.log = result.log.decode("utf-8")
         execution.error = result.error.decode("utf-8")
