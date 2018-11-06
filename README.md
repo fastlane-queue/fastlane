@@ -12,8 +12,9 @@ Aside from freedom, EasyQ also provides:
 - [x] Scheduled execution of jobs (run job next sunday at 6am, or run in 10 minutes from now);
 - [x] Crontab execution of jobs (run job at "*/10 * * * *" - every ten minutes);
 - [x] Configurable retries per job;
-- [ ] Configurable exponential back-off for retries and failures in monitoring of jobs;
-- [ ] Docker Container Runner (with Docker Host Pool);
+- [x] Configurable exponential back-off for retries and failures in monitoring of jobs;
+- [ ] Self-healing handling of interrupted jobs;
+- [x] Docker Container Runner (with Docker Host Pool);
 - [ ] Kubernetes Container Runner;
 - [x] MongoDB Task and Job Storage;
 - [x] Structured Logging;

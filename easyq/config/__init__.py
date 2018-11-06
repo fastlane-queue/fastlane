@@ -15,6 +15,20 @@ Config.define(
 )
 
 Config.define(
+    "EXPONENTIAL_BACKOFF_MIN_MS",
+    1000,
+    "Number of milliseconds that EasyQ must wait before the first retry in each job",
+    "Worker",
+)
+
+Config.define(
+    "EXPONENTIAL_BACKOFF_FACTOR",
+    2,
+    "Factor to multiply backoff by in each retry",
+    "Worker",
+)
+
+Config.define(
     "EXECUTOR",
     "easyq.worker.docker_executor",
     "Module full name where to find the Executor class",

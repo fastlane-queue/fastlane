@@ -145,9 +145,15 @@ def monitor_job(task_id, job_id, execution_id):
             scheduler = Scheduler("jobs", connection=current_app.redis)
 
             args = [task_id, job_id, execution.image, execution.command]
-            dt = datetime.utcnow() + timedelta(
-                seconds=math.pow(2, job.metadata["retry_count"])
-            )
+            factor = app.config["EXPONENTIAL_BACKOFF_FACTOR"]
+            min_backoff = app.config["EXPONENTIAL_BACKOFF_MIN_MS"] / 1000.0
+            delta = timedelta(seconds=min_backoff)
+
+            if job.metadata["retries"] > 0:
+                delta = timedelta(
+                    seconds=math.pow(factor, job.metadata["retry_count"]) * min_backoff
+                )
+            dt = datetime.utcnow() + delta
             enqueued = scheduler.enqueue_at(dt, run_job, *args)
 
             job.metadata["enqueued_id"] = enqueued.id
