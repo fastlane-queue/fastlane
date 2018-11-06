@@ -56,7 +56,10 @@ class Executor:
         host, port, cl = self.pool.get_client(h, p)
 
         container = cl.containers.run(
-            image=f"{image}:{tag}", command=command, detach=True
+            image=f"{image}:{tag}",
+            command=command,
+            detach=True,
+            environment=job.metadata.get("envs", {}),
         )
 
         execution.metadata["container_id"] = container.id

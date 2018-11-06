@@ -13,8 +13,12 @@ Aside from freedom, EasyQ also provides:
 - [x] Crontab execution of jobs (run job at "*/10 * * * *" - every ten minutes);
 - [x] Configurable retries per job;
 - [x] Configurable exponential back-off for retries and failures in monitoring of jobs;
+- [ ] Exponential back-off parameters per job;
 - [ ] Self-healing handling of interrupted jobs;
+- [ ] Job log output streaming;
 - [x] Docker Container Runner (with Docker Host Pool);
+- [x] Container Environment Variables per Job;
+- [ ] Max number of simultaneous running containers;
 - [ ] Kubernetes Container Runner;
 - [x] MongoDB Task and Job Storage;
 - [x] Structured Logging;
@@ -37,22 +41,21 @@ The decision here is to sacrifice isolation for simplicity. Usually a queueing s
 Let's say I want to run a job that sends an e-mail when something happens and I have a container already configured with templates and all I need to pass is the SMTP as an env variable and a command to execute a python script:
 
 ```
-$ curl -XPOST -d'{"image": "my.docker.repo.com/my-image:latest", "command": "python /app/my-script.py", "envs": {"SMTP_SERVER":"my-smtp-server"}}' http://easyq.local:10000/tasks/send-very-specific-email
+$ curl -XPOST -d'{"image": "my.docker.repo.com/my-send-email-image:latest", "command": "python /app/sendmail.py", "envs": {"SMTP_SERVER":"my-smtp-server"}}' http://easyq.local:10000/tasks/send-very-specific-email
 {
-    "taskId": "sou-o-jeff",
+    "taskId": "send-very-specific-email",
     "jobId": "5b8db248edc7d584132a6d4d",
-    "queueJobId": "77cfabbb-1864-4073-afe7-0efe01014754",
-    "status": "queued"
+    "queueJobId": "77cfabbb-1864-4073-afe7-0efe01014754"
 }
 ```
 
-In this request I'm creating/updating a task called `send-very-specific-email` and creating a new job in it to execute the command `python /app/my-script.py`. I hope you now have a **boatload** of questions, like:
+In this request I'm creating/updating a task called `send-very-specific-email` and creating a new job in it to execute the command `python /app/sendmail.py`. I hope you now have a **boatload** of questions, like:
 
-* Where did you get `/app/my-script.py` from?
+* Where did you get `/app/sendmail.py` from?
 * What version of the python interpreter are you running? Are you even sure python is installed?
-* What about the python and system libraries that `my-script.py` depends on? When were they installed?
+* What about the python and system libraries that `sendmail.py` depends on? When were they installed?
 * What is that jobId in the return of the `POST` and how do I use that?
-* What does it mean for that job to be `queued`? I thought you said that Ad-Hoc execution meant running the job **right now**!
+* What does it mean for that job to be in a queue? I thought you said that Ad-Hoc execution meant running the job **right now**!
 
 Those are all very good questions! Let's discuss each one of those.
 
@@ -67,9 +70,9 @@ Just pre-install everything you need in the container image, including the appli
 
 EasyQ supports versioning of containers. You can run the latest version, or just specify a tag to run (`stable` or `0.1.3` for instance).
 
-And that's where `/app/my-script.py` comes from. It was pre-installed in the container when it was published to the `my.docker.repo.com` container repository.
+And that's where `/app/sendmail.py` comes from. It was pre-installed in the container when it was published to the `my.docker.repo.com` container repository.
 
-That also answers the second and third questions. All the dependencies get pre-installed with the container.
+That also answers the second and third questions. All the dependencies get pre-installed within the container image.
 
 ## Tasks and Jobs in EasyQ
 
@@ -88,5 +91,13 @@ TBW.
 TBW.
 
 ## EasyQ Workers
+
+TBW.
+
+## Configurations
+
+TBW.
+
+## Contributing
 
 TBW.
