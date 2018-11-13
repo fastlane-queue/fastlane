@@ -16,7 +16,7 @@ Aside from freedom, EasyQ also provides:
 - [ ] Exponential back-off parameters per job;
 - [ ] Self-healing handling of interrupted jobs;
 - [ ] Job log output streaming;
-- [ ] Workers should handle SIGTERM and exit gracefully;
+- [x] Workers should handle SIGTERM and exit gracefully;
 - [x] Docker Container Runner (with Docker Host Pool);
 - [ ] Circuit breaking when Docker Host is unavailable;
 - [x] Container Environment Variables per Job;
