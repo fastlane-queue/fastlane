@@ -16,16 +16,17 @@ Aside from freedom, EasyQ also provides:
 - [ ] Exponential back-off parameters per job;
 - [ ] Self-healing handling of interrupted jobs;
 - [ ] Job log output streaming;
+- [ ] Workers should handle SIGTERM and exit gracefully;
 - [x] Docker Container Runner (with Docker Host Pool);
+- [ ] Circuit breaking when Docker Host is unavailable;
 - [x] Container Environment Variables per Job;
-- [ ] Max number of simultaneous running containers;
+- [ ] Configurable global and task-scoped limits for number of running jobs;
 - [ ] Kubernetes Container Runner;
 - [x] MongoDB Task and Job Storage;
 - [x] Structured Logging;
 - [x] Monitoring of job completion;
 - [ ] Job Expiration;
 - [x] Stop a recurring job;
-- [ ] Configurable global and task-scoped limits for number of running jobs;
 - [x] API to retrieve job and task details;
 - [ ] Admin to inspect tasks and jobs;
 - [x] Admin to inspect health of queueing system (error queue, size of queues, etc).

@@ -32,5 +32,5 @@ def test_job_get_by_job_id(client):
     expect(topic).not_to_be_null()
     expect(topic.job_id).to_equal(str(j.id))
 
-    topic = Job.get_by_id('invalid', 'invalid')
+    topic = Job.get_by_id("invalid", "invalid")
     expect(topic).to_be_null()
