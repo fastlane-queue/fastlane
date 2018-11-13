@@ -25,7 +25,8 @@ def test_run(client):
     """Tests that a docker executor can run containers"""
 
     task_mock = MagicMock()
-    job_mock = MagicMock()
+    job_mock = MagicMock(metadata={})
+
     execution_mock = MagicMock(
         metadata={"docker_host": "localhost", "docker_port": 1010}
     )
@@ -43,5 +44,5 @@ def test_run(client):
     expect(execution_mock.metadata).to_include("container_id")
     expect(client.containers.run.call_count).to_equal(1)
     client.containers.run.assert_called_with(
-        image=f"mock-image:latest", command="command", detach=True
+        image=f"mock-image:latest", environment={}, command="command", detach=True
     )
