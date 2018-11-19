@@ -10,7 +10,6 @@ from structlog.processors import (
     JSONRenderer,
     StackInfoRenderer,
     TimeStamper,
-
     format_exc_info,
 )
 from structlog.stdlib import add_log_level, add_logger_name, filter_by_level
@@ -19,6 +18,7 @@ import easyq.api.metrics as metrics
 import easyq.api.rqb as rqb
 from easyq.api.enqueue import bp as enqueue
 from easyq.api.healthcheck import bp as healthcheck
+from easyq.api.status import bp as status
 from easyq.api.task import bp as task_api
 from easyq.models import db
 
@@ -49,6 +49,7 @@ class Application:
         self.app.register_blueprint(healthcheck)
         self.app.register_blueprint(enqueue)
         self.app.register_blueprint(task_api)
+        self.app.register_blueprint(status)
         self.app.register_blueprint(rq_dashboard.blueprint, url_prefix="/rq")
 
     def configure_logging(self):
@@ -83,7 +84,6 @@ class Application:
             add_logger_name,
             TimeStamper(fmt="iso"),
             StackInfoRenderer(),
-
             format_exc_info,
             JSONRenderer(indent=1, sort_keys=True),
         ]

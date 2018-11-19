@@ -29,6 +29,13 @@ Config.define(
 )
 
 Config.define(
+    "MAX_GLOBAL_SIMULTANEOUS_EXECUTIONS",
+    2,
+    "Maximum number of simultaneous executions across all executors",
+    "Worker",
+)
+
+Config.define(
     "EXECUTOR",
     "easyq.worker.docker_executor",
     "Module full name where to find the Executor class",

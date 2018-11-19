@@ -57,6 +57,7 @@ class Executor:
 
         container = cl.containers.run(
             image=f"{image}:{tag}",
+            name=f"easyq_worker_{execution.execution_id}",
             command=command,
             detach=True,
             environment=job.metadata.get("envs", {}),
@@ -106,3 +107,18 @@ class Executor:
                 result.error = container.logs(stdout=False, stderr=True)
 
         return result
+
+    def get_running_containers(self):
+        running = []
+
+        for (host, port, client) in self.pool.clients.values():
+            containers = client.containers.list(
+                sparse=False, filters={"status": "running"}
+            )
+
+            for container in containers:
+                if not container.name.startswith("easyq_worker_"):
+                    continue
+                running.append((host, port, container.id))
+
+        return running

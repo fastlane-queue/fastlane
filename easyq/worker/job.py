@@ -17,6 +17,8 @@ def run_job(task_id, job_id, image, command):
     try:
         executor = app.load_executor()
 
+        executions = executor.get_running_containers()
+
         job = Job.get_by_id(task_id, job_id)
 
         if job is None:
@@ -28,6 +30,23 @@ def run_job(task_id, job_id, image, command):
 
         if ":" in image:
             image, tag = image.split(":")
+
+        max_exec = app.config["MAX_GLOBAL_SIMULTANEOUS_EXECUTIONS"]
+
+        if len(executions) >= max_exec:
+            lg = logger.bind(
+                execution_count=len(executions), max_global_executions=max_exec
+            )
+            lg.debug(
+                "Maximum number of global container executions reached. Enqueuing job execution..."
+            )
+            args = [task_id, job_id, image, command]
+            result = current_app.job_queue.enqueue(run_job, *args, timeout=-1)
+            job.metadata["enqueued_id"] = result.id
+            job.save()
+            lg.info("Job execution re-enqueued successfully.")
+
+            return True
 
         logger = logger.bind(image=image, tag=tag)
 

@@ -20,7 +20,7 @@ Aside from freedom, EasyQ also provides:
 - [x] Docker Container Runner (with Docker Host Pool);
 - [ ] Circuit breaking when Docker Host is unavailable;
 - [x] Container Environment Variables per Job;
-- [ ] Configurable global and task-scoped limits for number of running jobs;
+- [x] Configurable global limit for number of running jobs;
 - [ ] Kubernetes Container Runner;
 - [x] MongoDB Task and Job Storage;
 - [x] Structured Logging;
@@ -28,6 +28,7 @@ Aside from freedom, EasyQ also provides:
 - [ ] Job Expiration;
 - [x] Stop a recurring job;
 - [x] API to retrieve job and task details;
+- [ ] Error handling mechanism (Sentry built-in, extensible)
 - [ ] Admin to inspect tasks and jobs;
 - [x] Admin to inspect health of queueing system (error queue, size of queues, etc).
 
@@ -42,7 +43,7 @@ The decision here is to sacrifice isolation for simplicity. Usually a queueing s
 Let's say I want to run a job that sends an e-mail when something happens and I have a container already configured with templates and all I need to pass is the SMTP as an env variable and a command to execute a python script:
 
 ```
-$ curl -XPOST -d'{"image": "my.docker.repo.com/my-send-email-image:latest", "command": "python /app/sendmail.py", "envs": {"SMTP_SERVER":"my-smtp-server"}}' http://easyq.local:10000/tasks/send-very-specific-email
+$ curl -XPOST --header "Content-Type: application/json" -d'{"image": "my.docker.repo.com/my-send-email-image:latest", "command": "python /app/sendmail.py", "envs": {"SMTP_SERVER":"my-smtp-server"}}' http://easyq.local:10000/tasks/send-very-specific-email
 {
     "taskId": "send-very-specific-email",
     "jobId": "5b8db248edc7d584132a6d4d",
@@ -75,9 +76,19 @@ And that's where `/app/sendmail.py` comes from. It was pre-installed in the cont
 
 That also answers the second and third questions. All the dependencies get pre-installed within the container image.
 
-## Tasks and Jobs in EasyQ
+## Tasks, Jobs and Executions in EasyQ
 
-TBW.
+There are three levels in EasyQ hierarchy: tasks, jobs and executions.
+
+Users group their units of work in tasks. Examples of tasks would be "system1-send-mail" or "system2-process-user-registration".
+
+The name of the task is arbitrary and it's not enforced to be unique. It's advised to use a task name that includes your system name as to ensure uniqueness.
+
+Jobs are created every time a task is enqueued. A job indicates whether it's scheduled and is basically a container for all the executions inside it.
+
+A Job Execution is the actual unit of work. An execution has an image, a command and any other metadata that is required to run the unit of work.
+
+Why aren't these details in the Job, instead of the execution? Because we can have many executions for a single job: Cron and retries are good examples of this behavior.
 
 ## Jobs Lifecycle
 
