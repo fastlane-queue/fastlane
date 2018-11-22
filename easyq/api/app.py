@@ -33,7 +33,10 @@ class Application:
         self.app = Flask("easyq")
         self.app.testing = testing
         self.app.config.from_object(rq_dashboard.default_settings)
-        self.app.config.update(self.config.items)
+
+        for key in self.config.items.keys():
+            self.app.config[key] = self.config[key]
+
         self.app.config.DEBUG = self.config.DEBUG
         self.app.config.ENV = self.config.ENV
         self.app.original_config = self.config

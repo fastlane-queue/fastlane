@@ -33,7 +33,7 @@ def run_job(task_id, job_id, image, command):
 
         max_exec = app.config["MAX_GLOBAL_SIMULTANEOUS_EXECUTIONS"]
 
-        if len(executions) >= max_exec:
+        if len(executions["running"]) >= max_exec:
             lg = logger.bind(
                 execution_count=len(executions), max_global_executions=max_exec
             )

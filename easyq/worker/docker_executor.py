@@ -1,4 +1,6 @@
 import random
+import re
+from json import loads
 
 import docker
 from dateutil.parser import parse
@@ -19,21 +21,32 @@ class DockerPool:
     def __init__(self, docker_hosts):
         self.docker_hosts = docker_hosts
 
+        self.clients_per_regex = []
         self.clients = {}
         self.__init_clients()
 
     def __init_clients(self):
-        for host, port in self.docker_hosts:
-            cl = docker.DockerClient(base_url=f"{host}:{port}")
-            self.clients[f"{host}:{port}"] = (host, port, cl)
+        for regex, docker_hosts in self.docker_hosts:
+            clients = (regex, [])
+            self.clients_per_regex.append(clients)
 
-    def get_client(self, host=None, port=None):
-        if host is None and port is None:
-            item = random.randint(0, len(self.clients) - 1)
+            for address in docker_hosts:
+                host, port = address.split(":")
+                cl = docker.DockerClient(base_url=address)
+                self.clients[address] = (host, port, cl)
+                clients[1].append((host, port, cl))
 
-            return tuple(self.clients.values())[item]
+    def get_client(self, task_id, host=None, port=None):
+        if host is not None or port is not None:
+            return self.clients.get(f"{host}:{port}")
 
-        return self.clients.get(f"{host}:{port}")
+        for regex, clients in self.clients_per_regex:
+            if regex is not None and not regex.match(task_id):
+                continue
+
+            return random.choice(clients)
+
+        raise RuntimeError(f"Failed to find a docker host for task id {task_id}.")
 
 
 class Executor:
@@ -42,10 +55,24 @@ class Executor:
         self.pool = pool
 
         if pool is None:
-            self.pool = DockerPool(self.app.config["DOCKER_HOSTS"])
+            docker_hosts = []
+            clusters = loads(self.app.config["DOCKER_HOSTS"])
+
+            for cluster in clusters:
+                regex = cluster["match"]
+
+                if not regex:
+                    regex = None
+                else:
+                    regex = re.compile(regex)
+
+                hosts = cluster["hosts"]
+                docker_hosts.append((regex, hosts))
+
+            self.pool = DockerPool(docker_hosts)
 
     def update_image(self, task, job, execution, image, tag):
-        host, port, cl = self.pool.get_client()
+        host, port, cl = self.pool.get_client(task.task_id)
         cl.images.pull(image, tag=tag)
         execution.metadata["docker_host"] = host
         execution.metadata["docker_port"] = port
@@ -53,7 +80,7 @@ class Executor:
     def run(self, task, job, execution, image, tag, command):
         h = execution.metadata["docker_host"]
         p = execution.metadata["docker_port"]
-        host, port, cl = self.pool.get_client(h, p)
+        host, port, cl = self.pool.get_client(task.task_id, h, p)
 
         container = cl.containers.run(
             image=f"{image}:{tag}",
@@ -73,7 +100,7 @@ class Executor:
     def get_result(self, task, job, execution):
         h = execution.metadata["docker_host"]
         p = execution.metadata["docker_port"]
-        host, port, cl = self.pool.get_client(h, p)
+        host, port, cl = self.pool.get_client(task.task_id, h, p)
 
         container_id = execution.metadata["container_id"]
         container = cl.containers.get(container_id)
@@ -121,4 +148,9 @@ class Executor:
                     continue
                 running.append((host, port, container.id))
 
-        return running
+        return {
+            "available": [
+                f"{host}:{port}" for (host, port, client) in self.pool.clients.values()
+            ],
+            "running": running,
+        }

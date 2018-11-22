@@ -18,9 +18,10 @@ Aside from freedom, EasyQ also provides:
 - [ ] Job log output streaming;
 - [x] Workers should handle SIGTERM and exit gracefully;
 - [x] Docker Container Runner (with Docker Host Pool);
+- [x] Docker Pool per task name (Regular Expressions);
 - [ ] Circuit breaking when Docker Host is unavailable;
 - [x] Container Environment Variables per Job;
-- [x] Configurable global limit for number of running jobs;
+- [ ] Configurable global limit for number of running jobs per task name (Regular Expressions);
 - [ ] Kubernetes Container Runner;
 - [x] MongoDB Task and Job Storage;
 - [x] Structured Logging;
