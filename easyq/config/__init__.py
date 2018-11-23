@@ -44,7 +44,7 @@ Config.define(
 
 Config.define(
     "DOCKER_HOSTS",
-    '[{"match": "", "hosts": ["localhost:2376"]}]',
+    '[{"match": "", "hosts": ["localhost:2376"], "maxRunning":2}]',
     "Docker Hosts to add to pool",
     "Docker Executor",
 )

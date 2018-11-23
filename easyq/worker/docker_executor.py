@@ -21,14 +21,16 @@ class DockerPool:
     def __init__(self, docker_hosts):
         self.docker_hosts = docker_hosts
 
+        self.max_running = {}
         self.clients_per_regex = []
         self.clients = {}
         self.__init_clients()
 
     def __init_clients(self):
-        for regex, docker_hosts in self.docker_hosts:
+        for regex, docker_hosts, max_running in self.docker_hosts:
             clients = (regex, [])
             self.clients_per_regex.append(clients)
+            self.max_running[regex] = max_running
 
             for address in docker_hosts:
                 host, port = address.split(":")
@@ -67,9 +69,25 @@ class Executor:
                     regex = re.compile(regex)
 
                 hosts = cluster["hosts"]
-                docker_hosts.append((regex, hosts))
+                max_running = cluster.get("maxRunning", 10)
+                docker_hosts.append((regex, hosts, max_running))
 
             self.pool = DockerPool(docker_hosts)
+
+    def validate_max_running_executions(self, task_id):
+        total_running = 0
+        max_running = 0
+
+        for regex, clients in self.pool.clients_per_regex:
+            if regex is not None and not regex.match(task_id):
+                continue
+
+            total_running = len(self.get_running_containers(regex)["running"])
+            max_running = self.pool.max_running[regex]
+
+            break
+
+        return total_running == 0 or total_running <= max_running
 
     def update_image(self, task, job, execution, image, tag):
         host, port, cl = self.pool.get_client(task.task_id)
@@ -135,10 +153,19 @@ class Executor:
 
         return result
 
-    def get_running_containers(self):
+    def get_running_containers(self, regex=None):
         running = []
 
-        for (host, port, client) in self.pool.clients.values():
+        clients = self.pool.clients.values()
+
+        if regex is not None:
+            for r, cl in self.pool.clients_per_regex:
+                if r is not None and r != regex:
+                    continue
+
+                clients = cl
+
+        for (host, port, client) in clients:
             containers = client.containers.list(
                 sparse=False, filters={"status": "running"}
             )
@@ -149,8 +176,6 @@ class Executor:
                 running.append((host, port, container.id))
 
         return {
-            "available": [
-                f"{host}:{port}" for (host, port, client) in self.pool.clients.values()
-            ],
+            "available": [f"{host}:{port}" for (host, port, client) in clients],
             "running": running,
         }

@@ -31,20 +31,17 @@ def run_job(task_id, job_id, image, command):
         if ":" in image:
             image, tag = image.split(":")
 
-        max_exec = app.config["MAX_GLOBAL_SIMULTANEOUS_EXECUTIONS"]
-
-        if len(executions["running"]) >= max_exec:
-            lg = logger.bind(
-                execution_count=len(executions), max_global_executions=max_exec
-            )
-            lg.debug(
+        if not executor.validate_max_running_executions(task_id):
+            logger.debug(
                 "Maximum number of global container executions reached. Enqueuing job execution..."
             )
             args = [task_id, job_id, image, command]
             result = current_app.job_queue.enqueue(run_job, *args, timeout=-1)
             job.metadata["enqueued_id"] = result.id
             job.save()
-            lg.info("Job execution re-enqueued successfully.")
+            logger.info(
+                "Job execution re-enqueued successfully due to max number of container executions."
+            )
 
             return True
 

@@ -21,7 +21,7 @@ Aside from freedom, EasyQ also provides:
 - [x] Docker Pool per task name (Regular Expressions);
 - [ ] Circuit breaking when Docker Host is unavailable;
 - [x] Container Environment Variables per Job;
-- [ ] Configurable global limit for number of running jobs per task name (Regular Expressions);
+- [x] Configurable global limit for number of running jobs per task name (Regular Expressions);
 - [ ] Kubernetes Container Runner;
 - [x] MongoDB Task and Job Storage;
 - [x] Structured Logging;
