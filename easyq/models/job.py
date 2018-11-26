@@ -23,6 +23,7 @@ class JobExecution(db.EmbeddedDocument):
         running = "running"
         done = "done"
         failed = "failed"
+        expired = "expired"
         stopped = "stopped"
 
     created_at = DateTimeField(required=True)

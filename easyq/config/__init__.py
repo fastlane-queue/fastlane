@@ -15,6 +15,13 @@ Config.define(
 )
 
 Config.define(
+    "WORKER_SLEEP_TIME_MS",
+    10,
+    "Number of milliseconds that EasyQ must sleep before getting the next job",
+    "Worker",
+)
+
+Config.define(
     "EXPONENTIAL_BACKOFF_MIN_MS",
     1000,
     "Number of milliseconds that EasyQ must wait before the first retry in each job",

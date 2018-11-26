@@ -96,9 +96,16 @@ class Executor:
         execution.metadata["docker_port"] = port
 
     def run(self, task, job, execution, image, tag, command):
-        h = execution.metadata["docker_host"]
-        p = execution.metadata["docker_port"]
-        host, port, cl = self.pool.get_client(task.task_id, h, p)
+        host, port, cl = None, None, None
+
+        if "docker_host" in execution.metadata:
+            h = execution.metadata["docker_host"]
+            p = execution.metadata["docker_port"]
+            host, port, cl = self.pool.get_client(task.task_id, h, p)
+        else:
+            host, port, cl = self.pool.get_client(task.task_id)
+            execution.metadata["docker_host"] = host
+            execution.metadata["docker_port"] = port
 
         container = cl.containers.run(
             image=f"{image}:{tag}",

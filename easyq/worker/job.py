@@ -17,8 +17,6 @@ def run_job(task_id, job_id, image, command):
     try:
         executor = app.load_executor()
 
-        executions = executor.get_running_containers()
-
         job = Job.get_by_id(task_id, job_id)
 
         if job is None:
@@ -54,6 +52,7 @@ def run_job(task_id, job_id, image, command):
         logger.debug(
             "Job status changed successfully.", status=JobExecution.Status.pulling
         )
+        logger = logger.bind(execution_id=ex.execution_id)
     except Exception as err:
         logger.error("Failed to create job execution. Skipping job...", error=err)
         raise err
@@ -61,16 +60,16 @@ def run_job(task_id, job_id, image, command):
     try:
         logger.info("Started processing job.")
 
-        try:
-            logger.debug("Downloading updated container image...", image=image, tag=tag)
-            executor.update_image(job.task, job, ex, image, tag)
-            logger.info("Image downloaded successfully.", image=image, tag=tag)
-        except Exception as err:
-            logger.error("Failed to download image.", error=err)
-            ex.error = str(err)
-            ex.status = JobExecution.Status.failed
-            job.save()
-            raise err
+        # try:
+        # logger.debug("Downloading updated container image...", image=image, tag=tag)
+        # executor.update_image(job.task, job, ex, image, tag)
+        # logger.info("Image downloaded successfully.", image=image, tag=tag)
+        # except Exception as err:
+        # logger.error("Failed to download image.", error=err)
+        # ex.error = str(err)
+        # ex.status = JobExecution.Status.failed
+        # job.save()
+        # raise err
 
         logger.debug(
             "Running command in container...", image=image, tag=tag, command=command

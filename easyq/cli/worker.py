@@ -1,3 +1,4 @@
+import signal
 import time
 from uuid import uuid4
 
@@ -33,6 +34,8 @@ class WorkerHandler:
         # self.click.echo(
         # f'Running easyq worker processing queues {",".join(self.queues)}.')
         app = Application(self.config, self.log_level)
+        interval = app.config["WORKER_SLEEP_TIME_MS"] / 1000.0
+
         with app.app.app_context():
             worker_kw = dict(connection=app.app.redis)
 
@@ -57,8 +60,6 @@ class WorkerHandler:
 
                 # app.logger.debug('Processing enqueued items...')
 
-                interval = 0.1
-
                 while True:
                     for queue in self.queues:
                         # app.logger.debug(
@@ -66,5 +67,10 @@ class WorkerHandler:
                         schedulers[queue].move_jobs()
 
                     # app.logger.debug('Processing queues...')
-                    worker.work(burst=True)
+                    worker.work(burst=False)
+
+                    if worker.death_date is not None:
+                        app.logger.info("Worker exiting gracefully.")
+
+                        return
                     time.sleep(interval)
