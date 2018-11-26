@@ -31,6 +31,7 @@ Aside from freedom, EasyQ also provides:
 - [x] Stop a recurring job;
 - [x] API to retrieve job and task details;
 - [ ] Error handling mechanism (Sentry built-in, extensible)
+- [ ] Usage metrics (extensible);
 - [ ] Admin to inspect tasks and jobs;
 - [x] Admin to inspect health of queueing system (error queue, size of queues, etc).
 
