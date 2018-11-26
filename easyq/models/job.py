@@ -39,9 +39,10 @@ class JobExecution(db.EmbeddedDocument):
     metadata = DictField(required=False)
 
     def to_dict(self, include_log=False, include_error=False):
+        f_at = self.finished_at.isoformat() if self.finished_at is not None else None
         res = {
             "createdAt": self.created_at.isoformat(),
-            "finishedAt": None,
+            "finishedAt": f_at,
             "image": self.image,
             "command": self.command,
             "metadata": self.metadata,

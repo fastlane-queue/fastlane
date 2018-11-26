@@ -57,9 +57,12 @@ def create_task(task_id):
 
     logger.debug("Creating job...")
     retries = details.get("retries", 0)
+    expiration = details.get("expiration")
+
     j = task.create_job()
     j.metadata["retries"] = retries
     j.metadata["retry_count"] = 0
+    j.metadata["expiration"] = expiration
     j.metadata["envs"] = details.get("envs", {})
     j.save()
     job_id = str(j.id)

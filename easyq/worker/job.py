@@ -1,3 +1,4 @@
+import calendar
 import math
 from datetime import datetime, timedelta
 
@@ -47,8 +48,9 @@ def run_job(task_id, job_id, image, command):
 
         logger.debug("Changing job status...", status=JobExecution.Status.pulling)
         ex = job.create_execution(image=image, command=command)
-        ex.status = JobExecution.Status.pulling
+        ex.status = JobExecution.Status.enqueued
         job.save()
+
         logger.debug(
             "Job status changed successfully.", status=JobExecution.Status.pulling
         )
@@ -58,18 +60,38 @@ def run_job(task_id, job_id, image, command):
         raise err
 
     try:
+        d = datetime.utcnow()
+        unixtime = calendar.timegm(d.utctimetuple())
+
+        if (
+            job.metadata.get("expiration") is not None
+            and job.metadata["expiration"] < unixtime
+        ):
+            expiration_utc = datetime.utcfromtimestamp(job.metadata["expiration"])
+            ex.status = JobExecution.Status.expired
+            ex.error = f"Job was supposed to be done before {expiration_utc.isoformat()}, but was started at {d.isoformat()}."
+            ex.finished_at = datetime.utcnow()
+            job.save()
+            logger.info(
+                "Job execution canceled due to being expired.",
+                job_expiration=job.metadata["expiration"],
+                current_ts=unixtime,
+            )
+
+            return False
+
         logger.info("Started processing job.")
 
-        # try:
-        # logger.debug("Downloading updated container image...", image=image, tag=tag)
-        # executor.update_image(job.task, job, ex, image, tag)
-        # logger.info("Image downloaded successfully.", image=image, tag=tag)
-        # except Exception as err:
-        # logger.error("Failed to download image.", error=err)
-        # ex.error = str(err)
-        # ex.status = JobExecution.Status.failed
-        # job.save()
-        # raise err
+        try:
+            logger.debug("Downloading updated container image...", image=image, tag=tag)
+            executor.update_image(job.task, job, ex, image, tag)
+            logger.info("Image downloaded successfully.", image=image, tag=tag)
+        except Exception as err:
+            logger.error("Failed to download image.", error=err)
+            ex.error = str(err)
+            ex.status = JobExecution.Status.failed
+            job.save()
+            raise err
 
         logger.debug(
             "Running command in container...", image=image, tag=tag, command=command
@@ -101,7 +123,7 @@ def run_job(task_id, job_id, image, command):
     except Exception as err:
         logger.error("Failed to run job", error=err)
         ex.status = JobExecution.Status.failed
-        ex.error = str(err)
+        ex.error = f"Job failed to run with error: {str(err)}"
         job.save()
 
         raise err

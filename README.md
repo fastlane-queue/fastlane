@@ -27,7 +27,7 @@ Aside from freedom, EasyQ also provides:
 - [x] MongoDB Task and Job Storage;
 - [x] Structured Logging;
 - [x] Monitoring of job completion;
-- [ ] Job Expiration;
+- [x] Job Expiration;
 - [x] Stop a recurring job;
 - [x] API to retrieve job and task details;
 - [ ] Error handling mechanism (Sentry built-in, extensible)
