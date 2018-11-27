@@ -51,18 +51,7 @@ def get_job(task_id, job_id):
 
     task_url = url_for("task.get_task", task_id=task_id, _external=True)
 
-    return jsonify(
-        {
-            "task": {"id": task_id, "url": task_url},
-            "job": {
-                "id": job_id,
-                "metadata": job.metadata,
-                "createdAt": job.created_at.isoformat(),
-                "scheduled": job.scheduled,
-            },
-            "details": details,
-        }
-    )
+    return jsonify({"task": {"id": task_id, "url": task_url}, "job": details})
 
 
 @bp.route("/tasks/<task_id>/jobs/<job_id>/stop", methods=("POST",))

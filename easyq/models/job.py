@@ -96,14 +96,21 @@ class Job(db.Document):
 
         return ex
 
-    def to_dict(self, include_log=False, include_error=False):
-        executions = [ex.to_dict(include_log, include_error) for ex in self.executions]
+    def to_dict(self, include_log=False, include_error=False, include_executions=True):
         res = {
             "createdAt": self.created_at.isoformat(),
             "lastModifiedAt": self.last_modified_at.isoformat(),
             "taskId": self.task.task_id,
-            "executions": executions,
+            "scheduled": self.scheduled,
+            "executionCount": len(self.executions),
+            "metadata": self.metadata,
         }
+
+        if include_executions:
+            executions = [
+                ex.to_dict(include_log, include_error) for ex in self.executions
+            ]
+            res["executions"] = executions
 
         return res
 
