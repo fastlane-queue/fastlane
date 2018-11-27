@@ -12,10 +12,12 @@ class QueueScheduler:
             try:
                 jobs = self.scheduler.get_jobs()
                 self.logger.debug(
-                    'Lock acquired. Enqueuing scheduled jobs...', jobs=jobs)
+                    "Lock acquired. Enqueuing scheduled jobs...", jobs=jobs
+                )
                 self.scheduler.enqueue_jobs()
             finally:
                 self.scheduler.remove_lock()
         else:
-            self.logger.warn(
-                'Lock could not be acquired. Enqueuing scheduled jobs failed.')
+            self.logger.debug(
+                "Lock could not be acquired. Enqueuing scheduled jobs skipped. Trying again next cycle."
+            )

@@ -1,7 +1,7 @@
-import signal
 import time
 from uuid import uuid4
 
+import rq
 from rq import Connection, Worker
 
 from easyq.api.app import Application
@@ -60,17 +60,16 @@ class WorkerHandler:
 
                 # app.logger.debug('Processing enqueued items...')
 
-                while True:
-                    for queue in self.queues:
-                        # app.logger.debug(
-                        # 'Processing scheduler...', queue=queue)
-                        schedulers[queue].move_jobs()
+                try:
+                    while True:
+                        for queue in self.queues:
+                            # app.logger.debug("Processing scheduler...", queue=queue)
+                            schedulers[queue].move_jobs()
 
-                    # app.logger.debug('Processing queues...')
-                    worker.work(burst=False)
+                        # app.logger.debug('Processing queues...')
+                        worker.work(burst=True)
+                        time.sleep(interval)
+                except rq.worker.StopRequested:
+                    app.logger.info("Worker exiting gracefully.")
 
-                    if worker.death_date is not None:
-                        app.logger.info("Worker exiting gracefully.")
-
-                        return
-                    time.sleep(interval)
+                    return
