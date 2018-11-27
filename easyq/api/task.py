@@ -47,16 +47,14 @@ def get_job(task_id, job_id):
         return
     logger.debug("Job retrieved successfully...")
 
-    details = (job.to_dict(include_log=True, include_error=True),)
+    details = job.to_dict(include_log=True, include_error=True)
 
     task_url = url_for("task.get_task", task_id=task_id, _external=True)
-
-    jobs_url = url_for("task.get_job", task_id=task_id, job_id=job_id, _external=True)
 
     return jsonify(
         {
             "task": {"id": task_id, "url": task_url},
-            "job": {"id": job_id, "metadata": job.metadata},
+            "job": {"id": job_id, "metadata": job.metadata, "scheduled": job.scheduled},
             "details": details,
         }
     )
