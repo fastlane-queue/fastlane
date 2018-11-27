@@ -54,7 +54,12 @@ def get_job(task_id, job_id):
     return jsonify(
         {
             "task": {"id": task_id, "url": task_url},
-            "job": {"id": job_id, "metadata": job.metadata, "scheduled": job.scheduled},
+            "job": {
+                "id": job_id,
+                "metadata": job.metadata,
+                "createdAt": job.created_at.isoformat(),
+                "scheduled": job.scheduled,
+            },
             "details": details,
         }
     )

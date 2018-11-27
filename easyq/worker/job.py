@@ -1,5 +1,6 @@
 import calendar
 import math
+import time
 from datetime import datetime, timedelta
 
 from flask import current_app
@@ -84,8 +85,15 @@ def run_job(task_id, job_id, image, command):
 
         try:
             logger.debug("Downloading updated container image...", image=image, tag=tag)
+            before = time.time()
             executor.update_image(job.task, job, ex, image, tag)
-            logger.info("Image downloaded successfully.", image=image, tag=tag)
+            ellapsed = time.time() - before
+            logger.info(
+                "Image downloaded successfully.",
+                image=image,
+                tag=tag,
+                ellapsed=ellapsed,
+            )
         except Exception as err:
             logger.error("Failed to download image.", error=err)
             ex.error = str(err)
@@ -97,9 +105,15 @@ def run_job(task_id, job_id, image, command):
             "Running command in container...", image=image, tag=tag, command=command
         )
         try:
+            before = time.time()
             executor.run(job.task, job, ex, image, tag, command)
+            ellapsed = time.time() - before
             logger.info(
-                "Container started successfully.", image=image, tag=tag, command=command
+                "Container started successfully.",
+                image=image,
+                tag=tag,
+                command=command,
+                ellapsed=ellapsed,
             )
         except Exception as err:
             logger.error("Failed to run command", error=err)
