@@ -105,6 +105,9 @@ def run_job(task_id, job_id, image, command):
             "Running command in container...", image=image, tag=tag, command=command
         )
         try:
+            ex.started_at = datetime.utcnow()
+            job.save()
+
             before = time.time()
             executor.run(job.task, job, ex, image, tag, command)
             ellapsed = time.time() - before
@@ -168,6 +171,26 @@ def monitor_job(task_id, job_id, execution_id):
             ExecutionResult.Status.created,
             ExecutionResult.Status.running,
         ):
+            ellapsed = (datetime.utcnow() - execution.started_at).total_seconds()
+
+            if ellapsed > job.metadata["timeout"]:
+                execution.finished_at = datetime.utcnow()
+                execution.status = JobExecution.Status.timedout
+                execution.error = f"Job execution timed out after {ellapsed} seconds."
+
+                executor.stop_job(job.task, job, execution)
+
+                logger.debug(
+                    "Job execution timed out. Storing job details in mongo db.",
+                    status=execution.status,
+                    ellapsed=ellapsed,
+                    error=result.error,
+                )
+                job.save()
+                logger.info("Job execution timed out.", status=execution.status)
+
+                return False
+
             scheduler = Scheduler("monitor", connection=app.redis)
             logger.info(
                 "Job has not finished. Retrying monitoring in the future.",
@@ -178,7 +201,7 @@ def monitor_job(task_id, job_id, execution_id):
             interval = timedelta(seconds=5)
             scheduler.enqueue_in(interval, monitor_job, task_id, job_id, execution_id)
 
-            return
+            return True
 
         if (
             result.exit_code != 0
@@ -226,6 +249,8 @@ def monitor_job(task_id, job_id, execution_id):
         )
         job.save()
         logger.info("Job details stored in mongo db.", status=execution.status)
+
+        return True
     except Exception as err:
         logger.error("Failed to monitor job", error=err)
         raise err

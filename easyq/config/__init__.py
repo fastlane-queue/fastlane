@@ -22,6 +22,13 @@ Config.define(
 )
 
 Config.define(
+    "HARD_EXECUTION_TIMEOUT_SECONDS",
+    30 * 60,
+    "Number of seconds that EasyQ must wait before killing an execution",
+    "Worker",
+)
+
+Config.define(
     "EXPONENTIAL_BACKOFF_MIN_MS",
     1000,
     "Number of milliseconds that EasyQ must wait before the first retry in each job",

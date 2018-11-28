@@ -59,10 +59,17 @@ def create_task(task_id):
     retries = details.get("retries", 0)
     expiration = details.get("expiration")
 
+    hard_limit = current_app.config["HARD_EXECUTION_TIMEOUT_SECONDS"]
+    timeout = details.get("timeout", hard_limit)
+    timeout = min(
+        timeout, hard_limit
+    )  # ensure  jobs can't specify more than hard limit
+
     j = task.create_job()
     j.metadata["retries"] = retries
     j.metadata["retry_count"] = 0
     j.metadata["expiration"] = expiration
+    j.metadata["timeout"] = timeout
     j.metadata["envs"] = details.get("envs", {})
     j.save()
     job_id = str(j.id)

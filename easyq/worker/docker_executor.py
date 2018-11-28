@@ -119,6 +119,17 @@ class Executor:
 
         return True
 
+    def stop_job(self, task, job, execution):
+        if "container_id" not in execution.metadata:
+            return
+
+        h = execution.metadata["docker_host"]
+        p = execution.metadata["docker_port"]
+        host, port, cl = self.pool.get_client(task.task_id, h, p)
+
+        container = cl.containers.get(execution.metadata["container_id"])
+        container.stop()
+
     def convert_date(self, dt):
         return parse(dt)
 

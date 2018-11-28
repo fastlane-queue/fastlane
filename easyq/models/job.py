@@ -23,10 +23,12 @@ class JobExecution(db.EmbeddedDocument):
         running = "running"
         done = "done"
         failed = "failed"
+        timedout = "timedout"
         expired = "expired"
         stopped = "stopped"
 
     created_at = DateTimeField(required=True)
+    started_at = DateTimeField(required=False)
     finished_at = DateTimeField(required=False)
     execution_id = StringField(required=True)
     image = StringField(required=True)
@@ -39,9 +41,11 @@ class JobExecution(db.EmbeddedDocument):
     metadata = DictField(required=False)
 
     def to_dict(self, include_log=False, include_error=False):
+        s_at = self.started_at.isoformat() if self.started_at is not None else None
         f_at = self.finished_at.isoformat() if self.finished_at is not None else None
         res = {
             "createdAt": self.created_at.isoformat(),
+            "startedAt": s_at,
             "finishedAt": f_at,
             "image": self.image,
             "command": self.command,
