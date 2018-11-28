@@ -13,7 +13,7 @@ Aside from freedom, EasyQ also provides:
 - [x] Crontab execution of jobs (run job at "*/10 * * * *" - every ten minutes);
 - [x] Configurable retries per job;
 - [x] Configurable exponential back-off for retries and failures in monitoring of jobs;
-- [ ] Configurable container timeout for each execution;
+- [x] Configurable hard timeout for each execution;
 - [ ] Exponential back-off parameters per job;
 - [ ] Self-healing handling of interrupted jobs;
 - [ ] Job log output streaming using WebSockets;
