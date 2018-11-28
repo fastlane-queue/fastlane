@@ -43,9 +43,16 @@ def status():
             "task.get_job", task_id=task_id, job_id=str(job.id), _external=True
         )
         j["url"] = job_url
+
+        stop_job_url = url_for(
+            "task.stop_job", task_id=task_id, job_id=str(job.id), _external=True
+        )
+        j["stopUrl"] = stop_job_url
+
         task_url = url_for("task.get_task", task_id=task_id, _external=True)
         del j["taskId"]
         j["task"] = {"id": task_id, "url": task_url}
+
         status["scheduled"].append(j)
 
     return jsonify(status), 200
