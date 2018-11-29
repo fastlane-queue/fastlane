@@ -235,6 +235,9 @@ def monitor_job(task_id, job_id, execution_id):
 
             retry_logger.info("Job execution enqueued successfully.")
 
+            # still need to finish current execution as the retry
+            # will be a new execution
+
         execution.finished_at = datetime.utcnow()
         execution.status = JobExecution.Status.done
         execution.exit_code = result.exit_code
