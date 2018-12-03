@@ -44,6 +44,10 @@ worker:
 	@#This env must be set in MacOS to ensure that docker py works
 	@OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES fastlane worker -vv
 
+publish:
+	@poetry build
+	@poetry publish
+
 coverage:
 	@coverage html
 	@open htmlcov/index.html
