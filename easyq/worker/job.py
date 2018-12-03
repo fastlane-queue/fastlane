@@ -10,6 +10,123 @@ from easyq.models.job import Job, JobExecution
 from easyq.worker import ExecutionResult
 
 
+def validate_max_concurrent(executor, task_id, job, image, command, logger):
+    if not executor.validate_max_running_executions(task_id):
+        logger.debug(
+            "Maximum number of global container executions reached. Enqueuing job execution..."
+        )
+        args = [task_id, job.id, image, command]
+        result = current_app.job_queue.enqueue(run_job, *args, timeout=-1)
+        job.metadata["enqueued_id"] = result.id
+        job.save()
+        logger.info(
+            "Job execution re-enqueued successfully due to max number of container executions."
+        )
+
+        return False
+
+    return True
+
+
+def validate_expiration(job, ex, logger):
+    d = datetime.utcnow()
+    unixtime = calendar.timegm(d.utctimetuple())
+
+    if (
+        job.metadata.get("expiration") is not None
+        and job.metadata["expiration"] < unixtime
+    ):
+        expiration_utc = datetime.utcfromtimestamp(job.metadata["expiration"])
+        ex.status = JobExecution.Status.expired
+        ex.error = f"Job was supposed to be done before {expiration_utc.isoformat()}, but was started at {d.isoformat()}."
+        ex.finished_at = datetime.utcnow()
+        job.save()
+        logger.info(
+            "Job execution canceled due to being expired.",
+            job_expiration=job.metadata["expiration"],
+            current_ts=unixtime,
+        )
+
+        return False
+
+    return True
+
+
+def download_image(executor, job, ex, image, tag, command, logger):
+    try:
+        logger.debug("Downloading updated container image...", image=image, tag=tag)
+        before = time.time()
+        executor.update_image(job.task, job, ex, image, tag)
+        ellapsed = time.time() - before
+        logger.info(
+            "Image downloaded successfully.", image=image, tag=tag, ellapsed=ellapsed
+        )
+    except Exception as err:
+        logger.error("Failed to download image.", error=err)
+        ex.error = str(err)
+        ex.status = JobExecution.Status.failed
+        job.save()
+
+        current_app.report_error(
+            err,
+            metadata=dict(
+                operation="Downloading Image",
+                task_id=job.task.task_id,
+                job_id=job.id,
+                execution_id=ex.execution_id,
+                image=image,
+                tag=tag,
+                command=command,
+            ),
+        )
+
+        return False
+
+    return True
+
+
+def run_container(executor, job, ex, image, tag, command, logger):
+    logger.debug(
+        "Running command in container...", image=image, tag=tag, command=command
+    )
+    try:
+        ex.started_at = datetime.utcnow()
+        job.save()
+
+        before = time.time()
+        executor.run(job.task, job, ex, image, tag, command)
+        ellapsed = time.time() - before
+        logger.info(
+            "Container started successfully.",
+            image=image,
+            tag=tag,
+            command=command,
+            ellapsed=ellapsed,
+        )
+    except Exception as err:
+        logger.error("Failed to run command", error=err)
+        ex.error = str(err)
+        ex.status = JobExecution.Status.failed
+        job.save()
+
+        current_app.report_error(
+            err,
+            metadata=dict(
+                operation="Running Container",
+                task_id=job.task.task_id,
+                job_id=job.id,
+                execution_id=ex.execution_id,
+                image=image,
+                tag=tag,
+                command=command,
+            ),
+        )
+
+        return False
+
+    return True
+
+
 def run_job(task_id, job_id, image, command):
     app = current_app
     logger = app.logger.bind(
@@ -26,24 +143,13 @@ def run_job(task_id, job_id, image, command):
 
             return False
 
+        if not validate_max_concurrent(executor, task_id, job, image, command, logger):
+            return False
+
         tag = "latest"
 
         if ":" in image:
             image, tag = image.split(":")
-
-        if not executor.validate_max_running_executions(task_id):
-            logger.debug(
-                "Maximum number of global container executions reached. Enqueuing job execution..."
-            )
-            args = [task_id, job_id, image, command]
-            result = current_app.job_queue.enqueue(run_job, *args, timeout=-1)
-            job.metadata["enqueued_id"] = result.id
-            job.save()
-            logger.info(
-                "Job execution re-enqueued successfully due to max number of container executions."
-            )
-
-            return True
 
         logger = logger.bind(image=image, tag=tag)
 
@@ -58,72 +164,24 @@ def run_job(task_id, job_id, image, command):
         logger = logger.bind(execution_id=ex.execution_id)
     except Exception as err:
         logger.error("Failed to create job execution. Skipping job...", error=err)
-        raise err
+        current_app.report_error(
+            err,
+            metadata=dict(task_id=task_id, job_id=job_id, image=image, command=command),
+        )
+
+        return False
 
     try:
-        d = datetime.utcnow()
-        unixtime = calendar.timegm(d.utctimetuple())
-
-        if (
-            job.metadata.get("expiration") is not None
-            and job.metadata["expiration"] < unixtime
-        ):
-            expiration_utc = datetime.utcfromtimestamp(job.metadata["expiration"])
-            ex.status = JobExecution.Status.expired
-            ex.error = f"Job was supposed to be done before {expiration_utc.isoformat()}, but was started at {d.isoformat()}."
-            ex.finished_at = datetime.utcnow()
-            job.save()
-            logger.info(
-                "Job execution canceled due to being expired.",
-                job_expiration=job.metadata["expiration"],
-                current_ts=unixtime,
-            )
-
+        if not validate_expiration(job, ex, logger):
             return False
 
         logger.info("Started processing job.")
 
-        try:
-            logger.debug("Downloading updated container image...", image=image, tag=tag)
-            before = time.time()
-            executor.update_image(job.task, job, ex, image, tag)
-            ellapsed = time.time() - before
-            logger.info(
-                "Image downloaded successfully.",
-                image=image,
-                tag=tag,
-                ellapsed=ellapsed,
-            )
-        except Exception as err:
-            logger.error("Failed to download image.", error=err)
-            ex.error = str(err)
-            ex.status = JobExecution.Status.failed
-            job.save()
-            raise err
+        if not download_image(executor, job, ex, image, tag, command, logger):
+            return False
 
-        logger.debug(
-            "Running command in container...", image=image, tag=tag, command=command
-        )
-        try:
-            ex.started_at = datetime.utcnow()
-            job.save()
-
-            before = time.time()
-            executor.run(job.task, job, ex, image, tag, command)
-            ellapsed = time.time() - before
-            logger.info(
-                "Container started successfully.",
-                image=image,
-                tag=tag,
-                command=command,
-                ellapsed=ellapsed,
-            )
-        except Exception as err:
-            logger.error("Failed to run command", error=err)
-            ex.error = str(err)
-            ex.status = JobExecution.Status.failed
-            job.save()
-            raise err
+        if not run_container(executor, job, ex, image, tag, command, logger):
+            return False
 
         logger.debug("Changing job status...", status=JobExecution.Status.running)
         ex.status = JobExecution.Status.running
@@ -143,7 +201,18 @@ def run_job(task_id, job_id, image, command):
         ex.error = f"Job failed to run with error: {str(err)}"
         job.save()
 
-        raise err
+        current_app.report_error(
+            err,
+            metadata=dict(
+                operation="Running Container",
+                task_id=task_id,
+                job_id=job_id,
+                execution_id=ex.execution_id,
+                image=image,
+                tag=tag,
+                command=command,
+            ),
+        )
 
 
 def monitor_job(task_id, job_id, execution_id):
@@ -256,4 +325,14 @@ def monitor_job(task_id, job_id, execution_id):
         return True
     except Exception as err:
         logger.error("Failed to monitor job", error=err)
+        current_app.report_error(
+            err,
+            metadata=dict(
+                operation="Monitoring Job",
+                task_id=task_id,
+                job_id=job_id,
+                execution_id=execution_id,
+            ),
+        )
+
         raise err

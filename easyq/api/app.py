@@ -1,5 +1,6 @@
 import logging
 import sys
+from json import loads
 
 import fakeredis
 import rq_dashboard
@@ -33,6 +34,7 @@ class Application:
         self.app = Flask("easyq")
         self.app.testing = testing
         self.app.config.from_object(rq_dashboard.default_settings)
+        self.app.error_handlers = []
 
         for key in self.config.items.keys():
             self.app.config[key] = self.config[key]
@@ -46,6 +48,7 @@ class Application:
         self.connect_queue()
         self.connect_db()
         self.load_executor()
+        self.load_error_handlers()
 
         metrics.init_app(self.app)
         self.app.register_blueprint(metrics.bp)
@@ -120,6 +123,7 @@ class Application:
         rqb.init_app(self.app)
 
     def connect_db(self):
+        self.app.config["MONGODB_SETTINGS"] = loads(self.app.config["MONGODB_CONFIG"])
         db.init_app(self.app)
 
     def load_executor(self):
@@ -138,6 +142,22 @@ class Application:
             return self.app.executor_module.Executor(self.app)
 
         self.app.load_executor = _loads
+
+    def load_error_handlers(self):
+        self.app.error_handlers = []
+
+        for handler_name in self.app.config["ERROR_HANDLERS"]:
+            parts = handler_name.split(".")
+            obj = __import__(".".join(parts[:-1]), None, None, [parts[-1]], 0)
+            obj = getattr(obj, parts[-1])
+
+            self.app.error_handlers.append(obj(self.app))
+
+        self.app.report_error = self.report_error
+
+    def report_error(self, err, metadata=None):
+        for handler in self.app.error_handlers:
+            handler.report(err, metadata)
 
     def run(self, host, port):
         self.app.run(host, port)

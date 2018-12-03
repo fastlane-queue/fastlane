@@ -64,14 +64,23 @@ Config.define(
 )
 
 Config.define(
-    "MONGODB_SETTINGS",
-    {
+    "MONGODB_CONFIG",
+    """{
         "host": "localhost",
         "port": 10101,
         "db": "easyq",
         "serverSelectionTimeoutMS": 100,
-        "connect": False,
-    },
-    "MongoDB socket timeout in ms",
+        "connect": false
+    }""",
+    "MongoDB configuration",
     "Models",
 )
+
+Config.define(
+    "ERROR_HANDLERS",
+    ["easyq.errors.sentry.SentryErrorHandler"],
+    "List of configured error handlers",
+    "Errors",
+)
+
+Config.define("SENTRY_DSN", "", "Sentry DSN to send errors to", "Errors")
