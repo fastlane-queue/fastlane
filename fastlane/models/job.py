@@ -13,7 +13,7 @@ from mongoengine import (
     StringField,
 )
 
-from easyq.models import db
+from fastlane.models import db
 
 
 class JobExecution(db.EmbeddedDocument):
@@ -120,7 +120,7 @@ class Job(db.Document):
 
     @classmethod
     def get_by_id(cls, task_id, job_id):
-        from easyq.models.task import Task
+        from fastlane.models.task import Task
 
         if task_id is None or task_id == "" or job_id is None or job_id == "":
             raise RuntimeError(

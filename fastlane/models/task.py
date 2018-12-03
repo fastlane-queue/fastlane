@@ -5,7 +5,7 @@ from bson.objectid import ObjectId
 from mongoengine import (BooleanField, DateTimeField, ListField,
                          ReferenceField, StringField)
 
-from easyq.models import db
+from fastlane.models import db
 
 
 class Task(db.Document):
@@ -53,7 +53,7 @@ class Task(db.Document):
         return t
 
     def create_job(self):
-        from easyq.models.job import Job
+        from fastlane.models.job import Job
 
         job_id = ObjectId()
         j = Job(

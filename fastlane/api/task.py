@@ -1,8 +1,8 @@
 from flask import Blueprint, abort, current_app, g, jsonify, url_for
 from rq_scheduler import Scheduler
 
-from easyq.models.job import Job
-from easyq.models.task import Task
+from fastlane.models.job import Job
+from fastlane.models.task import Task
 
 bp = Blueprint("task", __name__)
 

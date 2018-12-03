@@ -6,7 +6,7 @@ services:
     ports:
       - "10101:27017"
     volumes:
-      - /tmp/easyq/mongo:/data/db
+      - /tmp/fastlane/mongo:/data/db
   redis:
     image: redis
     ports:

@@ -3,7 +3,7 @@ from uuid import uuid4
 from mongoengine.errors import ValidationError
 from preggy import expect
 
-from easyq.models.task import Task
+from fastlane.models.task import Task
 
 
 def test_task_create(client):

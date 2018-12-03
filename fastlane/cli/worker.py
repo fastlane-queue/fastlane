@@ -4,9 +4,9 @@ from uuid import uuid4
 import rq
 from rq import Connection, Worker
 
-from easyq.api.app import Application
-from easyq.config import Config
-from easyq.worker.scheduler import QueueScheduler
+from fastlane.api.app import Application
+from fastlane.config import Config
+from fastlane.worker.scheduler import QueueScheduler
 
 
 class WorkerHandler:
@@ -32,7 +32,7 @@ class WorkerHandler:
 
     def __call__(self):
         # self.click.echo(
-        # f'Running easyq worker processing queues {",".join(self.queues)}.')
+        # f'Running fastlane worker processing queues {",".join(self.queues)}.')
         app = Application(self.config, self.log_level)
         interval = app.config["WORKER_SLEEP_TIME_MS"] / 1000.0
 

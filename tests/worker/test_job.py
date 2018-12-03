@@ -5,9 +5,9 @@ from uuid import uuid4
 from preggy import expect
 from rq import Queue, SimpleWorker
 
-import easyq.worker.job as job_mod
-from easyq.models.job import JobExecution
-from easyq.models.task import Task
+import fastlane.worker.job as job_mod
+from fastlane.models.job import JobExecution
+from fastlane.models.task import Task
 
 
 def test_run_job(client):
@@ -81,7 +81,7 @@ def test_run_job(client):
 
         res = app.redis.hget(next_job_id, "description")
         expect(res).to_equal(
-            f"easyq.worker.job.monitor_job('{task_id}', '{job_id}', '{execution.execution_id}')"
+            f"fastlane.worker.job.monitor_job('{task_id}', '{job_id}', '{execution.execution_id}')"
         )
 
         res = app.redis.hget(next_job_id, "timeout")
@@ -164,7 +164,7 @@ def test_monitor_job_with_retry(client):
 
         res = app.redis.hget(next_job_id, "description")
         expect(res).to_equal(
-            f"easyq.worker.job.run_job('{task_id}', '{job_id}', 'image', 'command')"
+            f"fastlane.worker.job.run_job('{task_id}', '{job_id}', 'image', 'command')"
         )
 
         t.reload()

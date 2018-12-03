@@ -5,7 +5,7 @@ import ipdb
 from preggy import expect
 from redis.exceptions import ConnectionError
 
-from easyq.models import db
+from fastlane.models import db
 
 
 def test_healthcheck1(client):
@@ -48,7 +48,7 @@ def test_healthcheck3(client):
         find_mock = MagicMock()
         find_mock.side_effect = RuntimeError(
             'MongoMock is emulating a connection error.')
-        db.connection.easyq.jobs.find = find_mock
+        db.connection.fastlane.jobs.find = find_mock
 
         rv = client.get('/healthcheck', follow_redirects=True)
         expect(rv.status_code).to_equal(500)

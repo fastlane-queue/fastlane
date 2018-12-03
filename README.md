@@ -1,12 +1,12 @@
-# easyq
+# fastlane
 
-EasyQ is a redis-based queueing service that outsmarts everyone else by using containers.
+fastlane is a redis-based queueing service that outsmarts everyone else by using containers.
 
-More seriously, though, EasyQ allows you to easily implement new workers in the form of containers.
+More seriously, though, fastlane allows you to easily implement new workers in the form of containers.
 
-Instead of the tedious, repetitive work of yesteryear where you had to implement a worker in language X or Y, you just spin a new container with all the dependencies you require already previously installed, and instruct EasyQ to run a command in that container. Bang! Instant Super-Powered Workers!
+Instead of the tedious, repetitive work of yesteryear where you had to implement a worker in language X or Y, you just spin a new container with all the dependencies you require already previously installed, and instruct fastlane to run a command in that container. Bang! Instant Super-Powered Workers!
 
-Aside from freedom, EasyQ also provides:
+Aside from freedom, fastlane also provides:
 
 - [x] Ad-Hoc execution of jobs (run job right now);
 - [x] Scheduled execution of jobs (run job next sunday at 6am, or run in 10 minutes from now);
@@ -36,18 +36,18 @@ Aside from freedom, EasyQ also provides:
 - [ ] Admin to inspect tasks and jobs;
 - [x] Admin to inspect health of queueing system (error queue, size of queues, etc).
 
-EasyQ is by design a system with no authentication and authorization.
+fastlane is by design a system with no authentication and authorization.
 
-Users are responsible for specifying a task id that's globally unique. If two users specify a task with id 'run', their jobs will be grouped together (not an issue for EasyQ, since every job has a globally unique id anyways). This might be confusing, though.
+Users are responsible for specifying a task id that's globally unique. If two users specify a task with id 'run', their jobs will be grouped together (not an issue for fastlane, since every job has a globally unique id anyways). This might be confusing, though.
 
-The decision here is to sacrifice isolation for simplicity. Usually a queueing system is a backend application, meaning that it's easy enough to construct a front-end for EasyQ that provides authentication and authorization to post jobs in tasks.
+The decision here is to sacrifice isolation for simplicity. Usually a queueing system is a backend application, meaning that it's easy enough to construct a front-end for fastlane that provides authentication and authorization to post jobs in tasks.
 
 ## Let's create a new job and fire it!
 
 Let's say I want to run a job that sends an e-mail when something happens and I have a container already configured with templates and all I need to pass is the SMTP as an env variable and a command to execute a python script:
 
 ```
-$ curl -XPOST --header "Content-Type: application/json" -d'{"image": "my.docker.repo.com/my-send-email-image:latest", "command": "python /app/sendmail.py", "envs": {"SMTP_SERVER":"my-smtp-server"}}' http://easyq.local:10000/tasks/send-very-specific-email
+$ curl -XPOST --header "Content-Type: application/json" -d'{"image": "my.docker.repo.com/my-send-email-image:latest", "command": "python /app/sendmail.py", "envs": {"SMTP_SERVER":"my-smtp-server"}}' http://fastlane.local:10000/tasks/send-very-specific-email
 {
     "taskId": "send-very-specific-email",
     "jobId": "5b8db248edc7d584132a6d4d",
@@ -68,21 +68,21 @@ Those are all very good questions! Let's discuss each one of those.
 
 ## The Container
 
-As said previously, EasyQ uses containers to enable users to have very flexible workers. 
+As said previously, fastlane uses containers to enable users to have very flexible workers. 
 
 This means that the container must be created and published before creating a new job. And that's the beauty of the system. Never worry about versions of libraries that the worker has to deal with again.
 
 Just pre-install everything you need in the container image, including the application you are running every job cycle, and publish that image to a container repository.
 
-EasyQ supports versioning of containers. You can run the latest version, or just specify a tag to run (`stable` or `0.1.3` for instance).
+fastlane supports versioning of containers. You can run the latest version, or just specify a tag to run (`stable` or `0.1.3` for instance).
 
 And that's where `/app/sendmail.py` comes from. It was pre-installed in the container when it was published to the `my.docker.repo.com` container repository.
 
 That also answers the second and third questions. All the dependencies get pre-installed within the container image.
 
-## Tasks, Jobs and Executions in EasyQ
+## Tasks, Jobs and Executions in fastlane
 
-There are three levels in EasyQ hierarchy: tasks, jobs and executions.
+There are three levels in fastlane hierarchy: tasks, jobs and executions.
 
 Users group their units of work in tasks. Examples of tasks would be "system1-send-mail" or "system2-process-user-registration".
 
@@ -106,7 +106,7 @@ TBW.
 
 TBW.
 
-## EasyQ Workers
+## fastlane Workers
 
 TBW.
 

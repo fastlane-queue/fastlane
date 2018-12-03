@@ -5,7 +5,7 @@ from json import loads
 import docker
 from dateutil.parser import parse
 
-from easyq.worker import ExecutionResult
+from fastlane.worker import ExecutionResult
 
 # https://docs.docker.com/engine/reference/commandline/ps/#examples
 # One of created, restarting, running, removing, paused, exited, or dead
@@ -109,7 +109,7 @@ class Executor:
 
         container = cl.containers.run(
             image=f"{image}:{tag}",
-            name=f"easyq_worker_{execution.execution_id}",
+            name=f"fastlane_worker_{execution.execution_id}",
             command=command,
             detach=True,
             environment=job.metadata.get("envs", {}),
@@ -189,7 +189,7 @@ class Executor:
             )
 
             for container in containers:
-                if not container.name.startswith("easyq_worker_"):
+                if not container.name.startswith("fastlane_worker_"):
                     continue
                 running.append((host, port, container.id))
 

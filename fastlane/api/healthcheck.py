@@ -1,6 +1,6 @@
 from flask import Blueprint, current_app, jsonify
 
-from easyq.models import db
+from fastlane.models import db
 
 bp = Blueprint('healthcheck', __name__, url_prefix='/healthcheck')
 
@@ -20,7 +20,7 @@ def healthcheck():
         status['redis'] = False
 
     try:
-        res = tuple(db.connection.easyq.jobs.find())
+        res = tuple(db.connection.fastlane.jobs.find())
         assert isinstance(res,
                           (tuple, )), f'Connection to mongoDB failed ({res}).'
     except Exception as err:

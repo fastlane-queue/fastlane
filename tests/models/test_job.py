@@ -2,8 +2,8 @@ from uuid import uuid4
 
 from preggy import expect
 
-from easyq.models.job import Job
-from easyq.models.task import Task
+from fastlane.models.job import Job
+from fastlane.models.task import Task
 
 
 def test_job_create(client):

@@ -2,7 +2,7 @@ from unittest.mock import MagicMock
 
 from preggy import expect
 
-from easyq.worker.docker_executor import Executor
+from fastlane.worker.docker_executor import Executor
 
 
 def test_pull(client):

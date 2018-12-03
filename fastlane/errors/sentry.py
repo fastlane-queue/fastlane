@@ -1,7 +1,7 @@
 # import sentry_sdk
 from raven import Client
 
-from easyq.errors import ErrorReporter
+from fastlane.errors import ErrorReporter
 
 
 class SentryErrorHandler(ErrorReporter):

@@ -5,7 +5,7 @@ from uuid import uuid4
 from croniter import croniter
 from preggy import expect
 
-from easyq.models.task import Task
+from fastlane.models.task import Task
 
 
 def test_enqueue1(client):
@@ -51,7 +51,7 @@ def test_enqueue1(client):
 
     res = app.redis.hget(hash_key, 'description')
     expect(res).to_equal(
-        f"easyq.worker.job.run_job('{obj['taskId']}', '{job_id}', 'ubuntu', 'ls')"
+        f"fastlane.worker.job.run_job('{obj['taskId']}', '{job_id}', 'ubuntu', 'ls')"
     )
 
     res = app.redis.hget(hash_key, 'timeout')

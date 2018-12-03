@@ -2,9 +2,9 @@ from os.path import abspath, dirname, join
 
 import pytest
 
-from easyq.api.app import Application
-from easyq.config import Config
-from easyq.models.task import Task
+from fastlane.api.app import Application
+from fastlane.config import Config
+from fastlane.models.task import Task
 
 ROOT_CONFIG = abspath(join(dirname(__file__), "testing.conf"))
 

@@ -15,13 +15,13 @@ from structlog.processors import (
 )
 from structlog.stdlib import add_log_level, add_logger_name, filter_by_level
 
-import easyq.api.metrics as metrics
-import easyq.api.rqb as rqb
-from easyq.api.enqueue import bp as enqueue
-from easyq.api.healthcheck import bp as healthcheck
-from easyq.api.status import bp as status
-from easyq.api.task import bp as task_api
-from easyq.models import db
+import fastlane.api.metrics as metrics
+import fastlane.api.rqb as rqb
+from fastlane.api.enqueue import bp as enqueue
+from fastlane.api.healthcheck import bp as healthcheck
+from fastlane.api.status import bp as status
+from fastlane.api.task import bp as task_api
+from fastlane.models import db
 
 
 class Application:
@@ -31,7 +31,7 @@ class Application:
         self.create_app(testing)
 
     def create_app(self, testing):
-        self.app = Flask("easyq")
+        self.app = Flask("fastlane")
         self.app.testing = testing
         self.app.config.from_object(rq_dashboard.default_settings)
         self.app.error_handlers = []

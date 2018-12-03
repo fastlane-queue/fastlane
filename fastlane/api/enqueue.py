@@ -3,9 +3,9 @@ from datetime import datetime, timezone
 from flask import Blueprint, current_app, g, make_response, request
 from rq_scheduler import Scheduler
 
-from easyq.models.task import Task
-from easyq.utils import parse_time
-from easyq.worker.job import run_job
+from fastlane.models.task import Task
+from fastlane.utils import parse_time
+from fastlane.worker.job import run_job
 
 try:
     from ujson import dumps, loads

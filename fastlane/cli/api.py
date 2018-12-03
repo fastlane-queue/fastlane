@@ -1,5 +1,5 @@
-from easyq.api.app import Application
-from easyq.config import Config
+from fastlane.api.app import Application
+from fastlane.config import Config
 
 
 class APIHandler:
@@ -20,8 +20,9 @@ class APIHandler:
     def __call__(self):
         app = Application(self.config, self.log_level)
         app.logger.info(
-            'EasyQ is runnning.',
+            "fastlane is runnning.",
             host=self.host,
             port=self.port,
-            environment=self.config.ENV)
+            environment=self.config.ENV,
+        )
         app.run(self.host, self.port)

@@ -5,8 +5,8 @@ from preggy import expect
 from rq import Queue
 from rq_scheduler import Scheduler
 
-import easyq.worker.job as job_mod
-from easyq.worker.scheduler import QueueScheduler
+import fastlane.worker.job as job_mod
+from fastlane.worker.scheduler import QueueScheduler
 
 
 def test_schedule_jobs(client):
@@ -52,7 +52,7 @@ def test_schedule_jobs(client):
 
         res = app.redis.hget(hash_key, 'description')
         expect(res).to_equal(
-            f"easyq.worker.job.run_job('{task_id}', '{job_id}')")
+            f"fastlane.worker.job.run_job('{task_id}', '{job_id}')")
 
         res = app.redis.hget(hash_key, 'timeout')
         expect(res).to_equal('-1')

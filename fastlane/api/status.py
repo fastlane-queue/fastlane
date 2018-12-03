@@ -3,7 +3,7 @@ from datetime import datetime
 import croniter
 from flask import Blueprint, current_app, jsonify, url_for
 
-from easyq.models.job import Job
+from fastlane.models.job import Job
 
 bp = Blueprint("status", __name__, url_prefix="/status")
 

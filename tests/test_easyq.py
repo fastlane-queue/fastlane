@@ -1,4 +1,4 @@
-from easyq import __version__
+from fastlane import __version__
 
 
 def test_version():

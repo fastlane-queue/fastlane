@@ -3,8 +3,8 @@ from os.path import abspath, dirname, join
 
 import click
 
-from easyq.cli.api import APIHandler
-from easyq.cli.worker import WorkerHandler
+from fastlane.cli.api import APIHandler
+from fastlane.cli.worker import WorkerHandler
 
 ROOT_CONFIG = abspath(join(dirname(__file__), '../config/local.conf'))
 
@@ -29,9 +29,9 @@ def main():
     '-c',
     '--config',
     default=ROOT_CONFIG,
-    help='configuration file to use with easyq')
+    help='configuration file to use with fastlane')
 def api(host, port, verbose, config):
-    """Runs easyq API in the specified host and port."""
+    """Runs fastlane API in the specified host and port."""
 
     log_level = LEVELS.get(verbose, 'ERROR')
     handler = APIHandler(click, host, port, config, log_level)
@@ -57,9 +57,9 @@ def api(host, port, verbose, config):
     '-c',
     '--config',
     default=ROOT_CONFIG,
-    help='configuration file to use with easyq')
+    help='configuration file to use with fastlane')
 def worker(id, no_jobs, no_monitor, verbose, config):
-    """Runs an easyq Worker with the specified queue name and starts processing."""
+    """Runs an fastlane Worker with the specified queue name and starts processing."""
     jobs = not no_jobs
     monitor = not no_monitor
 

@@ -17,21 +17,21 @@ Config.define(
 Config.define(
     "WORKER_SLEEP_TIME_MS",
     10,
-    "Number of milliseconds that EasyQ must sleep before getting the next job",
+    "Number of milliseconds that fastlane must sleep before getting the next job",
     "Worker",
 )
 
 Config.define(
     "HARD_EXECUTION_TIMEOUT_SECONDS",
     30 * 60,
-    "Number of seconds that EasyQ must wait before killing an execution",
+    "Number of seconds that fastlane must wait before killing an execution",
     "Worker",
 )
 
 Config.define(
     "EXPONENTIAL_BACKOFF_MIN_MS",
     1000,
-    "Number of milliseconds that EasyQ must wait before the first retry in each job",
+    "Number of milliseconds that fastlane must wait before the first retry in each job",
     "Worker",
 )
 
@@ -51,7 +51,7 @@ Config.define(
 
 Config.define(
     "EXECUTOR",
-    "easyq.worker.docker_executor",
+    "fastlane.worker.docker_executor",
     "Module full name where to find the Executor class",
     "Worker",
 )
@@ -68,7 +68,7 @@ Config.define(
     """{
         "host": "localhost",
         "port": 10101,
-        "db": "easyq",
+        "db": "fastlane",
         "serverSelectionTimeoutMS": 100,
         "connect": false
     }""",
@@ -78,7 +78,7 @@ Config.define(
 
 Config.define(
     "ERROR_HANDLERS",
-    ["easyq.errors.sentry.SentryErrorHandler"],
+    ["fastlane.errors.sentry.SentryErrorHandler"],
     "List of configured error handlers",
     "Errors",
 )

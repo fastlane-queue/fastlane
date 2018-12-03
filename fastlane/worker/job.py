@@ -6,8 +6,8 @@ from datetime import datetime, timedelta
 from flask import current_app
 from rq_scheduler import Scheduler
 
-from easyq.models.job import Job, JobExecution
-from easyq.worker import ExecutionResult
+from fastlane.models.job import Job, JobExecution
+from fastlane.worker import ExecutionResult
 
 
 def validate_max_concurrent(executor, task_id, job, image, command, logger):
