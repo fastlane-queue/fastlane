@@ -36,7 +36,7 @@ Aside from freedom, fastlane also provides:
 - [ ] Usage metrics (extensible);
 - [ ] Support Redis, Redis Sentinel and Redis Cluster;
 - [ ] Admin to inspect tasks and jobs;
-- [x] Admin to inspect health of queueing system (error queue, size of queues, etc).
+- [ ] Admin to inspect health of queueing system (error queue, size of queues, etc).
 
 fastlane is by design a system with no authentication and authorization.
 

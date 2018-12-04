@@ -11,3 +11,18 @@ services:
     image: redis
     ports:
       - "10100:6379"
+
+  redis2:
+    image: redis:3.2-alpine
+    volumes:
+      - /tmp/fastlane/redis:/data/
+    ports:
+      - "10102:6379"
+
+  redis-sentinel:
+    build:
+      context: ./redis-sentinel
+    links:
+      - redis2
+    ports:
+      - "10103:26379"

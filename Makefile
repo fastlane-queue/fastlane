@@ -21,6 +21,15 @@ ifdef COMPOSE
 endif
 	@-docker run -d -v /var/run/docker.sock:/var/run/docker.sock -p 127.0.0.1:1234:1234 bobrik/socat TCP-LISTEN:1234,fork UNIX-CONNECT:/var/run/docker.sock
 
+deps-build:
+ifdef COMPOSE
+	@echo "Starting dependencies..."
+	@docker-compose --project-name fastlane up --build -d
+	@echo "Dependencies started successfully."
+endif
+	@-docker run -d -v /var/run/docker.sock:/var/run/docker.sock -p 127.0.0.1:1234:1234 bobrik/socat TCP-LISTEN:1234,fork UNIX-CONNECT:/var/run/docker.sock
+
+
 stop-deps:
 ifdef COMPOSE
 	@echo "Stopping dependencies..."

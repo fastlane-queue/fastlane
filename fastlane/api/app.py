@@ -56,7 +56,7 @@ class Application:
         self.app.register_blueprint(enqueue)
         self.app.register_blueprint(task_api)
         self.app.register_blueprint(status)
-        self.app.register_blueprint(rq_dashboard.blueprint, url_prefix="/rq")
+        # self.app.register_blueprint(rq_dashboard.blueprint, url_prefix="/rq")
 
     def configure_logging(self):
         if self.app.testing:
