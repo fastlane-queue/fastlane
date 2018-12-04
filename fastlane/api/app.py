@@ -108,6 +108,7 @@ class Application:
         self.logger.debug("Connecting to redis...")
 
         if self.app.testing:
+            self.logger.info("Configuring Fake Redis...")
             import fakeredis
 
             self.app.redis = FlaskRedis.from_custom_provider(fakeredis.FakeStrictRedis)
@@ -115,11 +116,17 @@ class Application:
             self.app.redis.disconnect = self._mock_redis(False)
             self.app.redis.init_app(self.app)
         elif self.app.config["REDIS_URL"].startswith("redis+sentinel"):
+            self.logger.info(
+                "Configuring Redis Sentinel...", redis_url=self.app.config["REDIS_URL"]
+            )
             redis_sentinel = SentinelExtension()
             redis_connection = redis_sentinel.default_connection
             redis_sentinel.init_app(self.app)
             self.app.redis = redis_connection
         else:
+            self.logger.info(
+                "Configuring Redis...", redis_url=self.app.config["REDIS_URL"]
+            )
             self.app.redis = FlaskRedis()
             self.app.redis.init_app(self.app)
 
