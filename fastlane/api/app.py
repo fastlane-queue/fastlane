@@ -139,7 +139,14 @@ class Application:
 
     def connect_db(self):
         self.app.config["MONGODB_SETTINGS"] = loads(self.app.config["MONGODB_CONFIG"])
+        self.logger.info(
+            "Connecting to MongoDB...", mongo=self.app.config["MONGODB_SETTINGS"]
+        )
         db.init_app(self.app)
+        self.logger.info(
+            "Connected to MongoDB successfully.",
+            mongo=self.app.config["MONGODB_SETTINGS"],
+        )
 
     def load_executor(self):
         """Can't be loaded eagerly due to fork of jobs"""
