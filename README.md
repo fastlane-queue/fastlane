@@ -20,6 +20,7 @@ Aside from freedom, fastlane also provides:
 - [x] Workers should handle SIGTERM and exit gracefully;
 - [x] Docker Container Runner (with Docker Host Pool);
 - [x] Docker Pool per task name (Regular Expressions);
+- [ ] Docker SSL connections;
 - [ ] Circuit breaking when Docker Host is unavailable;
 - [x] Container Environment Variables per Job;
 - [x] Configurable global limit for number of running jobs per task name (Regular Expressions);
@@ -33,6 +34,7 @@ Aside from freedom, fastlane also provides:
 - [x] Status Page with details on the farm status (executors, scheduled tasks and queue sizes);
 - [x] Error handling mechanism (Sentry built-in, extensible)
 - [ ] Usage metrics (extensible);
+- [ ] Support Redis, Redis Sentinel and Redis Cluster;
 - [ ] Admin to inspect tasks and jobs;
 - [x] Admin to inspect health of queueing system (error queue, size of queues, etc).
 

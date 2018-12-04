@@ -7,6 +7,7 @@ import rq_dashboard
 import structlog
 from flask import Flask
 from flask_redis import FlaskRedis
+from flask_redis_sentinel import SentinelExtension
 from structlog.processors import (
     JSONRenderer,
     StackInfoRenderer,
@@ -111,11 +112,17 @@ class Application:
             self.app.redis = FlaskRedis.from_custom_provider(fakeredis.FakeStrictRedis)
             self.app.redis.connect = self._mock_redis(True)
             self.app.redis.disconnect = self._mock_redis(False)
+            self.app.redis.init_app(self.app)
+        elif self.app.config["REDIS_URL"].startswith("redis+sentinel"):
+            redis_sentinel = SentinelExtension()
+            redis_connection = redis_sentinel.default_connection
+            redis_sentinel.init_app(self.app)
+            self.app.redis = redis_connection
         else:
             self.app.redis = FlaskRedis()
+            self.app.redis.init_app(self.app)
 
         self.logger.info("Connection to redis successful")
-        self.app.redis.init_app(self.app)
 
     def connect_queue(self):
         self.app.queue = None

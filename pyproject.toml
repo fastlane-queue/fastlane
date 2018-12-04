@@ -21,6 +21,7 @@ rq-scheduler = "^0.8.3"
 rq-dashboard = "^0.3.12"
 sentry-sdk = "=0.5.5"
 raven = "^6.9"
+Flask-Redis-Sentinel = "^2.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^3.0"
