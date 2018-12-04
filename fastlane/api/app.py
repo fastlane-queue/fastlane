@@ -2,7 +2,6 @@ import logging
 import sys
 from json import loads
 
-import fakeredis
 import rq_dashboard
 import structlog
 from flask import Flask
@@ -109,6 +108,8 @@ class Application:
         self.logger.debug("Connecting to redis...")
 
         if self.app.testing:
+            import fakeredis
+
             self.app.redis = FlaskRedis.from_custom_provider(fakeredis.FakeStrictRedis)
             self.app.redis.connect = self._mock_redis(True)
             self.app.redis.disconnect = self._mock_redis(False)
