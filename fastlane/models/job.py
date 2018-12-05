@@ -105,10 +105,12 @@ class Job(db.Document):
             envs = {}
 
             for key, val in self.metadata["envs"].items():
-                if key.lower() in blacklist:
-                    envs[key] = "*" * len(str(val))
-                else:
-                    envs[key] = val
+                for word in blacklist:
+                    if word in key.lower():
+                        val = "*" * len(str(val))
+
+                        break
+                envs[key] = val
 
             self.metadata["envs"] = envs
 
