@@ -16,19 +16,10 @@ bp = Blueprint("enqueue", __name__)
 
 
 def get_details():
-    details = request.json
+    details = request.get_json()
 
-    if details is None and request.data:
-        details = loads(request.data)
-
-    if details is None and request.values:
-        all_values = tuple(request.values.keys())
-
-        if len(all_values) == 1:
-            try:
-                details = loads(all_values[0])
-            except Exception as err:
-                g.logger.error(err)
+    if details is None and request.get_data():
+        details = loads(request.get_data())
 
     return details
 
@@ -36,6 +27,7 @@ def get_details():
 @bp.route("/tasks/<task_id>", methods=("POST",))
 def create_task(task_id):
     details = get_details()
+
 
     if details is None or details == "":
         msg = "Failed to enqueue task because JSON body could not be parsed."
