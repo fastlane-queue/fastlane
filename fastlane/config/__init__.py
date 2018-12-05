@@ -77,3 +77,10 @@ Config.define(
 )
 
 Config.define("SENTRY_DSN", "", "Sentry DSN to send errors to", "Errors")
+
+Config.define(
+    "ENV_BLACKLISTED_WORDS",
+    "password,key,secret,client_id",
+    "Words that if present in environment variables are redacted",
+    "Errors",
+)

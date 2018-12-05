@@ -100,14 +100,39 @@ class Job(db.Document):
 
         return ex
 
-    def to_dict(self, include_log=False, include_error=False, include_executions=True):
+    def get_metadata(self, blacklist):
+        if "envs" in self.metadata:
+            envs = {}
+
+            for key, val in self.metadata["envs"].items():
+                if key.lower() in blacklist:
+                    envs[key] = "*" * len(str(val))
+                else:
+                    envs[key] = val
+
+            self.metadata["envs"] = envs
+
+        return self.metadata
+
+    def to_dict(
+        self,
+        include_log=False,
+        include_error=False,
+        include_executions=True,
+        blacklist=None,
+    ):
+        if blacklist is None:
+            blacklist = []
+
+        meta = self.get_metadata(blacklist)
+
         res = {
             "createdAt": self.created_at.isoformat(),
             "lastModifiedAt": self.last_modified_at.isoformat(),
             "taskId": self.task.task_id,
             "scheduled": self.scheduled,
             "executionCount": len(self.executions),
-            "metadata": self.metadata,
+            "metadata": meta,
         }
 
         if include_executions:

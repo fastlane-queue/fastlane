@@ -14,6 +14,8 @@ Aside from freedom, fastlane also provides:
 - [x] Configurable retries per job;
 - [x] Configurable exponential back-off for retries and failures in monitoring of jobs;
 - [x] Configurable hard timeout for each execution;
+- [ ] Route to stop running task;
+- [x] Redact any env that contains blacklisted keywords;
 - [ ] Exponential back-off parameters per job;
 - [ ] Self-healing handling of interrupted jobs;
 - [ ] Job log output streaming using WebSockets;

@@ -47,7 +47,11 @@ def get_job(task_id, job_id):
         return
     logger.debug("Job retrieved successfully...")
 
-    details = job.to_dict(include_log=True, include_error=True)
+    details = job.to_dict(
+        include_log=True,
+        include_error=True,
+        blacklist=current_app.config["ENV_BLACKLISTED_WORDS"].lower().split(","),
+    )
 
     task_url = url_for("task.get_task", task_id=task_id, _external=True)
 
