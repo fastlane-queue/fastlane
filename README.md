@@ -56,35 +56,23 @@ TBW.
 
 TBW.
 
-## Getting Started
-
-### Let's create a new job and fire it!
-
-Let's say I want to run a job that sends an e-mail when something happens and I have a container already configured with templates and all I need to pass is the SMTP as an env variable and a command to execute a python script:
-
-```
-$ curl -XPOST --header "Content-Type: application/json" -d'{"image": "my.docker.repo.com/my-send-email-image:latest", "command": "python /app/sendmail.py", "envs": {"SMTP_SERVER":"my-smtp-server"}}' http://fastlane.local:10000/tasks/send-very-specific-email
-{
-    "taskId": "send-very-specific-email",
-    "jobId": "5b8db248edc7d584132a6d4d",
-    "queueJobId": "77cfabbb-1864-4073-afe7-0efe01014754"
-}
-```
-
-In this request I'm creating/updating a task called `send-very-specific-email` and creating a new job in it to execute the command `python /app/sendmail.py`. I hope you now have a **boatload** of questions, like:
-
-* Where did you get `/app/sendmail.py` from?
-* What version of the python interpreter are you running? Are you even sure python is installed?
-* What about the python and system libraries that `sendmail.py` depends on? When were they installed?
-* What is that jobId in the return of the `POST` and how do I use that?
-* What does it mean for that job to be in a queue? I thought you said that Ad-Hoc execution meant running the job **right now**!
-
-Those are all very good questions! Let's discuss each one of those.
-
-
 ## How To?
 
 ### How do I run a new job?
+
+This Http `POST` will run an `ubuntu` container and then run the `ls -lah` command, as soon as there's a free working in fastlane.
+```
+$ curl -XPOST -d'{"image": "ubuntu:latest", "command": "ls -lah"}' http://fastlane.local:10000/tasks/test-task
+{
+  "taskId": "test-task",
+  "jobId": "5c094abcedc7d5be820e20da",
+  "queueJobId": "db72db9b-cb49-44bd-b2fa-b3afc8e3a041",
+  "jobUrl": "http://fastlane.local:10000/tasks/test-task/jobs/5c094abcedc7d5be820e20da",
+  "taskUrl": "http://fastlane.local:10000/tasks/test-task"
+}
+```
+
+In order to find more about the running (or done by now) job, just follow the `jobUrl` parameter of the returned JSON.
 
 TBW.
 
@@ -105,7 +93,36 @@ TBW.
 
 TBW.
 
+### How do I find all the jobs in my task?
+
+TBW.
+
 ## Architecture
+
+### An example situation
+
+We'll start with an example situation that we can explore in order to understand more about fastlane.
+
+Let's say I want to run a job that sends an e-mail when something happens and I have a container already configured with templates and all I need to pass is the SMTP as an env variable and a command to execute a python script:
+
+```
+$ curl -XPOST --header "Content-Type: application/json" -d'{"image": "my.docker.repo.com/my-send-email-image:latest", "command": "python /app/sendmail.py", "envs": {"SMTP_SERVER":"my-smtp-server"}}' http://fastlane.local:10000/tasks/send-very-specific-email
+{
+    "taskId": "send-very-specific-email",
+    "jobId": "5b8db248edc7d584132a6d4d",
+    "queueJobId": "77cfabbb-1864-4073-afe7-0efe01014754"
+}
+```
+
+In this request I'm creating/updating a task called `send-very-specific-email` and creating a new job in it to execute the command `python /app/sendmail.py`. I hope you now have a **boatload** of questions, like:
+
+* Where did you get `/app/sendmail.py` from?
+* What version of the python interpreter are you running? Are you even sure python is installed?
+* What about the python and system libraries that `sendmail.py` depends on? When were they installed?
+* What is that jobId in the return of the `POST` and how do I use that?
+* What does it mean for that job to be in a queue? I thought you said that Ad-Hoc execution meant running the job **right now**!
+
+We'll address these now.
 
 ### Design Decisions
 
@@ -115,7 +132,6 @@ Users are responsible for specifying a task id that's globally unique. If two us
 
 The decision here is to sacrifice isolation for simplicity. Usually a queueing system is a backend application, meaning that it's easy enough to construct a front-end for fastlane that provides authentication and authorization to post jobs in tasks.
 
-## Concepts
 ### The Container
 
 As said previously, fastlane uses containers to enable users to have very flexible workers. 
@@ -150,9 +166,11 @@ TBW.
 
 ## API
 
+### Http API
+
 TBW.
 
-## Workers
+### Workers
 
 TBW.
 
