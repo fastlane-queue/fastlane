@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from flask import Blueprint, current_app, g, make_response, request
+from flask import Blueprint, current_app, g, make_response, request, url_for
 from rq_scheduler import Scheduler
 
 from fastlane.models.task import Task
@@ -27,7 +27,6 @@ def get_details():
 @bp.route("/tasks/<task_id>", methods=("POST",))
 def create_task(task_id):
     details = get_details()
-
 
     if details is None or details == "":
         msg = "Failed to enqueue task because JSON body could not be parsed."
@@ -112,4 +111,15 @@ def create_task(task_id):
         j.save()
         logger.info("Job execution enqueued successfully.")
 
-    return dumps({"taskId": task_id, "jobId": job_id, "queueJobId": queue_job_id})
+    job_url = url_for("task.get_job", task_id=task_id, job_id=job_id, _external=True)
+    task_url = url_for("task.get_task", task_id=task_id, _external=True)
+
+    return dumps(
+        {
+            "taskId": task_id,
+            "jobId": job_id,
+            "queueJobId": queue_job_id,
+            "jobUrl": job_url,
+            "taskUrl": task_url,
+        }
+    )

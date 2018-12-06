@@ -42,6 +42,20 @@ Instead of the tedious, repetitive work of yesteryear where you had to implement
 - [ ] Admin to inspect tasks and jobs;
 - [ ] Admin to inspect health of queueing system (error queue, size of queues, etc).
 
+## Installing and Running
+
+### Pre-Requisites
+
+TBW.
+
+### Running the API
+
+TBW.
+
+### Running the Workers
+
+TBW.
+
 ## Getting Started
 
 ### Let's create a new job and fire it!
@@ -66,6 +80,30 @@ In this request I'm creating/updating a task called `send-very-specific-email` a
 * What does it mean for that job to be in a queue? I thought you said that Ad-Hoc execution meant running the job **right now**!
 
 Those are all very good questions! Let's discuss each one of those.
+
+
+## How To?
+
+### How do I run a new job?
+
+TBW.
+
+### How do I run a new job tomorrow morning?
+
+TBW.
+
+### How do I run a new job in 5 minutes?
+
+TBW.
+
+
+### How do I run a job periodically? 
+
+TBW.
+
+### How do I stop a periodical job?
+
+TBW.
 
 ## Architecture
 
