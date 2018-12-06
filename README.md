@@ -1,3 +1,5 @@
+![fastlane](fastlane-logo.png)
+
 # fastlane
 
 fastlane is a redis-based queueing service that outsmarts everyone else by using containers.
@@ -120,4 +122,4 @@ TBW.
 
 ## Contributing
 
-TBW.
+Logo was created using https://logomakr.com/4xwJMs.
