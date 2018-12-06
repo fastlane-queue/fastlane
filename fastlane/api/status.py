@@ -4,6 +4,7 @@ import croniter
 from flask import Blueprint, current_app, jsonify, url_for
 
 from fastlane.models.job import Job
+from fastlane.models.task import Task
 
 bp = Blueprint("status", __name__, url_prefix="/status")
 
@@ -28,7 +29,11 @@ def status():
         jobs_queue_size = current_app.redis.llen(f"rq:queue:{queue}")
         status["queues"][queue]["length"] = jobs_queue_size
 
-    status["scheduled"] = []
+    status["tasks"] = {"count": Task.objects.count()}
+
+    status["jobs"] = {"count": Job.objects.count()}
+
+    status["jobs"]["scheduled"] = []
     scheduled_jobs = Job.objects(scheduled=True).all()
 
     for job in scheduled_jobs:
