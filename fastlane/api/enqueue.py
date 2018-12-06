@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from flask import Blueprint, current_app, g, make_response, request, url_for
+from flask import Blueprint, current_app, g, jsonify, make_response, request, url_for
 from rq_scheduler import Scheduler
 
 from fastlane.models.task import Task
@@ -8,9 +8,9 @@ from fastlane.utils import parse_time
 from fastlane.worker.job import run_job
 
 try:
-    from ujson import dumps, loads
+    from ujson import loads
 except ImportError:
-    from json import dumps, loads
+    from json import loads
 
 bp = Blueprint("enqueue", __name__)
 
@@ -114,7 +114,7 @@ def create_task(task_id):
     job_url = url_for("task.get_job", task_id=task_id, job_id=job_id, _external=True)
     task_url = url_for("task.get_task", task_id=task_id, _external=True)
 
-    return dumps(
+    return jsonify(
         {
             "taskId": task_id,
             "jobId": job_id,

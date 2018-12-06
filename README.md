@@ -1,5 +1,7 @@
 ![fastlane](fastlane-logo.png)
 
+![demo](single_task.gif)
+
 ## Why Fastlane?
 
 fastlane is a redis-based queueing service that outsmarts everyone else by using containers.
