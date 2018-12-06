@@ -1,6 +1,6 @@
 ![fastlane](fastlane-logo.png)
 
-# fastlane
+## Why Fastlane?
 
 fastlane is a redis-based queueing service that outsmarts everyone else by using containers.
 
@@ -8,7 +8,7 @@ More seriously, though, fastlane allows you to easily implement new workers in t
 
 Instead of the tedious, repetitive work of yesteryear where you had to implement a worker in language X or Y, you just spin a new container with all the dependencies you require already previously installed, and instruct fastlane to run a command in that container. Bang! Instant Super-Powered Workers!
 
-Aside from freedom, fastlane also provides:
+## Features
 
 - [x] Ad-Hoc execution of jobs (run job right now);
 - [x] Scheduled execution of jobs (run job next sunday at 6am, or run in 10 minutes from now);
@@ -42,13 +42,9 @@ Aside from freedom, fastlane also provides:
 - [ ] Admin to inspect tasks and jobs;
 - [ ] Admin to inspect health of queueing system (error queue, size of queues, etc).
 
-fastlane is by design a system with no authentication and authorization.
+## Getting Started
 
-Users are responsible for specifying a task id that's globally unique. If two users specify a task with id 'run', their jobs will be grouped together (not an issue for fastlane, since every job has a globally unique id anyways). This might be confusing, though.
-
-The decision here is to sacrifice isolation for simplicity. Usually a queueing system is a backend application, meaning that it's easy enough to construct a front-end for fastlane that provides authentication and authorization to post jobs in tasks.
-
-## Let's create a new job and fire it!
+### Let's create a new job and fire it!
 
 Let's say I want to run a job that sends an e-mail when something happens and I have a container already configured with templates and all I need to pass is the SMTP as an env variable and a command to execute a python script:
 
@@ -71,8 +67,18 @@ In this request I'm creating/updating a task called `send-very-specific-email` a
 
 Those are all very good questions! Let's discuss each one of those.
 
+## Architecture
 
-## The Container
+### Design Decisions
+
+fastlane is by design a system with no authentication and authorization.
+
+Users are responsible for specifying a task id that's globally unique. If two users specify a task with id 'run', their jobs will be grouped together (not an issue for fastlane, since every job has a globally unique id anyways). This might be confusing, though.
+
+The decision here is to sacrifice isolation for simplicity. Usually a queueing system is a backend application, meaning that it's easy enough to construct a front-end for fastlane that provides authentication and authorization to post jobs in tasks.
+
+## Concepts
+### The Container
 
 As said previously, fastlane uses containers to enable users to have very flexible workers. 
 
@@ -86,7 +92,7 @@ And that's where `/app/sendmail.py` comes from. It was pre-installed in the cont
 
 That also answers the second and third questions. All the dependencies get pre-installed within the container image.
 
-## Tasks, Jobs and Executions in fastlane
+### Tasks, Jobs and Executions in fastlane
 
 There are three levels in fastlane hierarchy: tasks, jobs and executions.
 
@@ -100,11 +106,7 @@ A Job Execution is the actual unit of work. An execution has an image, a command
 
 Why aren't these details in the Job, instead of the execution? Because we can have many executions for a single job: Cron and retries are good examples of this behavior.
 
-## Jobs Lifecycle
-
-TBW.
-
-## Jobs Options
+### Jobs Lifecycle
 
 TBW.
 
@@ -112,11 +114,11 @@ TBW.
 
 TBW.
 
-## fastlane Workers
+## Workers
 
 TBW.
 
-## Configurations
+## Configuration
 
 TBW.
 
