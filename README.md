@@ -77,7 +77,7 @@ In order to find more about the running (or done by now) job, just follow the `j
 
 ### How do I run a new job at a specific point in the future?
 
-This Http `POST` will run an `ubuntu` container and uhen run the `ls -lah` command, at Thursday, February 17, 2022 4:01:32 PM GMT.
+This Http `POST` will run an `ubuntu` container and then run the `ls -lah` command, at Thursday, February 17, 2022 4:01:32 PM GMT.
 
 ```
 $ curl -XPOST -d'{"image": "ubuntu:latest", "command": "ls -lah", "startAt": 1645113692}' http://fastlane.local:10000/tasks/test-scheduled-task
@@ -94,20 +94,71 @@ In order to find more about the running (or done by now) job, just follow the `j
 
 ### How do I run a new job in 5 minutes?
 
-TBW.
+This Http `POST` will run an `ubuntu` container and then run the `ls -lah` command, in 5 minutes.
 
+```
+$ curl -XPOST -d'{"image": "ubuntu:latest", "command": "ls -lah", "startIn": "5m"}' http://fastlane.local:10000/tasks/test-scheduled-task
+{
+  "taskId": "test-scheduled-task",
+  "jobId": "5c094abcedc7d5be820e20da",
+  "queueJobId": "db72db9b-cb49-44bd-b2fa-b3afc8e3a041",
+  "jobUrl": "http://fastlane.local:10000/tasks/test-scheduled-task/jobs/5c094abcedc7d5be820e20da",
+  "taskUrl": "http://fastlane.local:10000/tasks/test-scheduled-task"
+}
+```
+
+Supported formats also include: `10s`, `2m30s`, `4h30m25s`, `2h30m`, `240h`.
+
+In order to find more about the running (or done by now) job, just follow the `jobUrl` parameter of the returned JSON.
 
 ### How do I run a job periodically? 
 
-TBW.
+Fastlane supports the well-known [cron format](https://en.wikipedia.org/wiki/Cron). In order to use just specify a `cron` parameter.
+
+This Http `POST` will run an `ubuntu` container and then run the `ls -lah` command, every each minute of every hour, every day.
+
+```
+$ curl -XPOST -d'{"image": "ubuntu:latest", "command": "ls -lah", "cron": "* * * * *"}' http://fastlane.local:10000/tasks/test-scheduled-task
+{
+  "taskId": "test-scheduled-task",
+  "jobId": "5c094abcedc7d5be820e20da",
+  "queueJobId": "db72db9b-cb49-44bd-b2fa-b3afc8e3a041",
+  "jobUrl": "http://fastlane.local:10000/tasks/test-scheduled-task/jobs/5c094abcedc7d5be820e20da",
+  "taskUrl": "http://fastlane.local:10000/tasks/test-scheduled-task"
+}
+```
+
+Just a reminder of the cron format:
+
+```
+# ┌───────────── minute (0 - 59)
+# │ ┌───────────── hour (0 - 23)
+# │ │ ┌───────────── day of the month (1 - 31)
+# │ │ │ ┌───────────── month (1 - 12)
+# │ │ │ │ ┌───────────── day of the week (0 - 6) (Sunday to Saturday;
+# │ │ │ │ │                                   7 is also Sunday on some systems)
+# │ │ │ │ │
+# │ │ │ │ │
+# * * * * * command to execute
+```
+
+In order to find more about the running (or done by now) job, just follow the `jobUrl` parameter of the returned JSON.
 
 ### How do I stop a periodical job?
 
-TBW.
+Just `POST` to the job URL with a `/stop` suffix in the job's URL.
+
+```
+$ curl -XPOST http://fastlane.local:10000/tasks/test-scheduled-task/jobs/5c094abcedc7d5be820e20da/stop
+```
 
 ### How do I find all the jobs in my task?
 
-TBW.
+Just do a `GET` on the task URL, like:
+
+```
+$ curl -XPOST http://fastlane.local:10000/tasks/test-my-task
+```
 
 ## Architecture
 
