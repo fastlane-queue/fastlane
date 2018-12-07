@@ -14,7 +14,7 @@
 
       const connect = function() {
         log.innerHTML = '';
-        const socket = new WebSocket("{{ ws_url }}", ["protocolOne", "protocolTwo"]);
+        const socket = new WebSocket("{{ ws_url }}");
 
         socket.onopen = function (event) {
           console.log('socket open, waiting for logs')

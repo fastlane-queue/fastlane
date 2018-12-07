@@ -173,7 +173,7 @@ To integrate with Fastlane and stream the results of a job, just connect to it u
 ```
 // In Javascript
 const connect = function() {
-  const socket = new WebSocket("http://fastlane.local:10000/tasks/test-scheduled-task/jobs/5c094abcedc7d5be820e20da/ws", ["protocolOne", "protocolTwo"]);
+  const socket = new WebSocket("ws://fastlane.local:10000/tasks/test-scheduled-task/jobs/5c094abcedc7d5be820e20da/ws");
 
   socket.onopen = function (event) {
     console.log('socket open, waiting for logs')
