@@ -7,6 +7,9 @@ import structlog
 from flask import Flask
 from flask_redis import FlaskRedis
 from flask_redis_sentinel import SentinelExtension
+from flask_sockets import Sockets
+from gevent import pywsgi
+from geventwebsocket.handler import WebSocketHandler
 from structlog.processors import (
     JSONRenderer,
     StackInfoRenderer,
@@ -20,6 +23,7 @@ import fastlane.api.rqb as rqb
 from fastlane.api.enqueue import bp as enqueue
 from fastlane.api.healthcheck import bp as healthcheck
 from fastlane.api.status import bp as status
+from fastlane.api.stream import bp as stream
 from fastlane.api.task import bp as task_api
 from fastlane.models import db
 
@@ -57,6 +61,9 @@ class Application:
         self.app.register_blueprint(task_api)
         self.app.register_blueprint(status)
         # self.app.register_blueprint(rq_dashboard.blueprint, url_prefix="/rq")
+
+        sockets = Sockets(self.app)
+        sockets.register_blueprint(stream)
 
     def configure_logging(self):
         if self.app.testing:
@@ -182,7 +189,14 @@ class Application:
             handler.report(err, metadata)
 
     def run(self, host, port):
-        self.app.run(host, port)
+        from gevent import monkey
+
+        monkey.patch_all()
+
+        server = pywsgi.WSGIServer(
+            (host, port), self.app, handler_class=WebSocketHandler
+        )
+        server.serve_forever()
 
     def _mock_redis(self, connected):
         def handle():

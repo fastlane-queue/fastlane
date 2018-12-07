@@ -1,4 +1,15 @@
-from flask import Blueprint, abort, current_app, g, jsonify, url_for
+import time
+
+from flask import (
+    Blueprint,
+    abort,
+    current_app,
+    g,
+    jsonify,
+    render_template,
+    request,
+    url_for,
+)
 from rq_scheduler import Scheduler
 
 from fastlane.models.job import Job
@@ -90,3 +101,17 @@ def stop_job(task_id, job_id):
     job.save()
 
     return jsonify({"taskId": task_id, "job": {"id": job_id}})
+
+
+@bp.route("/tasks/<task_id>/jobs/<job_id>/stream")
+def stream_job(task_id, job_id):
+    if request.url.startswith("https"):
+        protocol = "wss"
+    else:
+        protocol = "ws"
+
+    url = url_for("task.stream_job", task_id=task_id, job_id=job_id, external=True)
+    url = "/".join(url.split("/")[:-1])
+    ws_url = "%s://%s/%s/ws" % (protocol, request.host.rstrip("/"), url.lstrip("/"))
+
+    return render_template("stream.html", task_id=task_id, job_id=job_id, ws_url=ws_url)

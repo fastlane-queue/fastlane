@@ -197,3 +197,26 @@ class Executor:
             "available": [f"{host}:{port}" for (host, port, client) in clients],
             "running": running,
         }
+
+    def get_current_logs(self, task_id, job, execution):
+        h = execution.metadata["docker_host"]
+        p = execution.metadata["docker_port"]
+        host, port, cl = self.pool.get_client(task_id, h, p)
+
+        container_id = execution.metadata["container_id"]
+        container = cl.containers.get(container_id)
+
+        log = container.logs(stdout=True, stderr=True).decode("utf-8")
+
+        return log
+
+    def get_streaming_logs(self, task_id, job, execution):
+        h = execution.metadata["docker_host"]
+        p = execution.metadata["docker_port"]
+        host, port, cl = self.pool.get_client(task_id, h, p)
+
+        container_id = execution.metadata["container_id"]
+        container = cl.containers.get(container_id)
+
+        for log in container.logs(stdout=True, stderr=True, stream=True):
+            yield log.decode("utf-8")

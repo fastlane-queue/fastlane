@@ -165,3 +165,9 @@ class Job(db.Document):
                 return job_execution
 
         return None
+
+    def get_last_execution(self):
+        if not self.executions:
+            return None
+
+        return self.executions[-1]

@@ -1,0 +1,44 @@
+<html>
+  <head>
+    <title>{{ task_id }} - {{ job_id }} - Fastlane</title>
+  </head>
+
+  <body>
+<pre>
+<code id="log"></code>
+</pre>
+
+    <script>
+      const out = document.getElementById('log')
+      let timeout = null
+
+      const connect = function() {
+        log.innerHTML = '';
+        const socket = new WebSocket("{{ ws_url }}", ["protocolOne", "protocolTwo"]);
+
+        socket.onopen = function (event) {
+          console.log('socket open, waiting for logs')
+        };
+
+        socket.onmessage = function (event) {
+          log.innerHTML += event.data;
+          console.log('Received data', event.data);
+        };
+
+        socket.onclose = function (event) {
+          console.log('Socket closed');
+          if (event.reason != 'done') {
+            console.log('Trying again in 5s...');
+            if (timeout !== null) {
+              clearTimeout(timeout);
+              timeout = null;
+            }
+            timeout = setTimeout(connect, 5000);
+          }
+        }
+      }
+
+      connect()
+    </script>
+  </body>
+</html>

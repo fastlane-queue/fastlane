@@ -22,7 +22,7 @@ Instead of the tedious, repetitive work of yesteryear where you had to implement
 - [x] Redact any env that contains blacklisted keywords;
 - [ ] Exponential back-off parameters per job;
 - [ ] Self-healing handling of interrupted jobs;
-- [ ] Job log output streaming using WebSockets;
+- [x] Job log output streaming using WebSockets;
 - [x] Workers should handle SIGTERM and exit gracefully;
 - [x] Docker Container Runner (with Docker Host Pool);
 - [x] Docker Pool per task name (Regular Expressions);
@@ -161,6 +161,45 @@ Just do a `GET` on the task URL, like:
 ```
 $ curl -XPOST http://fastlane.local:10000/tasks/test-my-task
 ```
+
+### How do I see what's going on with my job before it finishes?
+
+Fastlane comes equipped with two routes for that purpose: `/task/<task-id>/jobs/<job-id>/stream` and `/task/<task-id>/jobs/<job-id>/ws`.
+
+The former is a simple page that connects to the latter using WebSockets. That means you should open it in your browser. Just navigate to `http://fastlane.local:10000/tasks/test-scheduled-task/jobs/5c094abcedc7d5be820e20da/stream`.
+
+To integrate with Fastlane and stream the results of a job, just connect to it using Websockets like:
+
+```
+// In Javascript
+const connect = function() {
+  const socket = new WebSocket("http://fastlane.local:10000/tasks/test-scheduled-task/jobs/5c094abcedc7d5be820e20da/ws", ["protocolOne", "protocolTwo"]);
+
+  socket.onopen = function (event) {
+    console.log('socket open, waiting for logs')
+  };
+
+  socket.onmessage = function (event) {
+    console.log('Received log', event.data);
+  };
+
+  socket.onclose = function (event) {
+    console.log('Socket closed');
+    if (event.reason != 'done') {
+      console.log('Trying again in 5s...');
+      if (timeout !== null) {
+        clearTimeout(timeout);
+        timeout = null;
+      }
+      timeout = setTimeout(connect, 5000);
+    }
+  }
+}
+
+connect()
+```
+
+The reason when the socket gets closed tells you what happened. If the reason is `retry` it means you should reconnect (like the above) since the job has not started or not finished yet. If the reason is `done` it means you are done and should not reconnect.
 
 ## Architecture
 
