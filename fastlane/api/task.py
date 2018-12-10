@@ -2,6 +2,7 @@ import time
 
 from flask import (
     Blueprint,
+    Response,
     abort,
     current_app,
     g,
@@ -115,3 +116,38 @@ def stream_job(task_id, job_id):
     ws_url = "%s://%s/%s/ws" % (protocol, request.host.rstrip("/"), url.lstrip("/"))
 
     return render_template("stream.html", task_id=task_id, job_id=job_id, ws_url=ws_url)
+
+
+def get_response(task_id, job_id, get_data_fn):
+    logger = g.logger.bind(task_id=task_id, job_id=job_id)
+
+    logger.debug("Getting job...")
+    job = Job.get_by_id(task_id=task_id, job_id=job_id)
+
+    if job is None:
+        logger.error("Job not found in task.")
+        abort(404)
+
+        return
+
+    if not job.executions:
+        logger.error("No executions found in job.")
+        abort(400)
+
+        return
+
+    execution = job.get_last_execution()
+
+    headers = {"Fastlane-Exit-Code": str(execution.exit_code)}
+
+    return Response(headers=headers, response=get_data_fn(execution), status=200)
+
+
+@bp.route("/tasks/<task_id>/jobs/<job_id>/stdout")
+def stdout(task_id, job_id):
+    return get_response(task_id, job_id, lambda execution: execution.log)
+
+
+@bp.route("/tasks/<task_id>/jobs/<job_id>/stderr")
+def stderr(task_id, job_id):
+    return get_response(task_id, job_id, lambda execution: execution.error)

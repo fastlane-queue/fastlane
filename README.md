@@ -19,6 +19,7 @@ Instead of the tedious, repetitive work of yesteryear where you had to implement
 - [x] Configurable exponential back-off for retries and failures in monitoring of jobs;
 - [x] Configurable hard timeout for each execution;
 - [ ] Route to stop running task;
+- [ ] Routes to get stdout and stderr for last execution in jobs;
 - [x] Redact any env that contains blacklisted keywords;
 - [ ] Exponential back-off parameters per job;
 - [ ] Self-healing handling of interrupted jobs;
@@ -161,6 +162,19 @@ Just do a `GET` on the task URL, like:
 ```
 $ curl -XPOST http://fastlane.local:10000/tasks/test-my-task
 ```
+
+### How do I get stdout and stderr data for an execution after it finishes?
+
+You can query both after the job id. The exit code comes as a header called `Fastlane-Exit-Code`.
+
+```
+$ curl http://fastlane.local:10000/tasks/test-my-task/jobs/5c094abcedc7d5be820e20da/stdout
+
+# and
+
+$ curl http://fastlane.local:10000/tasks/test-my-task/jobs/5c094abcedc7d5be820e20da/stderr
+```
+
 
 ### How do I see what's going on with my job before it finishes?
 

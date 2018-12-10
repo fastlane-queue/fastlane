@@ -189,10 +189,6 @@ class Application:
             handler.report(err, metadata)
 
     def run(self, host, port):
-        from gevent import monkey
-
-        monkey.patch_all()
-
         server = pywsgi.WSGIServer(
             (host, port), self.app, handler_class=WebSocketHandler
         )

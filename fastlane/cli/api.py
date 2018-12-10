@@ -1,5 +1,9 @@
+from gevent import monkey
+
 from fastlane.api.app import Application
 from fastlane.config import Config
+
+monkey.patch_all()
 
 
 class APIHandler:
