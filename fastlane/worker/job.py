@@ -308,8 +308,13 @@ def monitor_job(task_id, job_id, execution_id):
             # will be a new execution
 
         execution.finished_at = datetime.utcnow()
-        execution.status = JobExecution.Status.done
         execution.exit_code = result.exit_code
+        execution.status = (
+            JobExecution.Status.done
+
+            if execution.exit_code == 0
+            else JobExecution.Status.failed
+        )
         execution.log = result.log.decode("utf-8")
         execution.error = result.error.decode("utf-8")
 

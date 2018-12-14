@@ -14,6 +14,7 @@ setup-ci:
 	@poetry develop
 
 deps:
+	@mkdir -p /tmp/fastlane/{mongo,redis}
 ifdef COMPOSE
 	@echo "Starting dependencies..."
 	@docker-compose --project-name fastlane up -d

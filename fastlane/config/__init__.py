@@ -59,8 +59,7 @@ Config.define(
 Config.define(
     "MONGODB_CONFIG",
     """{
-        "host": "localhost",
-        "port": 10101,
+        "host": "mongodb://localhost:10101/fastlane",
         "db": "fastlane",
         "serverSelectionTimeoutMS": 100,
         "connect": false

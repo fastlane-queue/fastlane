@@ -18,8 +18,11 @@ Instead of the tedious, repetitive work of yesteryear where you had to implement
 - [x] Configurable retries per job;
 - [x] Configurable exponential back-off for retries and failures in monitoring of jobs;
 - [x] Configurable hard timeout for each execution;
-- [ ] Route to stop running task;
-- [ ] Routes to get stdout and stderr for last execution in jobs;
+- [x] Route to stop running task;
+- [x] Route to retry task;
+- [x] Routes to get stdout and stderr for last execution in jobs;
+- [ ] E-mail subscription to tasks;
+- [ ] Web hooks on job completion;
 - [x] Redact any env that contains blacklisted keywords;
 - [ ] Exponential back-off parameters per job;
 - [ ] Self-healing handling of interrupted jobs;
