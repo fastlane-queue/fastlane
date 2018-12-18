@@ -1,6 +1,6 @@
-![fastlane](fastlane-logo.png)
+![fastlane](source/_static/fastlane-logo.png)
 
-![demo](single_task.gif)
+![demo](source/_static/single_task.gif)
 
 ## Why Fastlane?
 
