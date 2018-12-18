@@ -1,5 +1,11 @@
 COMPOSE := $(shell command -v docker-compose 2> /dev/null)
 POETRY := $(shell command -v poetry 2> /dev/null)
+SPHINXOPTS    	=
+SPHINXBUILD   	= sphinx-build
+SPHINXAUTOBUILD = sphinx-autobuild
+SPHINXPROJ    	= fastlane
+SOURCEDIR     	= source
+BUILDDIR      	= build
 
 setup:
 ifndef POETRY
@@ -61,3 +67,10 @@ publish:
 coverage:
 	@coverage html
 	@open htmlcov/index.html
+
+docs-build: Makefile
+	@$(SPHINXBUILD) -M html "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+
+
+docs-live:
+	@$(SPHINXAUTOBUILD) --open-browser -b html "$(SOURCEDIR)" "$(BUILDDIR)/html" $(SPHINXOPTS)
