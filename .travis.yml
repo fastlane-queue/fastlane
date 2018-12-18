@@ -6,6 +6,7 @@ services:
 before_install:
   - docker-compose up -d
 install:
+  - pip install -U setuptools
   - pip install poetry
   - poetry install
 script:
