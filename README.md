@@ -240,6 +240,11 @@ When creating a new job, this is the most complete body that can be sent:
 
 * `image` - This parameter specifies the docker image that should be used to run this job;
 * `command` - The command that will be run by the job;
+* `envs` - The environment variables that will be set in the container when the job is run;
+* `startIn`, `startAt` and `cron` - Different ways to schedule the job. If none of these is passed, the job starts immediately. `startIn` gets a string with how much time in the future to start the job in the form of `2h30m50s`. `startAt` takes an UNIX UTC timestamp that will be used to determine when the job should start. `cron` takes a [cron format](https://en.wikipedia.org/wiki/Cron) string that determines how often this job should be executed;
+* `retries` - This argument determines whether this job should be retried (>0) and how many times. If this argument is not present in the body, retry is disabled;
+* `expiration` - If this argument is present, this determines a point in time where this job should not run anymore. It is an UNIX UTC timestamp. The purpose of this argument is for scenarios of high queueing, so the job can sit in the queue for a long time. In this scenario, after a long time, this job might not make sense anymore (i.e.: a push notification);
+* `timeout` - This is a timeout in seconds after which the job will be terminated. There's a hard limit in Fastlane and it will use whatever value is lower.
 
 ## Architecture
 
