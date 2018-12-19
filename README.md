@@ -179,7 +179,6 @@ $ curl http://fastlane.local:10000/tasks/test-my-task/jobs/5c094abcedc7d5be820e2
 $ curl http://fastlane.local:10000/tasks/test-my-task/jobs/5c094abcedc7d5be820e20da/stderr
 ```
 
-
 ### How do I see what's going on with my job before it finishes?
 
 Fastlane comes equipped with two routes for that purpose: `/task/<task-id>/jobs/<job-id>/stream` and `/task/<task-id>/jobs/<job-id>/ws`.
@@ -218,6 +217,29 @@ connect()
 ```
 
 The reason when the socket gets closed tells you what happened. If the reason is `retry` it means you should reconnect (like the above) since the job has not started or not finished yet. If the reason is `done` it means you are done and should not reconnect.
+
+## Job Options
+
+When creating a new job, this is the most complete body that can be sent:
+
+```
+{
+  "image": "ubuntu:latest",
+  "command": "ls -lah",
+  "envs": {
+    "SMTP_SERVER":"my-smtp-server"
+  },
+  "startIn": "5m",
+  "startAt": 1645113692,
+  "cron": "* * * * *",
+  "retries": 4,
+  "expiration": 1645113692,
+  "timeout": 3600
+}
+```
+
+* `image` - This parameter specifies the docker image that should be used to run this job;
+* `command` - The command that will be run by the job;
 
 ## Architecture
 

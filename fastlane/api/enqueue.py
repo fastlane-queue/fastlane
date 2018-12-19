@@ -71,6 +71,12 @@ def create_task(task_id):
     start_at = details.get("startAt", None)
     start_in = parse_time(details.get("startIn", None))
     cron = details.get("cron", None)
+
+    if len(list(filter(lambda item: item is not None, (start_at, start_in, cron)))) > 1:
+        return make_response(
+            "Only ONE of 'startAt', 'startIn' and 'cron' should be in the request.", 400
+        )
+
     scheduler = Scheduler("jobs", connection=current_app.redis)
 
     args = [task_id, job_id, image, command]
