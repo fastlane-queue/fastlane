@@ -4,8 +4,10 @@ import math
 import smtplib
 import time
 from datetime import datetime, timedelta
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
-from flask import current_app
+from flask import current_app, url_for
 from rq_scheduler import Scheduler
 
 from fastlane.models.job import Job, JobExecution
@@ -469,22 +471,55 @@ def send_email(task_id, job_id, execution_id, subject, to_email):
 
         from_email = app.config["SMTP_FROM"]
 
-        msg = "From: %s\r\nTo: %s\r\nSubject: %s\r\n\r\n%s" % (
-            from_email,
-            to_email,
-            "[Fastlane] %s" % subject,
-            "Automatic message. Please do not reply to this!\n\nJob Data:\n%s"
-            % (
-                json.dumps(
-                    execution.to_dict(include_log=True, include_error=True),
-                    indent=4,
-                    sort_keys=True,
-                )
-            ),
+        task_url = url_for("task.get_task", task_id=task_id, _external=True)
+        job_url = url_for(
+            "task.get_job", task_id=task_id, job_id=job_id, _external=True
         )
 
+        job_data = json.dumps(
+            execution.to_dict(include_log=True, include_error=True),
+            indent=4,
+            sort_keys=True,
+        )
+        body = (
+            """
+Automatic message. Please do not reply to this!
+
+Job Details:
+%s
+"""
+            % job_data
+        )
+
+        subj = "[Fastlane] %s" % subject
+
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subj
+        msg["From"] = from_email
+        msg["To"] = to_email
+
+        part1 = MIMEText(body, "plain")
+
+        html_body = """<html><body>
+<h2>Job Details:</h2>
+<div><pre><code>%s</code></pre></div>
+<div>---</div>
+<p><a href="%s">[View Task Details]</a> | <a href="%s">[View Job Details]</a></p>
+<div>---</div>
+<p>Automatic message. Please do not reply to this!</p>
+</body></html>
+""" % (
+            job_data,
+            task_url,
+            job_url,
+        )
+        part2 = MIMEText(html_body, "html")
+
+        msg.attach(part1)
+        msg.attach(part2)
+
         logger.info("Sending email...")
-        server.sendmail(from_email, to_email, msg)
+        server.sendmail(from_email, to_email, msg.as_string())
         server.quit()
         logger.info("Email sent successfully.")
     except Exception as exc:
