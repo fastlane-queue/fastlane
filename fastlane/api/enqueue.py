@@ -29,6 +29,9 @@ def create_job(details, task, logger):
     retries = details.get("retries", 0)
     expiration = details.get("expiration")
 
+    # people to notify when job succeeds, fails or finishes
+    notify = details.get("notify", {"succeeds": [], "fails": [], "finishes": []})
+
     hard_limit = current_app.config["HARD_EXECUTION_TIMEOUT_SECONDS"]
     timeout = details.get("timeout", hard_limit)
     timeout = min(
@@ -37,6 +40,7 @@ def create_job(details, task, logger):
 
     j = task.create_job()
     j.metadata["retries"] = retries
+    j.metadata["notify"] = notify
     j.metadata["retry_count"] = 0
     j.metadata["expiration"] = expiration
     j.metadata["timeout"] = timeout

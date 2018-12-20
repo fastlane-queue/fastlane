@@ -83,3 +83,36 @@ Config.define(
     "Words that if present in environment variables are redacted",
     "Errors",
 )
+
+Config.define(
+    "SMTP_USE_SSL",
+    False,
+    "Wheter the SMTP server used to send notifications uses SSL",
+    "Email",
+)
+
+Config.define(
+    "SMTP_HOST", None, "Host of the SMTP server used to send notifications", "Email"
+)
+
+Config.define(
+    "SMTP_PORT", None, "Port of the SMTP server used to send notifications", "Email"
+)
+
+Config.define(
+    "SMTP_USER", None, "User of the SMTP server used to send notifications", "Email"
+)
+
+Config.define(
+    "SMTP_PASSWORD",
+    None,
+    "Password of the SMTP server used to send notifications",
+    "Email",
+)
+
+Config.define(
+    "SMTP_FROM",
+    None,
+    "From E-mail of the SMTP server used to send notifications",
+    "Email",
+)

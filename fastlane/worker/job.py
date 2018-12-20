@@ -1,5 +1,7 @@
 import calendar
+import json
 import math
+import smtplib
 import time
 from datetime import datetime, timedelta
 
@@ -38,7 +40,10 @@ def validate_expiration(job, ex, logger):
     ):
         expiration_utc = datetime.utcfromtimestamp(job.metadata["expiration"])
         ex.status = JobExecution.Status.expired
-        ex.error = f"Job was supposed to be done before {expiration_utc.isoformat()}, but was started at {d.isoformat()}."
+        ex.error = "Job was supposed to be done before %s, but was started at %s." % (
+            expiration_utc.isoformat(),
+            d.isoformat(),
+        )
         ex.finished_at = datetime.utcnow()
         job.save()
         logger.info(
@@ -130,7 +135,11 @@ def run_container(executor, job, ex, image, tag, command, logger):
 def run_job(task_id, job_id, image, command):
     app = current_app
     logger = app.logger.bind(
-        task_id=task_id, job_id=job_id, image=image, command=command
+        operation="run_job",
+        task_id=task_id,
+        job_id=job_id,
+        image=image,
+        command=command,
     )
 
     try:
@@ -198,7 +207,7 @@ def run_job(task_id, job_id, image, command):
     except Exception as err:
         logger.error("Failed to run job", error=err)
         ex.status = JobExecution.Status.failed
-        ex.error = f"Job failed to run with error: {str(err)}"
+        ex.error = "Job failed to run with error: %s" % str(err)
         job.save()
 
         current_app.report_error(
@@ -215,13 +224,70 @@ def run_job(task_id, job_id, image, command):
         )
 
 
+def notify_users(task, job, execution, logger):
+    task_id = task.task_id
+    job_id = str(job.id)
+    execution_id = str(execution.execution_id)
+    succeed = job.metadata.get("notify", {}).get("succeeds", [])
+    fails = job.metadata.get("notify", {}).get("fails", [])
+    finishes = job.metadata.get("notify", {}).get("finishes", [])
+
+    if execution.status == JobExecution.Status.done:
+        logger.info("Notifying users of success...")
+
+        for email in succeed:
+            logger.info("Notifying user of success...", email=email)
+            subject = "Job %s/%s succeeded!" % (task_id, job_id)
+            args = [task_id, job_id, execution_id, subject, email]
+            current_app.notify_queue.enqueue(send_email, *args, timeout=-1)
+
+    if execution.status == JobExecution.Status.failed:
+        logger.info("Notifying users of failure...")
+
+        for email in fails:
+            logger.info(
+                "Notifying user of failure...",
+                email=email,
+                exit_code=execution.exit_code,
+            )
+            subject = "Job %s/%s failed with exit code %d!" % (
+                task_id,
+                job_id,
+                execution.exit_code,
+            )
+            args = [task_id, job_id, execution_id, subject, email]
+            current_app.notify_queue.enqueue(send_email, *args, timeout=-1)
+
+    logger.info("Notifying users of completion...")
+
+    for email in finishes:
+        logger.info(
+            "Notifying user of completion...",
+            email=email,
+            exit_code=execution.exit_code,
+        )
+
+        subject = "Job %s/%s finished with exit code %d!" % (
+            task_id,
+            job_id,
+            execution.exit_code,
+        )
+        args = [task_id, job_id, execution_id, subject, email]
+        current_app.job_queue.enqueue(send_email, *args, timeout=-1)
+
+
 def monitor_job(task_id, job_id, execution_id):
     try:
         app = current_app
         executor = app.load_executor()
 
         job = Job.get_by_id(task_id, job_id)
-        logger = app.logger.bind(task_id=task_id, job_id=job_id)
+        logger = app.logger.bind(
+            operation="monitor_job",
+            task_id=task_id,
+            job_id=job_id,
+            execution_id=execution_id,
+        )
 
         if job is None:
             logger.error("Failed to retrieve task or job.")
@@ -245,7 +311,7 @@ def monitor_job(task_id, job_id, execution_id):
             if ellapsed > job.metadata["timeout"]:
                 execution.finished_at = datetime.utcnow()
                 execution.status = JobExecution.Status.timedout
-                execution.error = f"Job execution timed out after {ellapsed} seconds."
+                execution.error = "Job execution timed out after %d seconds." % ellapsed
 
                 executor.stop_job(job.task, job, execution)
 
@@ -327,6 +393,8 @@ def monitor_job(task_id, job_id, execution_id):
         job.save()
         logger.info("Job details stored in mongo db.", status=execution.status)
 
+        notify_users(job.task, job, execution, logger)
+
         return True
     except Exception as err:
         logger.error("Failed to monitor job", error=err)
@@ -341,3 +409,84 @@ def monitor_job(task_id, job_id, execution_id):
         )
 
         raise err
+
+
+def send_email(task_id, job_id, execution_id, subject, to_email):
+    app = current_app
+
+    job = Job.get_by_id(task_id, job_id)
+    logger = app.logger.bind(
+        operation="send_email",
+        task_id=task_id,
+        job_id=job_id,
+        to_email=to_email,
+        execution_id=execution_id,
+        subject=subject,
+    )
+
+    if job is None:
+        logger.error("Failed to retrieve task or job.")
+
+        return False
+
+    execution = job.get_execution_by_id(execution_id)
+    logger.info("Execution loaded successfully")
+
+    smtp_host = app.config["SMTP_HOST"]
+    smtp_port = app.config["SMTP_PORT"]
+    smtp_from = app.config["SMTP_FROM"]
+
+    if smtp_host is None or smtp_port is None or smtp_from is None:
+        logger.error(
+            "SMTP_HOST, SMTP_PORT and SMTP_FROM must be configured. Skipping sending e-mail."
+        )
+
+        return False
+
+    try:
+        smtp_port = int(smtp_port)
+
+        logger = logger.bind(smtp_host=smtp_host, smtp_port=smtp_port)
+
+        logger.info("Connecting to SMTP Server...")
+        server = smtplib.SMTP(smtp_host, smtp_port)
+        server.set_debuglevel(0)
+
+        if app.config.get("SMTP_USE_SSL"):
+            logger.info("Starting TLS...")
+            server.starttls()
+
+        smtp_user = app.config.get("SMTP_USER")
+        smtp_password = app.config.get("SMTP_PASSWORD")
+
+        if smtp_user and smtp_password:
+            logger.info(
+                "Authenticating with SMTP...",
+                smtp_user=smtp_user,
+                smtp_password=smtp_password,
+            )
+            server.login(smtp_user, smtp_password)
+
+        from_email = app.config["SMTP_FROM"]
+
+        msg = "From: %s\r\nTo: %s\r\nSubject: %s\r\n\r\n%s" % (
+            from_email,
+            to_email,
+            "[Fastlane] %s" % subject,
+            "Automatic message. Please do not reply to this!\n\nJob Data:\n%s"
+            % (
+                json.dumps(
+                    execution.to_dict(include_log=True, include_error=True),
+                    indent=4,
+                    sort_keys=True,
+                )
+            ),
+        )
+
+        logger.info("Sending email...")
+        server.sendmail(from_email, to_email, msg)
+        server.quit()
+        logger.info("Email sent successfully.")
+    except Exception as exc:
+        logger.error("Sending e-mail failed with exception!", error=exc)
+        raise exc

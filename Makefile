@@ -48,11 +48,11 @@ watch:
 	@poetry run ptw -c -w -- --quiet --nf --cov=fastlane tests/
 
 run:
-	@fastlane api -vvv
+	@fastlane api -vvv -c ./fastlane/config/local.conf
 
 worker:
 	@#This env must be set in MacOS to ensure that docker py works
-	@OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES fastlane worker -vv
+	@OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES fastlane worker -vv -c ./fastlane/config/local.conf
 
 publish:
 	@poetry build

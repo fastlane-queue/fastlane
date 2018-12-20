@@ -10,7 +10,7 @@ from fastlane.worker.scheduler import QueueScheduler
 
 
 class WorkerHandler:
-    def __init__(self, click, worker_id, jobs, monitor, config, log_level):
+    def __init__(self, click, worker_id, jobs, monitor, notify, config, log_level):
         self.config_path = config
         self.config = None
         self.click = click
@@ -24,6 +24,9 @@ class WorkerHandler:
         if monitor:
             self.queues.append("monitor")
 
+        if notify:
+            self.queues.append("notify")
+
         self.load_config()
 
     def load_config(self):
@@ -34,6 +37,9 @@ class WorkerHandler:
         # self.click.echo(
         # f'Running fastlane worker processing queues {",".join(self.queues)}.')
         app = Application(self.config, self.log_level)
+        app.logger.info(
+            f'Running fastlane worker processing queues {",".join(self.queues)}.'
+        )
         interval = app.config["WORKER_SLEEP_TIME_MS"] / 1000.0
 
         with app.app.app_context():

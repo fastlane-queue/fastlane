@@ -2,7 +2,7 @@ from flask import Blueprint
 from rq import Queue
 from rq_scheduler import Scheduler
 
-bp = Blueprint('rq', __name__)
+bp = Blueprint("rq", __name__)
 
 
 class JobQueue:
@@ -13,13 +13,12 @@ class JobQueue:
         self._scheduler = None
 
     def enqueue_in(self, *args, **kw):
-        self.app.logger.info('Scheduling execution for the future.', **kw)
+        self.app.logger.info("Scheduling execution for the future.", **kw)
 
         return self._scheduler.enqueue_in(*args, **kw)
 
     def enqueue_at(self, *args, **kw):
-        self.app.logger.info('Scheduling execution for a specific timestamp.',
-                             **kw)
+        self.app.logger.info("Scheduling execution for a specific timestamp.", **kw)
 
         return self._scheduler.enqueue_at(*args, **kw)
 
@@ -42,6 +41,6 @@ class JobQueue:
 
 
 def init_app(app):
-    for qn in ['jobs', 'monitor']:
-        key = f"{qn.rstrip('s')}"
-        setattr(app, f'{key}_queue', JobQueue(qn, app))
+    for qn in ["jobs", "monitor", "notify"]:
+        key = qn.rstrip("s")
+        setattr(app, "%s_queue" % key, JobQueue(qn, app))

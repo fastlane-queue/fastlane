@@ -46,6 +46,13 @@ def api(host, port, verbose, config):
     help="""Process the 'monitor' queue?""",
     is_flag=True,
 )
+@click.option(
+    "-n",
+    "--no-notify",
+    default=False,
+    help="""Process the 'notify' queue?""",
+    is_flag=True,
+)
 @click.option("-v", "--verbose", default=0, count=True)
 @click.option(
     "-c",
@@ -53,17 +60,18 @@ def api(host, port, verbose, config):
     default=ROOT_CONFIG,
     help="configuration file to use with fastlane",
 )
-def worker(id, no_jobs, no_monitor, verbose, config):
+def worker(id, no_jobs, no_monitor, no_notify, verbose, config):
     """Runs an fastlane Worker with the specified queue name and starts processing."""
     jobs = not no_jobs
     monitor = not no_monitor
+    notify = not no_notify
 
-    if not jobs and not monitor:
-        click.echo("Worker must monitor at least one queue: jobs or monitor")
+    if not jobs and not monitor and not notify:
+        click.echo("Worker must monitor at least one queue: jobs, monitor or notify")
         sys.exit(1)
 
     log_level = LEVELS.get(verbose, "ERROR")
-    handler = WorkerHandler(click, id, jobs, monitor, config, log_level)
+    handler = WorkerHandler(click, id, jobs, monitor, notify, config, log_level)
     handler()
 
 
