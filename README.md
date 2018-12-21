@@ -319,11 +319,11 @@ Why aren't these details in the Job, instead of the execution? Because we can ha
 
 TBW.
 
-### Docker Executor
+## Docker Executor
 
 The docker executor features a pool of docker hosts that execute commands for you.
 
-#### Pool Configuration
+### Pool Configuration
 
 Configuring the pool is done with the `DOCKER_HOSTS` configuration. It is a JSON-encoded string that specifies the logical farms of docker hosts.
 
@@ -341,7 +341,7 @@ This configuration ensures that any tasks whose id start with `producta` like `p
 
 The `maxRunning` parameter indicates how many concurrent jobs can be run in the farm.
 
-#### Docker Executor Blacklisting
+### Docker Executor Blacklisting
 
 In order to improve on reliability and at the same time allow for fast and safe upgrades of docker hosts, Fastlane comes bundled with a route for blacklisting docker hosts.
 
