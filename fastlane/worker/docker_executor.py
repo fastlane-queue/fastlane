@@ -164,9 +164,6 @@ class Executor:
         return total_running == 0 or total_running <= max_running
 
     def update_image(self, task, job, execution, image, tag):
-        import ipdb
-
-        ipdb.set_trace()
         host, port, cl = self.pool.get_client(
             task.task_id, blacklist=self.get_blacklisted_hosts()
         )
