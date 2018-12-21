@@ -88,7 +88,7 @@ def stop_job(task_id, job_id):
 
     if execution is not None and execution.status == JobExecution.Status.running:
         logger.debug("Stopping current execution...")
-        executor = current_app.load_executor()
+        executor = current_app.executor
         executor.stop_job(job.task, job, execution)
         logger.debug("Current execution stopped.")
 
@@ -136,7 +136,7 @@ def retry_job(task_id, job_id):
 
     if execution.status == JobExecution.Status.running:
         logger.debug("Stopping current execution...")
-        executor = current_app.load_executor()
+        executor = current_app.executor
         executor.stop_job(job.task, job, execution)
         logger.debug("Current execution stopped.")
 

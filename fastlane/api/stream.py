@@ -36,7 +36,7 @@ def stream_log(executor, task_id, job, ex, ws):
 
 @bp.route("/tasks/<task_id>/jobs/<job_id>/ws")
 def ws(ws, task_id, job_id):
-    executor = current_app.load_executor()
+    executor = current_app.executor
     logger = current_app.logger.bind(task_id=task_id, job_id=job_id)
     job = Job.get_by_id(task_id=task_id, job_id=job_id)
 

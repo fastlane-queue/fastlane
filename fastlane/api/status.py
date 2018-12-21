@@ -11,17 +11,19 @@ bp = Blueprint("status", __name__, url_prefix="/status")
 
 @bp.route("/", methods=("GET",))
 def status():
-    executor = current_app.load_executor()
+    executor = current_app.executor
     status = {"hosts": [], "containers": {"running": []}}
 
     containers = executor.get_running_containers()
+    blacklist = executor.get_blacklisted_hosts()
 
     for host, port, container_id in containers["running"]:
         status["containers"]["running"].append(
             {"host": host, "port": port, "id": container_id}
         )
 
-    status["hosts"] = containers["available"]
+    for host in containers["available"]:
+        status["hosts"].append({"host": host, "blacklisted": host in blacklist})
 
     status["queues"] = {"jobs": {}, "monitor": {}, "error": {}}
 

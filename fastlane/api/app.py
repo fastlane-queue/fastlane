@@ -156,21 +156,18 @@ class Application:
         )
 
     def load_executor(self):
-        """Can't be loaded eagerly due to fork of jobs"""
+        name = self.config.EXECUTOR
+        parts = name.split(".")
+        executor_module = __import__(".".join(parts), None, None, [parts[-1]], 0)
 
-        def _loads():
-            if getattr(self.app, "executor_module", None) is None:
-                executor_module = __import__(self.config.EXECUTOR)
+        self.app.executor_module = executor_module
 
-                if "." in self.config.EXECUTOR:
-                    for part in self.config.EXECUTOR.split(".")[1:]:
-                        executor_module = getattr(executor_module, part)
+        bp = getattr(executor_module, "bp", None)
 
-                self.app.executor_module = executor_module
+        if bp is not None:
+            self.app.register_blueprint(bp)
 
-            return self.app.executor_module.Executor(self.app)
-
-        self.app.load_executor = _loads
+        self.app.executor = self.app.executor_module.Executor(self.app)
 
     def load_error_handlers(self):
         self.app.error_handlers = []

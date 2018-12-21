@@ -3,6 +3,7 @@ import json
 import math
 import smtplib
 import time
+import traceback
 from datetime import datetime, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -69,8 +70,9 @@ def download_image(executor, job, ex, image, tag, command, logger):
             "Image downloaded successfully.", image=image, tag=tag, ellapsed=ellapsed
         )
     except Exception as err:
-        logger.error("Failed to download image.", error=err)
-        ex.error = str(err)
+        error = traceback.format_exc()
+        logger.error("Failed to download image.", error=error)
+        ex.error = error
         ex.status = JobExecution.Status.failed
         job.save()
 
@@ -111,8 +113,9 @@ def run_container(executor, job, ex, image, tag, command, logger):
             ellapsed=ellapsed,
         )
     except Exception as err:
-        logger.error("Failed to run command", error=err)
-        ex.error = str(err)
+        error = traceback.format_exc()
+        logger.error("Failed to run command", error=error)
+        ex.error = error
         ex.status = JobExecution.Status.failed
         job.save()
 
@@ -145,7 +148,7 @@ def run_job(task_id, job_id, image, command):
     )
 
     try:
-        executor = app.load_executor()
+        executor = app.executor
 
         job = Job.get_by_id(task_id, job_id)
 
@@ -174,7 +177,8 @@ def run_job(task_id, job_id, image, command):
         )
         logger = logger.bind(execution_id=ex.execution_id)
     except Exception as err:
-        logger.error("Failed to create job execution. Skipping job...", error=err)
+        error = traceback.format_exc()
+        logger.error("Failed to create job execution. Skipping job...", error=error)
         current_app.report_error(
             err,
             metadata=dict(task_id=task_id, job_id=job_id, image=image, command=command),
@@ -207,9 +211,10 @@ def run_job(task_id, job_id, image, command):
 
         return True
     except Exception as err:
-        logger.error("Failed to run job", error=err)
+        error = traceback.format_exc()
+        logger.error("Failed to run job", error=error)
         ex.status = JobExecution.Status.failed
-        ex.error = "Job failed to run with error: %s" % str(err)
+        ex.error = "Job failed to run with error: %s" % error
         job.save()
 
         current_app.report_error(
@@ -281,7 +286,7 @@ def notify_users(task, job, execution, logger):
 def monitor_job(task_id, job_id, execution_id):
     try:
         app = current_app
-        executor = app.load_executor()
+        executor = app.executor
 
         job = Job.get_by_id(task_id, job_id)
         logger = app.logger.bind(
@@ -399,7 +404,8 @@ def monitor_job(task_id, job_id, execution_id):
 
         return True
     except Exception as err:
-        logger.error("Failed to monitor job", error=err)
+        error = traceback.format_exc()
+        logger.error("Failed to monitor job", error=error)
         current_app.report_error(
             err,
             metadata=dict(
@@ -523,5 +529,6 @@ Job Details:
         server.quit()
         logger.info("Email sent successfully.")
     except Exception as exc:
-        logger.error("Sending e-mail failed with exception!", error=exc)
+        error = traceback.format_exc()
+        logger.error("Sending e-mail failed with exception!", error=error)
         raise exc

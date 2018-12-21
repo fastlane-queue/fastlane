@@ -4,6 +4,7 @@ from json import loads
 
 import docker
 from dateutil.parser import parse
+from flask import Blueprint, current_app, g, make_response, request
 
 from fastlane.worker import ExecutionResult
 
@@ -15,6 +16,68 @@ STATUS = {
     "dead": ExecutionResult.Status.failed,
     "running": ExecutionResult.Status.running,
 }
+
+bp = Blueprint("docker", __name__, url_prefix="/docker-executor")
+blacklist_key = "docker-executor::blacklisted-hosts"
+
+
+def get_details():
+    details = request.get_json()
+
+    if details is None and request.get_data():
+        details = loads(request.get_data())
+
+    return details
+
+
+@bp.route("/blacklist", methods=["POST", "PUT"])
+def add_to_blacklist():
+    redis = current_app.redis
+
+    data = get_details()
+
+    if data is None or data == "":
+        msg = "Failed to add host to blacklist because JSON body could not be parsed."
+        g.logger.warn(msg)
+
+        return make_response(msg, 400)
+
+    if "host" not in data:
+        msg = "Failed to add host to blacklist because 'host' attribute was not found in JSON body."
+        g.logger.warn(msg)
+
+        return make_response(msg, 400)
+
+    host = data["host"]
+
+    redis.sadd(blacklist_key, host)
+
+    return ""
+
+
+@bp.route("/blacklist", methods=["DEL", "DELETE"])
+def remove_from_blacklist():
+    redis = current_app.redis
+
+    data = get_details()
+
+    if data is None or data == "":
+        msg = "Failed to remove host from blacklist because JSON body could not be parsed."
+        g.logger.warn(msg)
+
+        return make_response(msg, 400)
+
+    if "host" not in data:
+        msg = "Failed to remove host from blacklist because 'host' attribute was not found in JSON body."
+        g.logger.warn(msg)
+
+        return make_response(msg, 400)
+
+    host = data["host"]
+
+    redis.srem(blacklist_key, host)
+
+    return ""
 
 
 class DockerPool:
@@ -38,15 +101,26 @@ class DockerPool:
                 self.clients[address] = (host, port, cl)
                 clients[1].append((host, port, cl))
 
-    def get_client(self, task_id, host=None, port=None):
-        if host is not None or port is not None:
+    def get_client(self, task_id, host=None, port=None, blacklist=None):
+        if host is not None and port is not None:
             return self.clients.get(f"{host}:{port}")
 
+        if blacklist is None:
+            blacklist = set()
+
         for regex, clients in self.clients_per_regex:
-            if regex is not None and not regex.match(task_id):
+            filtered = [
+                (host, port, client)
+
+                for (host, port, client) in clients
+
+                if f"{host}:{port}" not in blacklist
+            ]
+
+            if not filtered or (regex is not None and not regex.match(task_id)):
                 continue
 
-            return random.choice(clients)
+            return random.choice(filtered)
 
         raise RuntimeError(f"Failed to find a docker host for task id {task_id}.")
 
@@ -90,7 +164,12 @@ class Executor:
         return total_running == 0 or total_running <= max_running
 
     def update_image(self, task, job, execution, image, tag):
-        host, port, cl = self.pool.get_client(task.task_id)
+        import ipdb
+
+        ipdb.set_trace()
+        host, port, cl = self.pool.get_client(
+            task.task_id, blacklist=self.get_blacklisted_hosts()
+        )
         cl.images.pull(image, tag=tag)
         execution.metadata["docker_host"] = host
         execution.metadata["docker_port"] = port
@@ -103,7 +182,9 @@ class Executor:
             p = execution.metadata["docker_port"]
             host, port, cl = self.pool.get_client(task.task_id, h, p)
         else:
-            host, port, cl = self.pool.get_client(task.task_id)
+            host, port, cl = self.pool.get_client(
+                task.task_id, blacklist=self.get_blacklisted_hosts()
+            )
             execution.metadata["docker_host"] = host
             execution.metadata["docker_port"] = port
 
@@ -220,3 +301,9 @@ class Executor:
 
         for log in container.logs(stdout=True, stderr=True, stream=True):
             yield log.decode("utf-8")
+
+    def get_blacklisted_hosts(self):
+        redis = current_app.redis
+        hosts = redis.smembers(blacklist_key)
+
+        return set([host.decode("utf-8") for host in hosts])
