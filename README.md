@@ -45,9 +45,9 @@ Instead of the tedious, repetitive work of yesteryear where you had to implement
 - [x] Status Page with details on the farm status (executors, scheduled tasks and queue sizes);
 - [x] Error handling mechanism (Sentry built-in, extensible)
 - [ ] Usage metrics (extensible);
-- [ ] Support Redis, Redis Sentinel and Redis Cluster;
-- [ ] Admin to inspect tasks and jobs;
-- [ ] Admin to inspect health of queueing system (error queue, size of queues, etc).
+- [x] Support Redis and Redis Sentinel;
+- [ ] Support Redis Cluster;
+- [ ] Admin to inspect tasks and jobs.
 
 ## Installing and Running
 
