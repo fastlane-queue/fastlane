@@ -1,5 +1,7 @@
 ![fastlane](fastlane-logo.png)
 
+[![Build Status](https://travis-ci.org/heynemann/fastlane.svg?branch=master)](https://travis-ci.org/heynemann/fastlane)
+
 ![demo](single_task.gif)
 
 ## Why Fastlane?
