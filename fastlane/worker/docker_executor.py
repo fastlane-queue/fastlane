@@ -167,15 +167,16 @@ class Executor:
 
         return total_running == 0 or total_running <= max_running
 
-    def update_image(self, task, job, execution, image, tag):
-        host, port, cl = self.pool.get_client(
-            task.task_id, blacklist=self.get_blacklisted_hosts()
-        )
+    def update_image(self, task, job, execution, image, tag, blacklisted_hosts=None):
+        if blacklisted_hosts is None:
+            blacklisted_hosts = self.get_blacklisted_hosts()
+
+        host, port, cl = self.pool.get_client(task.task_id, blacklist=blacklisted_hosts)
         cl.images.pull(image, tag=tag)
         execution.metadata["docker_host"] = host
         execution.metadata["docker_port"] = port
 
-    def run(self, task, job, execution, image, tag, command):
+    def run(self, task, job, execution, image, tag, command, blacklisted_hosts=None):
         host, port, cl = None, None, None
 
         if "docker_host" in execution.metadata:
@@ -183,8 +184,10 @@ class Executor:
             p = execution.metadata["docker_port"]
             host, port, cl = self.pool.get_client(task.task_id, h, p)
         else:
+            if blacklisted_hosts is None:
+                blacklisted_hosts = self.get_blacklisted_hosts()
             host, port, cl = self.pool.get_client(
-                task.task_id, blacklist=self.get_blacklisted_hosts()
+                task.task_id, blacklist=blacklisted_hosts
             )
             execution.metadata["docker_host"] = host
             execution.metadata["docker_port"] = port

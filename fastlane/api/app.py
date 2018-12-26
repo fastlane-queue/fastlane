@@ -12,8 +12,12 @@ from flask_redis_sentinel import SentinelExtension
 from flask_sockets import Sockets
 from gevent import pywsgi
 from geventwebsocket.handler import WebSocketHandler
-from structlog.processors import (JSONRenderer, StackInfoRenderer, TimeStamper,
-                                  format_exc_info)
+from structlog.processors import (
+    JSONRenderer,
+    StackInfoRenderer,
+    TimeStamper,
+    format_exc_info,
+)
 from structlog.stdlib import add_log_level, add_logger_name, filter_by_level
 
 # Fastlane
@@ -31,10 +35,12 @@ class Application:
     def __init__(self, config, log_level, testing=False):
         self.config = config
         self.log_level = log_level
+
         self.create_app(testing)
 
     def create_app(self, testing):
         self.app = Flask("fastlane")
+        self.testing = testing
         self.app.testing = testing
         self.app.config.from_object(rq_dashboard.default_settings)
         self.app.error_handlers = []
@@ -100,8 +106,14 @@ class Application:
             JSONRenderer(indent=1, sort_keys=True),
         ]
 
+        logger = logging.getLogger(__name__)
+
+        if self.testing:
+            chain = []
+            logger = structlog.ReturnLogger()
+
         log = structlog.wrap_logger(
-            logging.getLogger(__name__),
+            logger,
             processors=chain,
             context_class=dict,
             wrapper_class=structlog.stdlib.BoundLogger,
