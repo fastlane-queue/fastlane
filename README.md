@@ -53,15 +53,65 @@ Instead of the tedious, repetitive work of yesteryear where you had to implement
 
 ### Pre-Requisites
 
-TBW.
+The first and most important requirement is that you have a running Docker Host that accepts HTTP(s) requests. If you have docker running locally, you probably are set.
+
+In order to use fastlane, you also need to have both MongoDB and Redis instances available. If you just want to test fastlane and you have [Docker Compose]() available, run the following command:
+
+```
+$ curl https://raw.githubusercontent.com/heynemann/fastlane/master/docker-compose-sample.yml | docker-compose -f - up -d
+
+Creating tmp_redis_1 ... done
+Creating tmp_mongo_1 ... done
+
+```
+
+After this, both redis and mongo should be available at ports `10100` and `10101` respectively. We can confirm it with a `docker ps`:
+
+```
+$ docker ps
+
+CONTAINER ID        IMAGE               COMMAND                  CREATED              STATUS              PORTS                      NAMES
+d1a120f05601        redis               "docker-entrypoint.s…"   About a minute ago   Up About a minute   0.0.0.0:10100->6379/tcp    tmp_redis_1
+52a46e244b28        mongo               "docker-entrypoint.s…"   About a minute ago   Up About a minute   0.0.0.0:10101->27017/tcp   tmp_mongo_1
+```
+
+**IMPORTANT WARNING**: If you are running fastlane on MacOS, we need to expose Docker Host port to our service. This can be achieved by running the following command:
+
+```
+$ docker run -d -v /var/run/docker.sock:/var/run/docker.sock -p 127.0.0.1:1234:1234 bobrik/socat TCP-LISTEN:1234,fork UNIX-CONNECT:/var/run/docker.sock
+```
+
+This will bridge the port `1234` in the container to the `1234` port in the host and allow us to use the default `localhost:1234` docker host.
+
+### Installing
+
+To install locally, you need python 3.7+. Just run `pip install fastlane` and you are good to go.
 
 ### Running the API
 
-TBW.
+Just run the command:
+
+```
+$ fastlane api -vvv
+```
+
+Optionally you can generate a configuration file and pass it in:
+
+```
+$ fastlane config > my.conf
+
+$ fastlane api -vvv -c my.conf
+```
+
+In order to ensure that the API is up and running, open in your browser `http://localhost:10000/healthcheck` and `http://localhost:10000/status`. The first ensures that the API has access to mongo and redis. The second that the docker farm as well as the queues are working properly.
 
 ### Running the Workers
 
-TBW.
+Just run the command:
+
+```
+$ fastlane worker -vv
+```
 
 ## How To?
 
