@@ -403,6 +403,8 @@ def monitor_job(task_id, job_id, execution_id):
         job.save()
         logger.info("Job details stored in mongo db.", status=execution.status)
 
+        executor.mark_as_done(job.task, job, execution)
+
         notify_users(job.task, job, execution, logger)
 
         return True

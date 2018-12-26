@@ -22,6 +22,7 @@ STATUS = {
 
 bp = Blueprint("docker", __name__, url_prefix="/docker-executor")
 blacklist_key = "docker-executor::blacklisted-hosts"
+job_prefix = "fastlane-job"
 
 
 def get_details():
@@ -190,7 +191,7 @@ class Executor:
 
         container = cl.containers.run(
             image=f"{image}:{tag}",
-            name=f"fastlane_worker_{execution.execution_id}",
+            name=f"{job_prefix}-{execution.execution_id}",
             command=command,
             detach=True,
             environment=job.metadata.get("envs", {}),
@@ -270,7 +271,7 @@ class Executor:
             )
 
             for container in containers:
-                if not container.name.startswith("fastlane_worker_"):
+                if not container.name.startswith(job_prefix):
                     continue
                 running.append((host, port, container.id))
 
@@ -307,3 +308,35 @@ class Executor:
         hosts = redis.smembers(blacklist_key)
 
         return set([host.decode("utf-8") for host in hosts])
+
+    def mark_as_done(self, task, job, execution):
+        h = execution.metadata["docker_host"]
+        p = execution.metadata["docker_port"]
+        host, port, cl = self.pool.get_client(task.task_id, h, p)
+
+        container_id = execution.metadata["container_id"]
+        container = cl.containers.get(container_id)
+
+        container.rename(f"defunct-{container.name}")
+
+    def remove_done(self):
+        removed_containers = []
+        clients = self.pool.clients.values()
+
+        for (host, port, client) in clients:
+            containers = client.containers.list(
+                sparse=False, all=True, filters={"name": f"defunct-{job_prefix}"}
+            )
+
+            for container in containers:
+                removed_containers.append(
+                    {
+                        "host": f"{host}:{port}",
+                        "name": container.name,
+                        "id": container.id,
+                        "image": container.image.attrs["RepoTags"][0],
+                    }
+                )
+                container.remove()
+
+        return removed_containers

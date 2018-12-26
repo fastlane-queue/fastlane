@@ -30,6 +30,8 @@ Instead of the tedious, repetitive work of yesteryear where you had to implement
 - [x] Workers should handle SIGTERM and exit gracefully;
 - [x] Docker Container Runner (with Docker Host Pool);
 - [x] Docker Pool per task name (Regular Expressions);
+- [x] Rename docker containers after processing their details;
+- [x] Command to prune processed containers;
 - [x] Routes to remove/put back Docker Host in job balancing;
 - [ ] Docker SSL connections;
 - [ ] Circuit breaking when Docker Host is unavailable;

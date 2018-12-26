@@ -7,6 +7,7 @@ import click
 
 # Fastlane
 from fastlane.cli.api import APIHandler
+from fastlane.cli.prune import PruneHandler
 from fastlane.cli.worker import WorkerHandler
 
 ROOT_CONFIG = abspath(join(dirname(__file__), "../config/local.conf"))
@@ -86,6 +87,22 @@ def config():
     print(Config.get_config_text())
 
 
+@click.command()
+@click.option("-v", "--verbose", default=0, count=True)
+@click.option(
+    "-c",
+    "--config",
+    default=ROOT_CONFIG,
+    help="configuration file to use with fastlane",
+)
+def prune(verbose, config):
+    """Removes all containers that have already been processed by fastlane."""
+    log_level = LEVELS.get(verbose, "ERROR")
+    handler = PruneHandler(click, config, log_level)
+    handler()
+
+
 main.add_command(api)
 main.add_command(worker)
 main.add_command(config)
+main.add_command(prune)
