@@ -26,10 +26,8 @@ def test_run_job(client):
         t.save()
 
         exec_mock = MagicMock()
-
-        exec_class_mock = MagicMock()
-        exec_class_mock.Executor.return_value = exec_mock
-        client.application.executor_module = exec_class_mock
+        exec_mock.validate_max_running_executions.return_value = True
+        client.application.executor = exec_mock
 
         queue = Queue("jobs", is_async=False, connection=client.application.redis)
         result = queue.enqueue(job_mod.run_job, t.task_id, job_id, "image", "command")
@@ -115,10 +113,7 @@ def test_monitor_job_with_retry(client):
         exec_mock.get_result.return_value = MagicMock(
             exit_code=1, log="".encode("utf-8"), error="error".encode("utf-8")
         )
-
-        exec_class_mock = MagicMock()
-        exec_class_mock.Executor.return_value = exec_mock
-        client.application.executor_module = exec_class_mock
+        client.application.executor = exec_mock
 
         queue = Queue("monitor", is_async=False, connection=client.application.redis)
         result = queue.enqueue(job_mod.monitor_job, t.task_id, job_id, ex.execution_id)
@@ -171,7 +166,7 @@ def test_monitor_job_with_retry(client):
         )
 
         t.reload()
-        expect(t.jobs[0].executions[0].status).to_equal(JobExecution.Status.done)
+        expect(t.jobs[0].executions[0].status).to_equal(JobExecution.Status.failed)
 
 
 def test_monitor_job_with_retry2(client):
@@ -195,10 +190,7 @@ def test_monitor_job_with_retry2(client):
         exec_mock.get_result.return_value = MagicMock(
             exit_code=1, log="".encode("utf-8"), error="error".encode("utf-8")
         )
-
-        exec_class_mock = MagicMock()
-        exec_class_mock.Executor.return_value = exec_mock
-        client.application.executor_module = exec_class_mock
+        client.application.executor = exec_mock
 
         queue = Queue("monitor", is_async=False, connection=client.application.redis)
         result = queue.enqueue(job_mod.monitor_job, t.task_id, job_id, ex.execution_id)
