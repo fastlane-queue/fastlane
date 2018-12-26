@@ -55,7 +55,7 @@ Instead of the tedious, repetitive work of yesteryear where you had to implement
 
 The first and most important requirement is that you have a running Docker Host that accepts HTTP(s) requests. If you have docker running locally, you probably are set.
 
-In order to use fastlane, you also need to have both MongoDB and Redis instances available. If you just want to test fastlane and you have [Docker Compose]() available, run the following command:
+In order to use fastlane, you also need to have both MongoDB and Redis instances available. If you just want to test fastlane and you have [Docker Compose](https://docs.docker.com/compose/) available, run the following command:
 
 ```
 $ curl https://raw.githubusercontent.com/heynemann/fastlane/master/docker-compose-sample.yml | docker-compose -f - up -d
