@@ -1,0 +1,15 @@
+version: '2'
+
+services:
+  mongo:
+    image: mongo
+    ports:
+      - "10101:27017"
+    volumes:
+      - /tmp/fastlane/mongo:/data/db
+  redis:
+    image: redis
+    ports:
+      - "10100:6379"
+    volumes:
+      - /tmp/fastlane/redis:/data
