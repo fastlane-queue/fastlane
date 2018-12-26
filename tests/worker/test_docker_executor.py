@@ -1,7 +1,10 @@
+# Standard Library
 from unittest.mock import MagicMock
 
+# 3rd Party
 from preggy import expect
 
+# Fastlane
 from fastlane.worker.docker_executor import Executor
 
 

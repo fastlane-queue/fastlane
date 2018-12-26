@@ -1,8 +1,11 @@
+# Standard Library
 import sys
 from os.path import abspath, dirname, join
 
+# 3rd Party
 import click
 
+# Fastlane
 from fastlane.cli.api import APIHandler
 from fastlane.cli.worker import WorkerHandler
 
@@ -75,5 +78,14 @@ def worker(id, no_jobs, no_monitor, no_notify, verbose, config):
     handler()
 
 
+@click.command()
+def config():
+    """Prints the default config for fastlane"""
+    from fastlane.config import Config
+
+    print(Config.get_config_text())
+
+
 main.add_command(api)
 main.add_command(worker)
+main.add_command(config)

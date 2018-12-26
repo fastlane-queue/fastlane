@@ -1,18 +1,14 @@
+# Standard Library
 import datetime
 from uuid import uuid4
 
+# 3rd Party
 import mongoengine.errors
-from mongoengine import (
-    BooleanField,
-    DateTimeField,
-    DictField,
-    EmbeddedDocumentField,
-    IntField,
-    ListField,
-    ReferenceField,
-    StringField,
-)
+from mongoengine import (BooleanField, DateTimeField, DictField,
+                         EmbeddedDocumentField, IntField, ListField,
+                         ReferenceField, StringField)
 
+# Fastlane
 from fastlane.models import db
 
 

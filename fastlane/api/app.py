@@ -1,7 +1,9 @@
+# Standard Library
 import logging
 import sys
 from json import loads
 
+# 3rd Party
 import rq_dashboard
 import structlog
 from flask import Flask
@@ -10,14 +12,11 @@ from flask_redis_sentinel import SentinelExtension
 from flask_sockets import Sockets
 from gevent import pywsgi
 from geventwebsocket.handler import WebSocketHandler
-from structlog.processors import (
-    JSONRenderer,
-    StackInfoRenderer,
-    TimeStamper,
-    format_exc_info,
-)
+from structlog.processors import (JSONRenderer, StackInfoRenderer, TimeStamper,
+                                  format_exc_info)
 from structlog.stdlib import add_log_level, add_logger_name, filter_by_level
 
+# Fastlane
 import fastlane.api.metrics as metrics
 import fastlane.api.rqb as rqb
 from fastlane.api.enqueue import bp as enqueue

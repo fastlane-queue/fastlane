@@ -1,9 +1,14 @@
+"""   isort:skip_file """
+
+# 3rd Party
 from gevent import monkey
 
-from fastlane.api.app import Application
-from fastlane.config import Config
+# Must be before other imports
+monkey.patch_all()  # isort:skip
 
-monkey.patch_all()
+# Fastlane
+from fastlane.api.app import Application  # NOQA
+from fastlane.config import Config  # NOQA
 
 
 class APIHandler:
