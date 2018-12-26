@@ -49,6 +49,10 @@ def test_healthcheck3(client):
         find_mock.side_effect = RuntimeError(
             "MongoMock is emulating a connection error."
         )
+        # replacing properties is weird
+        db._connection = MagicMock()
+        db.connection.fastlane = MagicMock()
+        db.connection.fastlane.jobs = MagicMock()
         db.connection.fastlane.jobs.find = find_mock
 
         rv = client.get("/healthcheck", follow_redirects=True)

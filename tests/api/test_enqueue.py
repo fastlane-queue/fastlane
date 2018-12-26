@@ -15,59 +15,55 @@ def test_enqueue1(client):
     """Test enqueue a job works"""
     task_id = str(uuid4())
 
-    data = {
-        "image": "ubuntu",
-        "command": "ls",
-    }
+    data = {"image": "ubuntu", "command": "ls"}
 
-    rv = client.post(
-        f'/tasks/{task_id}', data=dumps(data), follow_redirects=True)
+    rv = client.post(f"/tasks/{task_id}", data=dumps(data), follow_redirects=True)
 
     expect(rv.status_code).to_equal(200)
 
     obj = loads(rv.data)
-    job_id = obj['jobId']
+    job_id = obj["jobId"]
     expect(job_id).not_to_be_null()
-    expect(obj['queueJobId']).not_to_be_null()
+    expect(obj["queueJobId"]).not_to_be_null()
 
     queue_job_id = obj["queueJobId"]
-    hash_key = f'rq:job:{queue_job_id}'
+    hash_key = f"rq:job:{queue_job_id}"
     app = client.application
 
     res = app.redis.exists(hash_key)
     expect(res).to_be_true()
 
-    res = app.redis.hget(hash_key, 'status')
-    expect(res).to_equal('queued')
+    res = app.redis.hget(hash_key, "status")
+    expect(res).to_equal("queued")
 
-    res = app.redis.hexists(hash_key, 'created_at')
+    res = app.redis.hexists(hash_key, "created_at")
     expect(res).to_be_true()
 
-    res = app.redis.hexists(hash_key, 'enqueued_at')
+    res = app.redis.hexists(hash_key, "enqueued_at")
     expect(res).to_be_true()
 
-    res = app.redis.hexists(hash_key, 'data')
+    res = app.redis.hexists(hash_key, "data")
     expect(res).to_be_true()
 
-    res = app.redis.hget(hash_key, 'origin')
-    expect(res).to_equal('jobs')
+    res = app.redis.hget(hash_key, "origin")
+    expect(res).to_equal("jobs")
 
-    res = app.redis.hget(hash_key, 'description')
+    res = app.redis.hget(hash_key, "description")
     expect(res).to_equal(
         f"fastlane.worker.job.run_job('{obj['taskId']}', '{job_id}', 'ubuntu', 'ls')"
     )
 
-    res = app.redis.hget(hash_key, 'timeout')
-    expect(res).to_equal('-1')
+    res = app.redis.hget(hash_key, "timeout")
+    expect(res).to_equal("-1")
 
-    task = Task.get_by_task_id(obj['taskId'])
+    task = Task.get_by_task_id(obj["taskId"])
     expect(task).not_to_be_null()
     expect(task.jobs).not_to_be_empty()
 
     j = task.jobs[0]
     expect(str(j.id)).to_equal(job_id)
 
-    q = 'rq:queue:jobs'
+    q = "rq:queue:jobs"
     res = app.redis.llen(q)
     expect(res).to_equal(1)
 
@@ -84,32 +80,30 @@ def test_enqueue2(client):
 
     task_id = str(uuid4())
 
-    data = {
-        "image": "ubuntu",
-        "command": "ls",
-    }
+    data = {"image": "ubuntu", "command": "ls"}
 
     options = dict(
         data=dumps(data),
-        headers={'Content-Type': 'application/json'},
-        follow_redirects=True)
+        headers={"Content-Type": "application/json"},
+        follow_redirects=True,
+    )
 
-    rv = client.post(f'/tasks/{task_id}', **options)
+    rv = client.post(f"/tasks/{task_id}", **options)
     expect(rv.status_code).to_equal(200)
 
     obj = loads(rv.data)
-    job_id = obj['jobId']
+    job_id = obj["jobId"]
     expect(job_id).not_to_be_null()
-    expect(obj['queueJobId']).not_to_be_null()
+    expect(obj["queueJobId"]).not_to_be_null()
 
-    rv = client.post(f'/tasks/{task_id}', **options)
+    rv = client.post(f"/tasks/{task_id}", **options)
     expect(rv.status_code).to_equal(200)
     obj = loads(rv.data)
-    job_id = obj['jobId']
+    job_id = obj["jobId"]
     expect(job_id).not_to_be_null()
-    expect(obj['queueJobId']).not_to_be_null()
+    expect(obj["queueJobId"]).not_to_be_null()
 
-    task = Task.get_by_task_id(obj['taskId'])
+    task = Task.get_by_task_id(obj["taskId"])
     expect(task).not_to_be_null()
     expect(task.jobs).not_to_be_empty()
 
@@ -128,28 +122,25 @@ def test_enqueue3(client):
 
     time = int(datetime.now(tz=timezone.utc).timestamp())
 
-    data = {
-        "image": "ubuntu",
-        "command": "ls",
-        "startAt": time,
-    }
+    data = {"image": "ubuntu", "command": "ls", "startAt": time}
     options = dict(
         data=dumps(data),
-        headers={'Content-Type': 'application/json'},
-        follow_redirects=True)
+        headers={"Content-Type": "application/json"},
+        follow_redirects=True,
+    )
 
-    rv = client.post(f'/tasks/{task_id}', **options)
+    rv = client.post(f"/tasks/{task_id}", **options)
     expect(rv.status_code).to_equal(200)
     obj = loads(rv.data)
-    job_id = obj['jobId']
+    job_id = obj["jobId"]
     expect(job_id).not_to_be_null()
-    expect(obj['queueJobId']).to_be_null()
+    expect(obj["queueJobId"]).not_to_be_null()
 
     # res = app.redis.keys()
-    res = app.redis.zrange(b'rq:scheduler:scheduled_jobs', 0, -1)
+    res = app.redis.zrange(b"rq:scheduler:scheduled_jobs", 0, -1)
     expect(res).to_length(1)
 
-    res = app.redis.zscore('rq:scheduler:scheduled_jobs', res[0])
+    res = app.redis.zscore("rq:scheduler:scheduled_jobs", res[0])
     expect(res).to_equal(time)
 
 
@@ -173,30 +164,28 @@ def enqueue_in(client, start_in, delta):
 
     task_id = str(uuid4())
 
-    data = {
-        "image": "ubuntu",
-        "command": "ls",
-        "startIn": start_in,
-    }
+    data = {"image": "ubuntu", "command": "ls", "startIn": start_in}
     options = dict(
         data=dumps(data),
-        headers={'Content-Type': 'application/json'},
-        follow_redirects=True)
+        headers={"Content-Type": "application/json"},
+        follow_redirects=True,
+    )
 
-    rv = client.post(f'/tasks/{task_id}', **options)
+    rv = client.post(f"/tasks/{task_id}", **options)
     expect(rv.status_code).to_equal(200)
     obj = loads(rv.data)
-    job_id = obj['jobId']
+    job_id = obj["jobId"]
     expect(job_id).not_to_be_null()
-    expect(obj['queueJobId']).to_be_null()
+    expect(obj["queueJobId"]).not_to_be_null()
 
     # res = app.redis.keys()
-    res = app.redis.zrange(b'rq:scheduler:scheduled_jobs', 0, -1)
+    res = app.redis.zrange(b"rq:scheduler:scheduled_jobs", 0, -1)
     expect(res).to_length(1)
 
     time = int((datetime.now(tz=timezone.utc) + delta).timestamp())
-    res = app.redis.zscore('rq:scheduler:scheduled_jobs', res[0])
-    expect(res).to_equal(time)
+    res = app.redis.zscore("rq:scheduler:scheduled_jobs", res[0])
+    expect(res).to_be_greater_than(time - 2)
+    expect(res).to_be_lesser_than(time + 2)
 
 
 def test_enqueue5(client):
@@ -207,27 +196,24 @@ def test_enqueue5(client):
 
     task_id = str(uuid4())
 
-    data = {
-        "image": "ubuntu",
-        "command": "ls",
-        "cron": "*/10 * * * *",
-    }
+    data = {"image": "ubuntu", "command": "ls", "cron": "*/10 * * * *"}
     options = dict(
         data=dumps(data),
-        headers={'Content-Type': 'application/json'},
-        follow_redirects=True)
+        headers={"Content-Type": "application/json"},
+        follow_redirects=True,
+    )
 
-    rv = client.post(f'/tasks/{task_id}', **options)
+    rv = client.post(f"/tasks/{task_id}", **options)
     expect(rv.status_code).to_equal(200)
     obj = loads(rv.data)
-    job_id = obj['jobId']
+    job_id = obj["jobId"]
     expect(job_id).not_to_be_null()
-    expect(obj['queueJobId']).to_be_null()
+    expect(obj["queueJobId"]).not_to_be_null()
 
-    res = app.redis.zrange(b'rq:scheduler:scheduled_jobs', 0, -1)
+    res = app.redis.zrange(b"rq:scheduler:scheduled_jobs", 0, -1)
     expect(res).to_length(1)
 
-    cron = croniter('*/10 * * * *', datetime.now())
-    res = app.redis.zscore('rq:scheduler:scheduled_jobs', res[0])
+    cron = croniter("*/10 * * * *", datetime.now())
+    res = app.redis.zscore("rq:scheduler:scheduled_jobs", res[0])
     expected = cron.get_next(datetime)
     expect(res).to_equal(expected.timestamp())
