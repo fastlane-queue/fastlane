@@ -1,5 +1,6 @@
 language: python
 python:
+  - "3.6.5"
   - "3.7-dev"
 services:
   - docker
