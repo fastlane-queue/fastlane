@@ -89,7 +89,7 @@ This will bridge the port `1234` in the container to the `1234` port in the host
 
 ### Installing
 
-To install locally, you need python 3.7+. Just run `pip install fastlane` and you are good to go.
+To install locally, you need python >=3.6.5(preferrably python >=3.7). Just run `pip install fastlane` and you are good to go.
 
 ### Running the API
 
