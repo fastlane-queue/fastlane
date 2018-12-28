@@ -26,6 +26,7 @@ Flask-Redis-Sentinel = "^2.0"
 flask-sockets = "^0.2.1"
 wsaccel = "^0.6.2"
 flask-socketio = "^3.1"
+requests = "^2.21"
 
 [tool.poetry.dev-dependencies]
 pytest = "^3.0"
@@ -39,6 +40,7 @@ fakeredis = "^0.12.0"
 mongomock = "^3.10"
 black = {version = "^18.3-alpha.0",python = "3.7"}
 python-language-server = "^0.21.3"
+requests-mock = "^1.5"
 
 [tool.poetry.scripts]
 fl = 'fastlane.cli:main'
