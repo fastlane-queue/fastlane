@@ -8,6 +8,7 @@ from croniter import croniter
 from preggy import expect
 
 # Fastlane
+from fastlane.models.job import Job
 from fastlane.models.task import Task
 
 
@@ -217,3 +218,39 @@ def test_enqueue5(client):
     res = app.redis.zscore("rq:scheduler:scheduled_jobs", res[0])
     expected = cron.get_next(datetime)
     expect(res).to_equal(expected.timestamp())
+
+
+def test_enqueue6(client):
+    """Test enqueue with webhooks"""
+    app = client.application
+    app.redis.flushall()
+
+    task_id = str(uuid4())
+
+    data = {
+        "image": "ubuntu",
+        "command": "ls",
+        "webhooks": {
+            "succeeds": [{"method": "GET", "url": "http://some.test.url"}],
+            "fails": [{"method": "GET", "url": "http://some.test.url"}],
+            "finishes": [{"method": "POST", "url": "http://some.test.url"}],
+        },
+    }
+    options = dict(
+        data=dumps(data),
+        headers={"Content-Type": "application/json"},
+        follow_redirects=True,
+    )
+
+    rv = client.post(f"/tasks/{task_id}", **options)
+    expect(rv.status_code).to_equal(200)
+    obj = loads(rv.data)
+    job_id = obj["jobId"]
+    expect(job_id).not_to_be_null()
+    expect(obj["queueJobId"]).not_to_be_null()
+
+    j = Job.get_by_id(task_id, job_id)
+    expect(j.metadata).to_include("webhooks")
+
+    wh = j.metadata["webhooks"]
+    expect(wh).to_be_like(data["webhooks"])

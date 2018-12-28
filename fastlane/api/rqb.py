@@ -42,6 +42,6 @@ class JobQueue:
 
 
 def init_app(app):
-    for qn in ["jobs", "monitor", "notify"]:
+    for qn in ["jobs", "monitor", "notify", "webhooks"]:
         key = qn.rstrip("s")
         setattr(app, "%s_queue" % key, JobQueue(qn, app))

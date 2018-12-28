@@ -13,7 +13,9 @@ from fastlane.worker.scheduler import QueueScheduler
 
 
 class WorkerHandler:
-    def __init__(self, click, worker_id, jobs, monitor, notify, config, log_level):
+    def __init__(
+        self, click, worker_id, jobs, monitor, notify, webhooks, config, log_level
+    ):
         self.config_path = config
         self.config = None
         self.click = click
@@ -29,6 +31,9 @@ class WorkerHandler:
 
         if notify:
             self.queues.append("notify")
+
+        if webhooks:
+            self.queues.append("webhooks")
 
         self.load_config()
 

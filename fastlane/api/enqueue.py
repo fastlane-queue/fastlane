@@ -2,8 +2,7 @@
 from datetime import datetime, timezone
 
 # 3rd Party
-from flask import (Blueprint, current_app, g, jsonify, make_response, request,
-                   url_for)
+from flask import Blueprint, current_app, g, jsonify, make_response, request, url_for
 from rq_scheduler import Scheduler
 
 # Fastlane
@@ -36,6 +35,9 @@ def create_job(details, task, logger):
     # people to notify when job succeeds, fails or finishes
     notify = details.get("notify", {"succeeds": [], "fails": [], "finishes": []})
 
+    # people to notify when job succeeds, fails or finishes
+    webhooks = details.get("webhooks", {"succeeds": [], "fails": [], "finishes": []})
+
     hard_limit = current_app.config["HARD_EXECUTION_TIMEOUT_SECONDS"]
     timeout = details.get("timeout", hard_limit)
     timeout = min(
@@ -45,6 +47,7 @@ def create_job(details, task, logger):
     j = task.create_job()
     j.metadata["retries"] = retries
     j.metadata["notify"] = notify
+    j.metadata["webhooks"] = webhooks
     j.metadata["retry_count"] = 0
     j.metadata["expiration"] = expiration
     j.metadata["timeout"] = timeout

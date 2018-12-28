@@ -16,6 +16,7 @@ from rq_scheduler import Scheduler
 # Fastlane
 from fastlane.models.job import Job, JobExecution
 from fastlane.worker import ExecutionResult
+from fastlane.worker.webhooks import WebhooksDispatcher, WebhooksDispatchError
 
 
 def validate_max_concurrent(executor, task_id, job, image, command, logger):
@@ -234,6 +235,47 @@ def run_job(task_id, job_id, image, command):
         )
 
 
+def _webhook_dispatch(task, job, execution, collection, logger):
+    task_id = task.task_id
+    job_id = str(job.id)
+    execution_id = str(execution.execution_id)
+
+    for webhook in collection:
+        method = "POST"
+        url = webhook.get("url")
+
+        if url is None:
+            logger.warn("Webhook with empty URL found. Skipping...")
+
+            continue
+        headers = webhook.get("headers", {})
+        retries = webhook.get("retries", 0)
+        hook_logger = logger.bind(
+            method=method, url=url, headers=headers, retries=retries, retry_count=0
+        )
+
+        hook_logger.debug("Enqueueing webhook...")
+        args = [task_id, job_id, execution_id, method, url, headers, retries, 0]
+        current_app.webhook_queue.enqueue(send_webhook, *args, timeout=-1)
+        hook_logger.info("Webhook enqueued successfully.")
+
+
+def send_webhooks(task, job, execution, logger):
+    if execution.status == JobExecution.Status.done:
+        succeed = job.metadata.get("webhooks", {}).get("succeeds", [])
+        logger.debug("Sending success webhooks...")
+        _webhook_dispatch(task, job, execution, succeed, logger)
+
+    if execution.status == JobExecution.Status.failed:
+        fails = job.metadata.get("webhooks", {}).get("fails", [])
+        logger.debug("Sending failed webhooks...")
+        _webhook_dispatch(task, job, execution, fails, logger)
+
+    finishes = job.metadata.get("webhooks", {}).get("finishes", [])
+    logger.info("Sending completion webhooks...")
+    _webhook_dispatch(task, job, execution, finishes, logger)
+
+
 def notify_users(task, job, execution, logger):
     task_id = task.task_id
     job_id = str(job.id)
@@ -405,6 +447,7 @@ def monitor_job(task_id, job_id, execution_id):
 
         executor.mark_as_done(job.task, job, execution)
 
+        send_webhooks(job.task, job, execution, logger)
         notify_users(job.task, job, execution, logger)
 
         return True
@@ -537,3 +580,87 @@ Job Details:
         error = traceback.format_exc()
         logger.error("Sending e-mail failed with exception!", error=error)
         raise exc
+
+
+def send_webhook(
+    task_id, job_id, execution_id, method, url, headers, retries, retry_count
+):
+    app = current_app
+
+    job = Job.get_by_id(task_id, job_id)
+    logger = app.logger.bind(
+        operation="send_webhook",
+        task_id=task_id,
+        job_id=job_id,
+        execution_id=execution_id,
+        method=method,
+        url=url,
+        headers=headers,
+        retries=retries,
+        retry_count=retry_count,
+    )
+
+    if job is None:
+        logger.error("Failed to retrieve task or job.")
+
+        return False
+
+    execution = job.get_execution_by_id(execution_id)
+    logger.info("Execution loaded successfully")
+
+    data = execution.to_dict(include_log=True, include_error=True)
+    data = json.loads(json.dumps(data))
+    if "webhookDispatch" in data["metadata"]:
+        del data["metadata"]["webhookDispatch"]
+    data = json.dumps(data)
+    try:
+        w = WebhooksDispatcher()
+        response = w.dispatch(method, url, data, headers)
+
+        execution.metadata.setdefault("webhookDispatch", [])
+        execution.metadata["webhookDispatch"].append(
+            {
+                "timestamp": datetime.utcnow().isoformat(),
+                "url": url,
+                "statusCode": response.status_code,
+                "body": response.body,
+                "headers": response.headers,
+            }
+        )
+        job.save()
+        logger.info("Webhook dispatched successfully.")
+    except WebhooksDispatchError as err:
+        error = traceback.format_exc()
+        execution.metadata.setdefault("webhookDispatch", [])
+        execution.metadata["webhookDispatch"].append(
+            {
+                "timestamp": datetime.utcnow().isoformat(),
+                "url": url,
+                "statusCode": err.status_code,
+                "body": err.body,
+                "headers": err.headers,
+                "error": error,
+            }
+        )
+        job.save()
+
+        logger.error("Failed to dispatch webhook.", err=error)
+        if retry_count < retries:
+            logger.debug("Retrying...")
+            args = [
+                task_id,
+                job_id,
+                execution_id,
+                method,
+                url,
+                headers,
+                retries,
+                retry_count + 1,
+            ]
+            scheduler = Scheduler("webhooks", connection=current_app.redis)
+
+            factor = app.config["WEBHOOKS_EXPONENTIAL_BACKOFF_FACTOR"]
+            min_backoff = app.config["WEBHOOKS_EXPONENTIAL_BACKOFF_MIN_MS"] / 1000.0
+            delta = timedelta(seconds=math.pow(factor, retry_count) * min_backoff)
+            scheduler.enqueue_in(delta, send_webhook, *args)
+            logger.info("Webhook dispatch retry scheduled.", date=delta)

@@ -1,3 +1,4 @@
+# 3rd Party
 from derpconf.config import Config
 
 Config.allow_environment_variables()
@@ -39,6 +40,20 @@ Config.define(
     "EXPONENTIAL_BACKOFF_FACTOR",
     2,
     "Factor to multiply backoff by in each retry",
+    "Worker",
+)
+
+Config.define(
+    "WEBHOOKS_EXPONENTIAL_BACKOFF_MIN_MS",
+    5000,
+    "Number of milliseconds that fastlane must wait before the first retry in each webhook dispatch",
+    "Worker",
+)
+
+Config.define(
+    "WEBHOOKS_EXPONENTIAL_BACKOFF_FACTOR",
+    2,
+    "Factor to multiply backoff by in each retry for webhook dispatch",
     "Worker",
 )
 
