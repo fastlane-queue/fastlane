@@ -254,3 +254,62 @@ def test_enqueue6(client):
 
     wh = j.metadata["webhooks"]
     expect(wh).to_be_like(data["webhooks"])
+
+
+def test_enqueue7(client):
+    """Test enqueue with metadata"""
+    app = client.application
+    app.redis.flushall()
+
+    task_id = str(uuid4())
+
+    data = {"image": "ubuntu", "command": "ls", "metadata": {"a": 123, "b": 456}}
+    options = dict(
+        data=dumps(data),
+        headers={"Content-Type": "application/json"},
+        follow_redirects=True,
+    )
+
+    rv = client.post(f"/tasks/{task_id}", **options)
+    expect(rv.status_code).to_equal(200)
+    obj = loads(rv.data)
+    job_id = obj["jobId"]
+    expect(job_id).not_to_be_null()
+    expect(obj["queueJobId"]).not_to_be_null()
+
+    j = Job.get_by_id(task_id, job_id)
+    expect(j.metadata).to_include("custom")
+
+    metadata = j.metadata["custom"]
+    expect(metadata).to_be_like(data["metadata"])
+
+
+def test_enqueue8(client):
+    """Test enqueue ignore metadata if not dict"""
+    cases = ("qwe", 123, ["as"], [{"a": 123}])
+
+    def enqueue(client, input_data):
+        app = client.application
+        app.redis.flushall()
+
+        task_id = str(uuid4())
+
+        data = {"image": "ubuntu", "command": "ls", "metadata": "qwe"}
+        options = dict(
+            data=dumps(data),
+            headers={"Content-Type": "application/json"},
+            follow_redirects=True,
+        )
+
+        rv = client.post(f"/tasks/{task_id}", **options)
+        expect(rv.status_code).to_equal(200)
+        obj = loads(rv.data)
+        job_id = obj["jobId"]
+        expect(job_id).not_to_be_null()
+        expect(obj["queueJobId"]).not_to_be_null()
+
+        j = Job.get_by_id(task_id, job_id)
+        expect(j.metadata).not_to_include("custom")
+
+    for input_data in cases:
+        enqueue(client, input_data)

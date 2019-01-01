@@ -38,6 +38,12 @@ def create_job(details, task, logger):
     # people to notify when job succeeds, fails or finishes
     webhooks = details.get("webhooks", {"succeeds": [], "fails": [], "finishes": []})
 
+    # additional metadata
+    metadata = details.get("metadata", {})
+
+    if not isinstance(metadata, (dict,)):
+        metadata = {}
+
     hard_limit = current_app.config["HARD_EXECUTION_TIMEOUT_SECONDS"]
     timeout = details.get("timeout", hard_limit)
     timeout = min(
@@ -52,6 +58,10 @@ def create_job(details, task, logger):
     j.metadata["expiration"] = expiration
     j.metadata["timeout"] = timeout
     j.metadata["envs"] = details.get("envs", {})
+
+    if metadata:
+        j.metadata["custom"] = metadata
+
     j.save()
     logger.debug("Job created successfully...", job_id=str(j.id))
 

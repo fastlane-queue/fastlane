@@ -17,7 +17,7 @@ Instead of the tedious, repetitive work of yesteryear where you had to implement
 - [x] Ad-Hoc execution of jobs (run job right now);
 - [x] Scheduled execution of jobs (run job next sunday at 6am, or run in 10 minutes from now);
 - [x] Crontab execution of jobs (run job at "*/10 * * * *" - every ten minutes);
-- [ ] Additional Job Metadata (useful for webhooks);
+- [x] Additional Job Metadata (useful for webhooks);
 - [x] Configurable retries per job;
 - [x] Configurable exponential back-off for retries and failures in monitoring of jobs;
 - [x] Configurable hard timeout for each execution;
@@ -445,7 +445,7 @@ The former is a simple page that connects to the latter using WebSockets. That m
 
 To integrate with [fastlane](https://github.com/fastlane) and stream the results of a job, just connect to it using Websockets like:
 
-```
+```javascript
 // In Javascript
 const connect = function() {
   const socket = new WebSocket("ws://fastlane.local:10000/tasks/test-scheduled-task/jobs/5c094abcedc7d5be820e20da/ws");
@@ -480,7 +480,7 @@ The reason when the socket gets closed tells you what happened. If the reason is
 
 When creating a new job, this is the most complete body that can be sent:
 
-```
+```json
 {
   "image": "ubuntu:latest",
   "command": "ls -lah",
@@ -490,6 +490,10 @@ When creating a new job, this is the most complete body that can be sent:
   "startIn": "5m",
   "startAt": 1645113692,
   "cron": "* * * * *",
+  "metadata": {
+    "username": "heynemann",
+    "email": "heynemann@some-email.com"
+  },
   "notify": {
     "succeeds": ["success@mycompany.com"],
     "fails": ["failure@mycompany.com", "other@mycompany.com"],

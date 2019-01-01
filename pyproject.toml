@@ -3,10 +3,9 @@ name = "fastlane"
 version = "0.5.0"
 description = "fastlane is a redis and docker based queueing service."
 authors = ["Bernardo Heynemann <heynemann@gmail.com>"]
-requires-python = "~=3.7"
 
 [tool.poetry.dependencies]
-python = "*"
+python = "^3.6"
 click = "^6.7"
 redis = "2.10.6"
 rq = "^0.12.0"
@@ -38,7 +37,7 @@ ipdb = "^0.11.0"
 preggy = "^1.4"
 fakeredis = "^0.12.0"
 mongomock = "^3.10"
-black = {version = "^18.3-alpha.0",python = "3.7"}
+black = "18.9b0"
 python-language-server = "^0.21.3"
 requests-mock = "^1.5"
 
