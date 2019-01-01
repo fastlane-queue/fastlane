@@ -13,3 +13,16 @@ services:
       - "10100:6379"
     volumes:
       - /tmp/fastlane/redis:/data
+  docker-host:
+    image: docker:stable-dind
+    privileged: true
+  fastlane:
+    image: fastlane
+    ports:
+      - "10000:10000"
+    environment:
+      - DOCKER_HOSTS=[{"match":"","hosts":["docker-host:2375"],"maxRunning":2}]
+    depends_on:
+      - mongo
+      - redis
+      - docker-host

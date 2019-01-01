@@ -1,5 +1,6 @@
 COMPOSE := $(shell command -v docker-compose 2> /dev/null)
 POETRY := $(shell command -v poetry 2> /dev/null)
+LAST_TAG := $(shell git for-each-ref --format='%(*committerdate:raw)%(committerdate:raw) %(refname) %(*objectname) %(objectname)' refs/tags 2>/dev/null | sort -n | awk '{ print $$3 }' | tail -n1 | sed s@refs/tags/@@g)
 
 setup:
 ifndef POETRY
@@ -30,13 +31,21 @@ ifdef COMPOSE
 endif
 	@-docker run -d -v /var/run/docker.sock:/var/run/docker.sock -p 127.0.0.1:1234:1234 bobrik/socat TCP-LISTEN:1234,fork UNIX-CONNECT:/var/run/docker.sock
 
-
 stop-deps:
 ifdef COMPOSE
 	@echo "Stopping dependencies..."
 	@docker-compose --project-name fastlane stop
 	@docker-compose --project-name fastlane rm -f
 endif
+
+docker-build:
+	@docker build -t fastlane .
+
+docker-push: docker-build
+	@docker tag fastlane heynemann/fastlane:${LAST_TAG}
+	@docker push heynemann/fastlane:${LAST_TAG}
+	@docker tag fastlane heynemann/fastlane:latest
+	@docker push heynemann/fastlane:latest
 
 test:
 	@poetry run pytest -sv --quiet --nf --cov=fastlane tests/
@@ -61,3 +70,11 @@ publish:
 coverage:
 	@coverage html
 	@open htmlcov/index.html
+
+sample:
+	@mkdir -p /tmp/fastlane/{mongo,redis}
+ifdef COMPOSE
+	@echo "Starting fastlane..."
+	@docker-compose -f ./docker-compose-sample.yml --project-name fastlane up -d
+	@echo "fastlane started successfully."
+endif
