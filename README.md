@@ -58,7 +58,7 @@ Instead of the tedious, repetitive work of yesteryear where you had to implement
 
 The team behind [fastlane](https://github.com/fastlane) firmly believes the first 5 minutes with the tool should allow any developer to feel what this tool is all about. So, without further ado let's get some work done.
 
-We assume you have both [docker](https://docs.docker.com/) and [Docker Compose](https://docs.docker.com/compose/) installed, up and running.
+We assume you have both [docker](https://docs.docker.com/) and [Docker Compose](https://docs.docker.com/compose/) properly installed and available.
 
 The first thing, we'll do is get [fastlane](https://github.com/fastlane) up and running (ps: this docker-compose file runs [Docker In Docker](https://hub.docker.com/_/docker/) and requires privileged mode to run):
 
@@ -87,7 +87,7 @@ d2e8713dce78        docker:stable-dind   "dockerd-entrypoint.…"   About a minu
 
 This means that inside our docker-compose network we can run new containers in the docker-host at `docker-host:2375`.
 
-In order to ensure that [fastlane](https://github.com/fastlane) is up and running, we can query its `/healthcheck/` route:
+In order to ensure that [fastlane](https://github.com/fastlane) is actually healthy, we can query its `/healthcheck/` route:
 
 ```
 $ curl http://localhost:10000/healthcheck/
@@ -135,9 +135,9 @@ $ curl http://localhost:10000/status/
 }
 ```
 
-The purpose of the `/status/` route is twofold: first, ensure that our farm is up and running and second to give us some stats on the farm, such as number of jobs and tasks, jobs currently running, blacklisted hosts, etc. 
+The purpose of the `/status/` route is twofold: first, ensure that our farm is able to process jobs, and second to give us some stats on the farm, such as number of jobs and tasks, jobs currently running, blacklisted hosts, etc. 
 
-Now that our [fastlane](https://github.com/fastlane) server is up and running, let's get our first job done. We'll start the way almost every single programming assignment starts:
+Now that our [fastlane](https://github.com/fastlane) server is up, let's get our first job done. We'll start the way almost every single programming assignment starts:
 
 ```
 $ curl -XPOST -d'{"image": "hello-world", "command": "/hello"}' http://localhost:10000/tasks/hello-world
@@ -311,7 +311,7 @@ $ fastlane config > my.conf
 $ fastlane api -vvv -c my.conf
 ```
 
-In order to ensure that the API is up and running, open in your browser `http://localhost:10000/healthcheck` and `http://localhost:10000/status`. The first ensures that the API has access to mongo and redis. The second that the docker farm as well as the queues are working properly.
+In order to ensure that the API is working as expected, open in your browser `http://localhost:10000/healthcheck` and `http://localhost:10000/status`. The first ensures that the API has access to mongo and redis. The second that the docker farm as well as the queues are working properly.
 
 ### Running the Workers
 
