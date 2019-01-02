@@ -40,6 +40,7 @@ Instead of the tedious, repetitive work of yesteryear where you had to implement
 - [ ] Circuit breaking when Docker Host is unavailable;
 - [x] Container Environment Variables per Job;
 - [x] Configurable global limit for number of running jobs per task name (Regular Expressions);
+- [ ] Limit of concurrent job executions per task;
 - [ ] Kubernetes Container Runner;
 - [x] MongoDB Task and Job Storage;
 - [x] Structured Logging;
