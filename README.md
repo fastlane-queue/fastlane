@@ -61,7 +61,7 @@ The team behind [fastlane](https://github.com/fastlane) firmly believes the firs
 
 We assume you have both [docker](https://docs.docker.com/) and [Docker Compose](https://docs.docker.com/compose/) properly installed and available.
 
-The first thing, we'll do is get [fastlane](https://github.com/fastlane) up and running (ps: this docker-compose file runs [Docker In Docker](https://hub.docker.com/_/docker/) and requires privileged mode to run):
+The first thing, we'll do is get [fastlane](https://github.com/fastlane) up and running (ps: this [Docker Compose](https://docs.docker.com/compose/) file runs [Docker In Docker](https://hub.docker.com/_/docker/) and requires privileged mode to run):
 
 ```
 $ curl https://raw.githubusercontent.com/heynemann/fastlane/master/docker-compose-sample.yml | docker-compose -f - up -d
@@ -86,7 +86,7 @@ d2e8713dce78        docker:stable-dind   "dockerd-entrypoint.…"   About a minu
 3fa269965f9e        mongo                "docker-entrypoint.s…"   About a minute ago   Up About a minute   0.0.0.0:10101->27017/tcp   fastlane_mongo_1
 ```
 
-This means that inside our docker-compose network we can run new containers in the `docker-host` at `docker-host:2375`.
+This means that inside our [docker-compose](https://docs.docker.com/compose/) network we can run new containers in the `docker-host` at `docker-host:2375`.
 
 In order to ensure that [fastlane](https://github.com/fastlane) is actually healthy, we can query its `/healthcheck/` route:
 
