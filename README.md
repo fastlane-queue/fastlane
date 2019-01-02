@@ -59,9 +59,9 @@ Instead of the tedious, repetitive work of yesteryear where you had to implement
 
 The team behind [fastlane](https://github.com/fastlane) firmly believes the first 5 minutes with the tool should allow any developer to feel what this tool is all about. So, without further ado let's get some work done.
 
-We assume you have both [docker](https://docs.docker.com/) and [Docker Compose](https://docs.docker.com/compose/) properly installed and available.
+We assume you have both [docker](https://docs.docker.com/) and [docker-compose](https://docs.docker.com/compose/) properly installed and available.
 
-The first thing, we'll do is get [fastlane](https://github.com/fastlane) up and running (ps: this [Docker Compose](https://docs.docker.com/compose/) file runs [Docker In Docker](https://hub.docker.com/_/docker/) and requires privileged mode to run):
+The first thing, we'll do is get [fastlane](https://github.com/fastlane) up and running (ps: this [docker-compose](https://docs.docker.com/compose/) file runs [Docker In Docker](https://hub.docker.com/_/docker/) and requires privileged mode to run):
 
 ```
 $ curl https://raw.githubusercontent.com/heynemann/fastlane/master/docker-compose-sample.yml | docker-compose -f - up -d
