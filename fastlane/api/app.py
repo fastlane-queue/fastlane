@@ -21,6 +21,7 @@ from structlog.processors import (
 from structlog.stdlib import add_log_level, add_logger_name, filter_by_level
 
 # Fastlane
+import fastlane.api.gzipped as gzipped
 import fastlane.api.metrics as metrics
 import fastlane.api.rqb as rqb
 from fastlane.api.enqueue import bp as enqueue
@@ -65,7 +66,9 @@ class Application:
         self.app.register_blueprint(enqueue)
         self.app.register_blueprint(task_api)
         self.app.register_blueprint(status)
-        # self.app.register_blueprint(rq_dashboard.blueprint, url_prefix="/rq")
+
+        self.app.register_blueprint(gzipped.bp)
+        gzipped.init_app(self.app)
 
         sockets = Sockets(self.app)
         sockets.register_blueprint(stream)
