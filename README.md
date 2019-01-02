@@ -54,6 +54,7 @@ Instead of the tedious, repetitive work of yesteryear where you had to implement
 - [ ] Usage metrics (extensible);
 - [x] Support [Redis](https://redis.io/) and [Redis](https://redis.io/) Sentinel;
 - [ ] Support [Redis](https://redis.io/) Cluster;
+- [ ] gzip all JSON responses for the API (for requests that accept gzip);
 - [ ] Admin to inspect tasks and jobs.
 
 ## Getting Started
