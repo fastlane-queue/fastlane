@@ -50,6 +50,7 @@ Instead of the tedious, repetitive work of yesteryear where you had to implement
 - [x] API to retrieve job and task details;
 - [x] Status Page with details on the farm status (executors, scheduled tasks and queue sizes);
 - [x] Error handling mechanism (Sentry built-in, extensible)
+- [ ] Per-job Error handling mechanism (Sentry built-in, extensible)
 - [ ] Usage metrics (extensible);
 - [x] Support [Redis](https://redis.io/) and [Redis](https://redis.io/) Sentinel;
 - [ ] Support [Redis](https://redis.io/) Cluster;
