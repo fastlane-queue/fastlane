@@ -612,6 +612,7 @@ def send_webhook(
     data = json.loads(json.dumps(data))
     if "webhookDispatch" in data["metadata"]:
         del data["metadata"]["webhookDispatch"]
+    data["metadata"]["custom"] = job.metadata.get("custom", {})
     data = json.dumps(data)
     try:
         w = WebhooksDispatcher()

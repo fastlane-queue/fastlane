@@ -19,7 +19,6 @@ services:
       - /tmp/fastlane/redis2:/data
     ports:
       - "10102:6379"
-
   redis-sentinel:
     build:
       context: ./redis-sentinel
@@ -29,3 +28,8 @@ services:
       - redis2
     ports:
       - "10103:26379"
+  docker-host:
+    image: docker:stable-dind
+    privileged: true
+    ports:
+      - "1234:2375"
