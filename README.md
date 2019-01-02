@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/heynemann/fastlane.svg?branch=master)](https://travis-ci.org/heynemann/fastlane)
 
-![demo](single_task.gif)
+[![demo](https://asciinema.org/a/219455.svg)](https://asciinema.org/a/219455)
 
 ## Why [fastlane](https://github.com/fastlane)?
 
