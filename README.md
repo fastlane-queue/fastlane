@@ -17,12 +17,12 @@ Instead of the tedious, repetitive work of yesteryear where you had to implement
 - [x] Ad-Hoc execution of jobs (run job right now);
 - [x] Scheduled execution of jobs (run job next sunday at 6am, or run in 10 minutes from now);
 - [x] Crontab execution of jobs (run job at "*/10 * * * *" - every ten minutes);
-- [x] API to retrieve task details, `/tasks/my-task` (`taskUrl`);
-- [x] API to retrieve job details, `taskUrl/jobs/<jobId>` (`jobUrl`);
-- [x] API to stop running task (`jobUrl/stop`);
-- [x] API to retry task (`jobUrl/retry`);
-- [x] API to get stdout (`jobUrl/stdout`) and stderr (`jobUrl/stderr`) for last execution in jobs;
-- [x] Job log output streaming using WebSockets (`ws://jobUrl/ws`) and `jobUrl/stream`;
+- [x] API to retrieve task details, `/tasks/my-task` (`<taskUrl>`);
+- [x] API to retrieve job details, `<taskUrl>/jobs/<jobId>` (`<jobUrl>`);
+- [x] API to stop running task (`<jobUrl>/stop`);
+- [x] API to retry task (`<jobUrl>/retry`);
+- [x] API to get stdout (`<jobUrl>/stdout`) and stderr (`<jobUrl>/stderr`) for last execution in jobs;
+- [x] Job log output streaming using WebSockets (`ws://<jobUrl>/ws`) and `<jobUrl>/stream`;
 - [x] Additional Job Metadata (useful for webhooks);
 - [x] Configurable retries per job;
 - [x] Configurable exponential back-off for retries and failures in monitoring of jobs;
