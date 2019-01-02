@@ -6,7 +6,7 @@
 
 ## Why [fastlane](https://github.com/fastlane)?
 
-[fastlane](https://github.com/fastlane) is a redis-based queueing service that outsmarts everyone else by using containers.
+[fastlane](https://github.com/fastlane) is a [redis](https://redis.io/)-based queueing service that outsmarts everyone else by using containers.
 
 More seriously, though, [fastlane](https://github.com/fastlane) allows you to easily implement new workers in the form of containers.
 
@@ -42,7 +42,7 @@ Instead of the tedious, repetitive work of yesteryear where you had to implement
 - [x] Configurable global limit for number of running jobs per task name (Regular Expressions);
 - [ ] Limit of concurrent job executions per task;
 - [ ] Kubernetes Container Runner;
-- [x] MongoDB Task and Job Storage;
+- [x] [MongoDB](https://www.mongodb.com/) Task and Job Storage;
 - [x] Structured Logging;
 - [x] Monitoring of job completion;
 - [x] Job Expiration;
@@ -51,8 +51,8 @@ Instead of the tedious, repetitive work of yesteryear where you had to implement
 - [x] Status Page with details on the farm status (executors, scheduled tasks and queue sizes);
 - [x] Error handling mechanism (Sentry built-in, extensible)
 - [ ] Usage metrics (extensible);
-- [x] Support Redis and Redis Sentinel;
-- [ ] Support Redis Cluster;
+- [x] Support [Redis](https://redis.io/) and [Redis](https://redis.io/) Sentinel;
+- [ ] Support [Redis](https://redis.io/) Cluster;
 - [ ] Admin to inspect tasks and jobs.
 
 ## Getting Started
@@ -74,7 +74,7 @@ Creating fastlane_fastlane_1    ... done
 fastlane started successfully.
 ```
 
-After this, both redis (port `10100`), mongo (port `10101`), [docker](https://docs.docker.com/) and [fastlane](https://github.com/fastlane) (port `10000`) should be available. We can confirm it with a `docker ps`:
+After this, both [redis](https://redis.io/) (port `10100`), [Mongo DB](https://www.mongodb.com/) (port `10101`), [docker](https://docs.docker.com/) and [fastlane](https://github.com/fastlane) (port `10000`) should be available. We can confirm it with a `docker ps`:
 
 ```
 $ docker ps
@@ -100,7 +100,7 @@ $ curl http://localhost:10000/healthcheck/
 }
 ```
 
-This route ensures [fastlane](https://github.com/fastlane) can access both `redis` and `mongo`. Now let's make sure it can also access our [docker](https://docs.docker.com/) farm:
+This route ensures [fastlane](https://github.com/fastlane) can access both [redis](https://redis.io/) and [Mongo DB](https://www.mongodb.com/). Now let's make sure it can also access our [docker](https://docs.docker.com/) farm:
 
 ```
 $ curl http://localhost:10000/status/
@@ -282,7 +282,7 @@ It should be fairly clear by this point that you can send any [docker](https://d
 
 The first and most important requirement is that you have a running [docker](https://docs.docker.com/) Host that accepts HTTP(s) requests. If you have [docker](https://docs.docker.com/) running locally, you probably are set.
 
-In order to use [fastlane](https://github.com/fastlane), you also need to have both MongoDB and Redis instances available. 
+In order to use [fastlane](https://github.com/fastlane), you also need to have both [Mongo DB](https://www.mongodb.com/) and [Redis](https://redis.io/) instances available. 
 
 **IMPORTANT WARNING**: If you are running fastlane on MacOS, we need to expose [docker](https://docs.docker.com/) host port to our service. This can be achieved by running the following command:
 
@@ -312,7 +312,7 @@ $ fastlane config > my.conf
 $ fastlane api -vvv -c my.conf
 ```
 
-In order to ensure that the API is working as expected, open in your browser `http://localhost:10000/healthcheck` and `http://localhost:10000/status`. The first ensures that the API has access to mongo and redis. The second that the [docker](https://docs.docker.com/) farm as well as the queues are working properly.
+In order to ensure that the API is working as expected, open in your browser `http://localhost:10000/healthcheck` and `http://localhost:10000/status`. The first ensures that the API has access to [Mongo DB](https://www.mongodb.com/) and [redis](https://redis.io/). The second that the [docker](https://docs.docker.com/) farm as well as the queues are working properly.
 
 ### Running the Workers
 
