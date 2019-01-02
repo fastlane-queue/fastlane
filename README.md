@@ -31,13 +31,13 @@ Instead of the tedious, repetitive work of yesteryear where you had to implement
 - [ ] Self-healing handling of interrupted jobs;
 - [x] Job log output streaming using WebSockets;
 - [x] Workers should handle SIGTERM and exit gracefully;
-- [x] Docker Container Runner (with Docker Host Pool);
-- [x] Docker Pool per task name (Regular Expressions);
-- [x] Rename docker containers after processing their details;
+- [x] [Docker](https://docs.docker.com/) Container Runner (with [docker](https://docs.docker.com/) host pool);
+- [x] [Docker](https://docs.docker.com/) Pool per task name (Regular Expressions);
+- [x] Rename [docker](https://docs.docker.com/) containers after processing their details;
 - [x] Command to prune processed containers;
-- [x] Routes to remove/put back Docker Host in job balancing;
-- [ ] Docker SSL connections;
-- [ ] Circuit breaking when Docker Host is unavailable;
+- [x] Routes to remove/put back [docker](https://docs.docker.com/) host in job balancing;
+- [ ] [Docker](https://docs.docker.com/) SSL connections;
+- [ ] Circuit breaking when [docker](https://docs.docker.com/) host is unavailable;
 - [x] Container Environment Variables per Job;
 - [x] Configurable global limit for number of running jobs per task name (Regular Expressions);
 - [ ] Limit of concurrent job executions per task;
@@ -74,7 +74,7 @@ Creating fastlane_fastlane_1    ... done
 fastlane started successfully.
 ```
 
-After this, both redis (port `10100`), mongo (port `10101`), docker and [fastlane](https://github.com/fastlane) (port `10000`) should be available. We can confirm it with a `docker ps`:
+After this, both redis (port `10100`), mongo (port `10101`), [docker](https://docs.docker.com/) and [fastlane](https://github.com/fastlane) (port `10000`) should be available. We can confirm it with a `docker ps`:
 
 ```
 $ docker ps
@@ -86,7 +86,7 @@ d2e8713dce78        docker:stable-dind   "dockerd-entrypoint.…"   About a minu
 3fa269965f9e        mongo                "docker-entrypoint.s…"   About a minute ago   Up About a minute   0.0.0.0:10101->27017/tcp   fastlane_mongo_1
 ```
 
-This means that inside our docker-compose network we can run new containers in the docker-host at `docker-host:2375`.
+This means that inside our docker-compose network we can run new containers in the `docker-host` at `docker-host:2375`.
 
 In order to ensure that [fastlane](https://github.com/fastlane) is actually healthy, we can query its `/healthcheck/` route:
 
@@ -100,7 +100,7 @@ $ curl http://localhost:10000/healthcheck/
 }
 ```
 
-This route ensures [fastlane](https://github.com/fastlane) can access both `redis` and `mongo`. Now let's make sure it can also access our `docker` farm:
+This route ensures [fastlane](https://github.com/fastlane) can access both `redis` and `mongo`. Now let's make sure it can also access our [docker](https://docs.docker.com/) farm:
 
 ```
 $ curl http://localhost:10000/status/
@@ -274,17 +274,17 @@ drwxr-xr-x   1 root root 4.0K Dec  4 17:11 usr
 drwxr-xr-x   1 root root 4.0K Dec  4 17:12 var
 ```
 
-It should be fairly clear by this point that you can send any docker image and any command and [fastlane](https://github.com/fastlane) will execute it for you, but don't be fooled by its simplicity. This is a very powerful concept, to be able to run anything at a later point in time with an API to query about its status. Never worry about building workers again.
+It should be fairly clear by this point that you can send any [docker](https://docs.docker.com/) image and any command and [fastlane](https://github.com/fastlane) will execute it for you, but don't be fooled by its simplicity. This is a very powerful concept, to be able to run anything at a later point in time with an API to query about its status. Never worry about building workers again.
 
 ## Installing and Running
 
 ### Pre-Requisites
 
-The first and most important requirement is that you have a running Docker Host that accepts HTTP(s) requests. If you have docker running locally, you probably are set.
+The first and most important requirement is that you have a running [docker](https://docs.docker.com/) Host that accepts HTTP(s) requests. If you have [docker](https://docs.docker.com/) running locally, you probably are set.
 
 In order to use [fastlane](https://github.com/fastlane), you also need to have both MongoDB and Redis instances available. 
 
-**IMPORTANT WARNING**: If you are running fastlane on MacOS, we need to expose Docker Host port to our service. This can be achieved by running the following command:
+**IMPORTANT WARNING**: If you are running fastlane on MacOS, we need to expose [docker](https://docs.docker.com/) host port to our service. This can be achieved by running the following command:
 
 ```
 $ docker run -d -v /var/run/docker.sock:/var/run/docker.sock -p 127.0.0.1:1234:1234 bobrik/socat TCP-LISTEN:1234,fork UNIX-CONNECT:/var/run/docker.sock
@@ -312,7 +312,7 @@ $ fastlane config > my.conf
 $ fastlane api -vvv -c my.conf
 ```
 
-In order to ensure that the API is working as expected, open in your browser `http://localhost:10000/healthcheck` and `http://localhost:10000/status`. The first ensures that the API has access to mongo and redis. The second that the docker farm as well as the queues are working properly.
+In order to ensure that the API is working as expected, open in your browser `http://localhost:10000/healthcheck` and `http://localhost:10000/status`. The first ensures that the API has access to mongo and redis. The second that the [docker](https://docs.docker.com/) farm as well as the queues are working properly.
 
 ### Running the Workers
 
@@ -529,7 +529,7 @@ When creating a new job, this is the most complete body that can be sent:
 }
 ```
 
-* `image` - This parameter specifies the docker image that should be used to run this job;
+* `image` - This parameter specifies the [docker](https://docs.docker.com/) image that should be used to run this job;
 * `command` - The command that will be run by the job;
 * `envs` - The environment variables that will be set in the container when the job is run;
 * `startIn`, `startAt` and `cron` - Different ways to schedule the job. If none of these is passed, the job starts immediately. `startIn` gets a string with how much time in the future to start the job in the form of `2h30m50s`. `startAt` takes an UNIX UTC timestamp that will be used to determine when the job should start. `cron` takes a [cron format](https://en.wikipedia.org/wiki/Cron) string that determines how often this job should be executed;
@@ -609,11 +609,11 @@ TBW.
 
 ## Docker Executor
 
-The docker executor features a pool of docker hosts that execute commands for you.
+The [docker](https://docs.docker.com/) executor features a pool of [docker](https://docs.docker.com/) hosts that execute commands for you.
 
 ### Pool Configuration
 
-Configuring the pool is done with the `DOCKER_HOSTS` configuration. It is a JSON-encoded string that specifies the logical farms of docker hosts.
+Configuring the pool is done with the `DOCKER_HOSTS` configuration. It is a JSON-encoded string that specifies the logical farms of [docker](https://docs.docker.com/) hosts.
 
 An example configuration with two pools:
 
@@ -629,9 +629,9 @@ This configuration ensures that any tasks whose id start with `producta` like `p
 
 The `maxRunning` parameter indicates how many concurrent jobs can be run in the farm.
 
-### Docker Executor Blacklisting
+### [Docker](https://docs.docker.com/) Executor Blacklisting
 
-In order to improve on reliability and at the same time allow for fast and safe upgrades of docker hosts, [fastlane](https://github.com/fastlane) comes bundled with a route for blacklisting docker hosts.
+In order to improve on reliability and at the same time allow for fast and safe upgrades of [docker](https://docs.docker.com/) hosts, [fastlane](https://github.com/fastlane) comes bundled with a route for blacklisting [docker](https://docs.docker.com/) hosts.
 
 The use case for this blacklist is as follows:
 
@@ -643,7 +643,7 @@ The use case for this blacklist is as follows:
 
 Then do the same for all the other hosts.
 
-**WARNING**: Please ensure that at least one docker host is available and **NOT** blacklisted in each farm. If all hosts are blacklisted, [fastlane](https://github.com/fastlane) will start dropping jobs on the affected farms.
+**WARNING**: Please ensure that at least one [docker](https://docs.docker.com/) host is available and **NOT** blacklisted in each farm. If all hosts are blacklisted, [fastlane](https://github.com/fastlane) will start dropping jobs on the affected farms.
 
 ## API
 
