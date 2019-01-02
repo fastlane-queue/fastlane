@@ -17,8 +17,8 @@ def status():
     executor = current_app.executor
     status = {"hosts": [], "containers": {"running": []}}
 
-    containers = executor.get_running_containers()
     blacklist = executor.get_blacklisted_hosts()
+    containers = executor.get_running_containers()
 
     for host, port, container_id in containers["running"]:
         status["containers"]["running"].append(
@@ -26,7 +26,27 @@ def status():
         )
 
     for host in containers["available"]:
-        status["hosts"].append({"host": host, "blacklisted": host in blacklist})
+        status["hosts"].append(
+            {
+                "host": host,
+                "available": True,
+                "error": None,
+                "blacklisted": host in blacklist,
+            }
+        )
+
+    for server in containers["unavailable"]:
+        host = server["host"]
+        port = server["port"]
+        error = server["error"]
+        status["hosts"].append(
+            {
+                "host": f"{host}:{port}",
+                "available": False,
+                "error": error,
+                "blacklisted": host in blacklist,
+            }
+        )
 
     status["queues"] = {"jobs": {}, "monitor": {}, "error": {}}
 

@@ -256,10 +256,15 @@ class Executor:
 
         return result
 
-    def get_running_containers(self, regex=None):
+    def get_running_containers(self, regex=None, blacklisted_hosts=None):
+        if blacklisted_hosts is None:
+            blacklisted_hosts = self.get_blacklisted_hosts()
+
         running = []
 
         clients = self.pool.clients.values()
+        unavailable_clients = []
+        unavailable_clients_set = set()
 
         if regex is not None:
             for r, cl in self.pool.clients_per_regex:
@@ -269,17 +274,35 @@ class Executor:
                 clients = cl
 
         for (host, port, client) in clients:
-            containers = client.containers.list(
-                sparse=False, filters={"status": "running"}
-            )
+            if f"{host}:{port}" in blacklisted_hosts:
+                continue
 
-            for container in containers:
-                if not container.name.startswith(job_prefix):
-                    continue
-                running.append((host, port, container.id))
+            try:
+                containers = client.containers.list(
+                    sparse=False, filters={"status": "running"}
+                )
+
+                for container in containers:
+                    if not container.name.startswith(job_prefix):
+                        continue
+                    running.append((host, port, container.id))
+            except Exception as err:
+                unavailable_clients_set.add(f"{host}:{port}")
+                unavailable_clients.append((host, port, err))
 
         return {
-            "available": [f"{host}:{port}" for (host, port, client) in clients],
+            "available": [
+                f"{host}:{port}"
+
+                for (host, port, client) in clients
+
+                if f"{host}:{port}" not in unavailable_clients_set
+            ],
+            "unavailable": [
+                {"host": host, "port": port, "error": str(err)}
+
+                for (host, port, err) in unavailable_clients
+            ],
             "running": running,
         }
 
