@@ -158,7 +158,6 @@ def create_task(task_id):
     )
 
     job_url = url_for("task.get_job", task_id=task_id, job_id=job_id, _external=True)
-    task_url = url_for("task.get_task", task_id=task_id, _external=True)
 
     return jsonify(
         {
@@ -166,6 +165,6 @@ def create_task(task_id):
             "jobId": job_id,
             "queueJobId": queue_job_id,
             "jobUrl": job_url,
-            "taskUrl": task_url,
+            "taskUrl": task.get_url(),
         }
     )

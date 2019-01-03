@@ -145,3 +145,10 @@ Config.define(
     "From E-mail of the SMTP server used to send notifications",
     "Email",
 )
+
+Config.define(
+    "PAGINATION_PER_PAGE",
+    10,
+    "Total items per page to be used on api pagination methods",
+    "API",
+)

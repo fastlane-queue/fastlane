@@ -16,9 +16,7 @@ from fastlane.models.task import Task
 def test_enqueue1(client):
     """Test enqueue a job works"""
     task_id = str(uuid4())
-
     data = {"image": "ubuntu", "command": "ls"}
-
     rv = client.post(f"/tasks/{task_id}", data=dumps(data), follow_redirects=True)
 
     expect(rv.status_code).to_equal(200)
@@ -28,9 +26,14 @@ def test_enqueue1(client):
     expect(job_id).not_to_be_null()
     expect(obj["queueJobId"]).not_to_be_null()
 
+    app = client.application
+    task = Task.get_by_task_id(obj["taskId"])
+
+    with app.app_context():
+        expect(obj["taskUrl"]).to_equal(task.get_url())
+
     queue_job_id = obj["queueJobId"]
     hash_key = f"rq:job:{queue_job_id}"
-    app = client.application
 
     res = app.redis.exists(hash_key)
     expect(res).to_be_true()
@@ -58,7 +61,6 @@ def test_enqueue1(client):
     res = app.redis.hget(hash_key, "timeout")
     expect(res).to_equal("-1")
 
-    task = Task.get_by_task_id(obj["taskId"])
     expect(task).not_to_be_null()
     expect(task.jobs).not_to_be_empty()
 
@@ -72,7 +74,7 @@ def test_enqueue1(client):
     res = app.redis.lpop(q)
     expect(res).to_equal(queue_job_id)
 
-    with client.application.app_context():
+    with app.app_context():
         count = Task.objects.count()
         expect(count).to_equal(1)
 
