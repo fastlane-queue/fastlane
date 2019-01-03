@@ -20,6 +20,50 @@ from fastlane.worker.job import run_job
 bp = Blueprint("task", __name__)
 
 
+@bp.route("/tasks", methods=("GET",))
+def get_tasks():
+    logger = g.logger.bind(operation="get_tasks")
+
+    try:
+        page = int(request.args.get('page', 1))
+    except ValueError:
+        logger.error(f"Tasks pagination page param should be an integer.")
+        abort(404)
+
+    per_page = current_app.config["PAGINATION_PER_PAGE"]
+
+    logger.debug(f"Getting tasks page={page} per_page={per_page}...")
+    paginator = Task.get_tasks(page=page, per_page=per_page)
+
+    logger.debug("Tasks retrieved successfully...")
+
+    tasks_url = url_for("task.get_tasks", _external=True)
+    next_url = None
+    if paginator.has_next:
+        next_url = f'{tasks_url}?page={paginator.next_num}'
+
+    prev_url = None
+    if paginator.has_prev:
+        prev_url = f'{tasks_url}?page={paginator.prev_num}'
+
+    data = {
+        "items": [],
+        "total": paginator.total,
+        "page": paginator.page,
+        "pages": paginator.pages,
+        "perPage": paginator.per_page,
+        "hasNext": paginator.has_next,
+        "hasPrev": paginator.has_prev,
+        "nextUrl": next_url,
+        "prevUrl": prev_url,
+    }
+
+    for task in paginator.items:
+        data['items'].append(task.to_dict())
+
+    return jsonify(data)
+
+
 @bp.route("/tasks/<task_id>", methods=("GET",))
 def get_task(task_id):
     logger = g.logger.bind(operation="get_task", task_id=task_id)

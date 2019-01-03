@@ -4,6 +4,7 @@ import datetime
 # 3rd Party
 import mongoengine.errors
 from bson.objectid import ObjectId
+from flask import url_for
 from mongoengine import DateTimeField, ListField, ReferenceField, StringField
 
 # Fastlane
@@ -37,12 +38,30 @@ class Task(db.Document):
 
         return super(Task, self).save(*args, **kwargs)
 
+    def get_url(self):
+        return url_for("task.get_task", task_id=self.task_id, _external=True)
+
+    def to_dict(self):
+        res = {
+            'taskId': self.task_id,
+            'createdAt': self.created_at.timestamp(),
+            'lastModifiedAt': self.last_modified_at.timestamp(),
+            'url': self.get_url(),
+            'jobsCount': len(self.jobs),
+        }
+
+        return res
+
     @classmethod
     def create_task(cls, task_id):
         t = cls(task_id=task_id)
         t.save()
 
         return t
+
+    @classmethod
+    def get_tasks(cls, page=1, per_page=20):
+        return cls.objects.paginate(page, per_page)
 
     @classmethod
     def get_by_task_id(cls, task_id):

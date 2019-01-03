@@ -37,6 +37,51 @@ def test_task_create2(client):
         Task.create_task("")
 
 
+def test_task_to_dict(client):
+    """Test to_dict"""
+    task = Task.create_task('my-task')
+    app = client.application
+    server_name = app.config['SERVER_NAME']
+
+    with app.app_context():
+        res = task.to_dict()
+
+    expect(res['taskId']).to_equal('my-task')
+
+    created_at = int(task.created_at.timestamp())
+    expect(int(res["createdAt"])).to_equal(created_at)
+
+    last_modified_at = int(task.last_modified_at.timestamp())
+    expect(int(res["lastModifiedAt"])).to_equal(last_modified_at)
+
+    expect(res["url"]).to_equal(f'http://{server_name}/tasks/my-task')
+    expect(res["jobsCount"]).to_equal(0)
+
+
+def test_task_get_tasks(client):
+    """Test getting tasks"""
+    Task.create_task(str(uuid4()))
+    Task.create_task(str(uuid4()))
+
+    tasks = Task.get_tasks()
+    expect(tasks.total).to_equal(2)
+
+
+def test_task_get_tasks_pagination(client):
+    """Test getting tasks pagination"""
+    Task.create_task(str(uuid4()))
+    Task.create_task(str(uuid4()))
+    Task.create_task(str(uuid4()))
+
+    tasks = Task.get_tasks(page=1, per_page=1)
+    expect(tasks.total).to_equal(3)
+    expect(tasks.pages).to_equal(3)
+    expect(tasks.items).to_length(1)
+
+    expect(tasks.has_next).to_be_true()
+    expect(tasks.has_prev).to_be_false()
+
+
 def test_task_get_by_task_id(client):
     """Test getting a task by task id"""
     task_id = str(uuid4())
