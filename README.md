@@ -1,6 +1,6 @@
 ![fastlane](fastlane-logo.png)
 
-[![Build Status](https://travis-ci.org/heynemann/fastlane.svg?branch=master)](https://travis-ci.org/heynemann/fastlane) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/9a5f26ea8e1141e5941b0ced5f9f4a8d)](https://www.codacy.com/app/heynemann/fastlane?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=heynemann/fastlane&amp;utm_campaign=Badge_Grade) [![BCH compliance](https://bettercodehub.com/edge/badge/heynemann/fastlane?branch=master)](https://bettercodehub.com/)
+[![Build Status](https://travis-ci.org/heynemann/fastlane.svg?branch=master)](https://travis-ci.org/heynemann/fastlane) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/55791f14727846f5a330f409ff4266c1)](https://www.codacy.com/app/heynemann/fastlane?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=heynemann/fastlane&amp;utm_campaign=Badge_Grade) [![BCH compliance](https://bettercodehub.com/edge/badge/heynemann/fastlane?branch=master)](https://bettercodehub.com/)
 
 [![demo](https://asciinema.org/a/219455.svg)](https://asciinema.org/a/219455)
 
