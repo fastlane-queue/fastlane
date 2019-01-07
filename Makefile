@@ -76,3 +76,8 @@ ifdef COMPOSE
 	@docker-compose -f ./docker-compose-sample.yml --project-name fastlane up -d
 	@echo "fastlane started successfully."
 endif
+
+readme:
+	#ensure remark is installed with
+	#npm install --global remark-cli remark-preset-lint-recommended remark-stringify
+	@remark README.md -o README.md
