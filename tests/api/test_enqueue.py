@@ -4,6 +4,7 @@ from json import dumps, loads
 from uuid import uuid4
 
 # 3rd Party
+import pytest
 from croniter import croniter
 from preggy import expect
 
@@ -313,3 +314,24 @@ def test_enqueue8(client):
 
     for input_data in cases:
         enqueue(client, input_data)
+
+
+def test_enqueue9(client):
+    """Tests that enqueueing with invalid or empty body returns 400"""
+
+    pytest.skip("Not implemented")
+
+
+def test_enqueue10(client):
+    """Tests that enqueueing without image and command returns 400"""
+
+    pytest.skip("Not implemented")
+
+
+def test_enqueue11(client):
+    """
+    Tests that enqueueing with multiple scheduling options:
+    startAt, startIn or cron returns 400
+    """
+
+    pytest.skip("Not implemented")
