@@ -4,8 +4,7 @@ import datetime
 # 3rd Party
 import mongoengine.errors
 from bson.objectid import ObjectId
-from mongoengine import (BooleanField, DateTimeField, ListField,
-                         ReferenceField, StringField)
+from mongoengine import DateTimeField, ListField, ReferenceField, StringField
 
 # Fastlane
 from fastlane.models import db
@@ -13,20 +12,20 @@ from fastlane.models import db
 
 class Task(db.Document):
     created_at = DateTimeField(required=True)
-    last_modified_at = DateTimeField(
-        required=True, default=datetime.datetime.now)
+    last_modified_at = DateTimeField(required=True, default=datetime.datetime.now)
     task_id = StringField(required=True)
-    jobs = ListField(ReferenceField('Job'))
+    jobs = ListField(ReferenceField("Job"))
 
     def _validate(self):
         errors = {}
 
         if self.task_id == "":
             errors["task_id"] = mongoengine.errors.ValidationError(
-                'Field is required', field_name="task_id")
+                "Field is required", field_name="task_id"
+            )
 
         if errors:
-            message = 'ValidationError (%s:%s) ' % (self._class_name, self.pk)
+            message = "ValidationError (%s:%s) " % (self._class_name, self.pk)
             raise mongoengine.errors.ValidationError(message, errors=errors)
 
     def save(self, *args, **kwargs):
@@ -48,8 +47,7 @@ class Task(db.Document):
     @classmethod
     def get_by_task_id(cls, task_id):
         if task_id is None or task_id == "":
-            raise RuntimeError(
-                "Task ID is required and can't be None or empty.")
+            raise RuntimeError("Task ID is required and can't be None or empty.")
 
         t = cls.objects(task_id=task_id).no_dereference().first()
 
@@ -59,10 +57,7 @@ class Task(db.Document):
         from fastlane.models.job import Job
 
         job_id = ObjectId()
-        j = Job(
-            id=job_id,
-            job_id=str(job_id),
-        )
+        j = Job(id=job_id, job_id=str(job_id))
         j.task = self
         j.save()
 

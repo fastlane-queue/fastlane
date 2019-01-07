@@ -1,9 +1,15 @@
-# Standard Library
-import time
-
 # 3rd Party
-from flask import (Blueprint, Response, abort, current_app, g, jsonify,
-                   render_template, request, url_for)
+from flask import (
+    Blueprint,
+    Response,
+    abort,
+    current_app,
+    g,
+    jsonify,
+    render_template,
+    request,
+    url_for,
+)
 from rq_scheduler import Scheduler
 
 # Fastlane

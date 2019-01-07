@@ -72,6 +72,20 @@ Config.define(
 )
 
 Config.define(
+    "DOCKER_CIRCUIT_BREAKER_MAX_FAILS",
+    5,
+    "Maximum number of failures to docker host to stop sending new jobs",
+    "Docker Executor",
+)
+
+Config.define(
+    "DOCKER_CIRCUIT_BREAKER_RESET_TIMEOUT_SECONDS",
+    60,
+    "Number of seconds to reopen circuit and start sending new jobs to a docker host",
+    "Docker Executor",
+)
+
+Config.define(
     "MONGODB_CONFIG",
     """{
         "host": "mongodb://localhost:10101/fastlane",

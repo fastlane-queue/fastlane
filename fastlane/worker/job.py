@@ -16,6 +16,7 @@ from rq_scheduler import Scheduler
 # Fastlane
 from fastlane.models.job import Job, JobExecution
 from fastlane.worker import ExecutionResult
+from fastlane.worker.errors import HostUnavailableError
 from fastlane.worker.webhooks import WebhooksDispatcher, WebhooksDispatchError
 
 
@@ -64,6 +65,17 @@ def validate_expiration(job, ex, logger):
     return True
 
 
+def reenqueue_job_due_to_break(task_id, job_id, image, command):
+    args = [task_id, job_id, image, command]
+    delta = timedelta(seconds=1.0)
+
+    scheduler = Scheduler("jobs", connection=current_app.redis)
+    dt = datetime.utcnow() + delta
+    enqueued = scheduler.enqueue_at(dt, run_job, *args)
+
+    return enqueued.id
+
+
 def download_image(executor, job, ex, image, tag, command, logger):
     try:
         logger.debug("Downloading updated container image...", image=image, tag=tag)
@@ -73,6 +85,17 @@ def download_image(executor, job, ex, image, tag, command, logger):
         logger.info(
             "Image downloaded successfully.", image=image, tag=tag, ellapsed=ellapsed
         )
+    except HostUnavailableError:
+        enqueued_id = reenqueue_job_due_to_break(
+            job.task.task_id, str(job.job_id), image, command
+        )
+
+        job.metadata["enqueued_id"] = enqueued_id
+        job.save()
+
+        logger.warn("Job execution re-enqueued successfully.")
+
+        return False
     except Exception as err:
         error = traceback.format_exc()
         logger.error("Failed to download image.", error=error)
@@ -116,6 +139,17 @@ def run_container(executor, job, ex, image, tag, command, logger):
             command=command,
             ellapsed=ellapsed,
         )
+    except HostUnavailableError:
+        enqueued_id = reenqueue_job_due_to_break(
+            job.task.task_id, str(job.job_id), image, command
+        )
+
+        job.metadata["enqueued_id"] = enqueued_id
+        job.save()
+
+        logger.warn("Job execution re-enqueued successfully.")
+
+        return False
     except Exception as err:
         error = traceback.format_exc()
         logger.error("Failed to run command", error=error)
@@ -325,7 +359,16 @@ def notify_users(task, job, execution, logger):
             execution.exit_code,
         )
         args = [task_id, job_id, execution_id, subject, email]
-        current_app.job_queue.enqueue(send_email, *args, timeout=-1)
+        current_app.notify_queue.enqueue(send_email, *args, timeout=-1)
+
+
+def reenqueue_monitor_due_to_break(task_id, job_id, execution_id):
+    args = [task_id, job_id, execution_id]
+    delta = timedelta(seconds=1.0)
+
+    scheduler = Scheduler("monitor", connection=current_app.redis)
+    dt = datetime.utcnow() + delta
+    enqueued = scheduler.enqueue_at(dt, monitor_job, *args)
 
 
 def monitor_job(task_id, job_id, execution_id):
@@ -347,7 +390,15 @@ def monitor_job(task_id, job_id, execution_id):
             return False
 
         execution = job.get_execution_by_id(execution_id)
-        result = executor.get_result(job.task, job, execution)
+        try:
+            result = executor.get_result(job.task, job, execution)
+        except HostUnavailableError:
+            reenqueue_monitor_due_to_break(task_id, job_id, execution_id)
+
+            logger.warn("Job monitor re-enqueued successfully.")
+
+            return False
+
         logger.info(
             "Container result obtained.",
             container_status=result.status,
@@ -365,7 +416,14 @@ def monitor_job(task_id, job_id, execution_id):
                 execution.status = JobExecution.Status.timedout
                 execution.error = "Job execution timed out after %d seconds." % ellapsed
 
-                executor.stop_job(job.task, job, execution)
+                try:
+                    executor.stop_job(job.task, job, execution)
+                except HostUnavailableError:
+                    reenqueue_monitor_due_to_break(task_id, job_id, execution_id)
+
+                    logger.warn("Job monitor re-enqueued successfully.")
+
+                    return False
 
                 logger.debug(
                     "Job execution timed out. Storing job details in mongo db.",
@@ -445,7 +503,14 @@ def monitor_job(task_id, job_id, execution_id):
         job.save()
         logger.info("Job details stored in mongo db.", status=execution.status)
 
-        executor.mark_as_done(job.task, job, execution)
+        try:
+            executor.mark_as_done(job.task, job, execution)
+        except HostUnavailableError:
+            reenqueue_monitor_due_to_break(task_id, job_id, execution_id)
+
+            logger.warn("Job monitor re-enqueued successfully.")
+
+            return False
 
         send_webhooks(job.task, job, execution, logger)
         notify_users(job.task, job, execution, logger)

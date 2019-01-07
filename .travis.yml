@@ -10,5 +10,9 @@ install:
   - pip install -U setuptools
   - pip install poetry
   - poetry install
+  - pip install codacy-coverage
+after_success:
+  - coverage xml
+  - CODACY_PROJECT_TOKEN=6094c750148a4305b986d049385bbf9a python-codacy-coverage -r coverage.xml
 script:
   - make test

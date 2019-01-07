@@ -11,23 +11,28 @@ from fastlane.worker.docker_executor import blacklist_key
 
 def test_docker_blacklist1(client):
     """Test blacklisting a docker server"""
-    docker_host = str(uuid4())
 
-    data = {"host": docker_host}
-    rv = client.post(
-        "/docker-executor/blacklist", data=dumps(data), follow_redirects=True
-    )
+    def ensure_blacklist(method):
+        docker_host = str(uuid4())
 
-    expect(rv.status_code).to_equal(200)
-    expect(rv.data).to_be_empty()
+        data = {"host": docker_host}
+        rv = getattr(client, method)(
+            "/docker-executor/blacklist", data=dumps(data), follow_redirects=True
+        )
 
-    app = client.application
+        expect(rv.status_code).to_equal(200)
+        expect(rv.data).to_be_empty()
 
-    res = app.redis.exists(blacklist_key)
-    expect(res).to_be_true()
+        app = client.application
 
-    res = app.redis.sismember(blacklist_key, docker_host)
-    expect(res).to_be_true()
+        res = app.redis.exists(blacklist_key)
+        expect(res).to_be_true()
+
+        res = app.redis.sismember(blacklist_key, docker_host)
+        expect(res).to_be_true()
+
+    for method in ["post", "put"]:
+        ensure_blacklist(method)
 
 
 def test_docker_blacklist2(client):

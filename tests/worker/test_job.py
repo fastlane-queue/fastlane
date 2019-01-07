@@ -4,6 +4,7 @@ from unittest.mock import MagicMock
 from uuid import uuid4
 
 # 3rd Party
+import pytest
 from preggy import expect
 from rq import Queue, SimpleWorker
 
@@ -13,7 +14,7 @@ from fastlane.models.job import JobExecution
 from fastlane.models.task import Task
 
 
-def test_run_job(client):
+def test_run_job1(client):
     """Test running a new job for a task"""
     with client.application.app_context():
         app = client.application
@@ -92,6 +93,114 @@ def test_run_job(client):
         expect(t.jobs[0].executions[0].status).to_equal(JobExecution.Status.running)
 
 
+def test_validate_max1(client):
+    """
+    Test validating max concurent executions for a farm returns True
+    if max concurrent executions not reached.
+    """
+    with client.application.app_context():
+        pytest.skip("Not implemented")
+
+
+def test_validate_max2(client):
+    """
+    Test validating max concurent executions for a farm returns False
+    if max concurrent executions reached and re-enqueues the Job.
+    """
+    with client.application.app_context():
+        pytest.skip("Not implemented")
+
+
+def test_validate_expiration1(client):
+    """
+    Test validating the expiration of a Job returns True if the job
+    has no expiration.
+    """
+    with client.application.app_context():
+        pytest.skip("Not implemented")
+
+
+def test_validate_expiration2(client):
+    """
+    Test validating the expiration of a Job returns True if the job
+    has expiration but not expired.
+    """
+    with client.application.app_context():
+        pytest.skip("Not implemented")
+
+
+def test_validate_expiration3(client):
+    """
+    Test validating the expiration of a Job returns False if the job
+    has expiration and has expired. It also tests that the job is marked
+    as expired with the proper message as error.
+    """
+    with client.application.app_context():
+        pytest.skip("Not implemented")
+
+
+def test_reenqueue_job1(client):
+    """
+    Test re-enqueuing a job due to Executor HostUnavailableError.
+    """
+    with client.application.app_context():
+        pytest.skip("Not implemented")
+
+
+def test_downloading_image1(client):
+    """
+    Test updating an image works and returns True
+    """
+    with client.application.app_context():
+        pytest.skip("Not implemented")
+
+
+def test_downloading_image2(client):
+    """
+    Test updating an image when executor raises HostUnavailableError,
+    the job is re-enqueued and method returns False
+    """
+    with client.application.app_context():
+        pytest.skip("Not implemented")
+
+
+def test_downloading_image3(client):
+    """
+    Test updating an image when executor raises any exception other than
+    HostUnavailableError, the job is marked as failed with the proper error
+    and method returns False
+    """
+    with client.application.app_context():
+        pytest.skip("Not implemented")
+
+
+def test_run_container1(client):
+    """
+    Test running a container works and returns True
+    """
+    with client.application.app_context():
+        pytest.skip("Not implemented")
+
+
+def test_run_container2(client):
+    """
+    Test running a container when executor raises HostUnavailableError,
+    the job is re-enqueued and method returns False
+    """
+    with client.application.app_context():
+        pytest.skip("Not implemented")
+
+
+def test_run_container3(client):
+    """
+    Test running a container when executor raises any exception other than
+    HostUnavailableError, the job is marked as failed with the proper error
+    and method returns False
+    """
+    with client.application.app_context():
+        pytest.skip("Not implemented")
+
+
 def test_monitor_job_with_retry(client):
     """Test monitoring a job for a task that fails"""
     with client.application.app_context():
@@ -147,7 +256,8 @@ def test_monitor_job_with_retry(client):
 
         time = datetime.now() + timedelta(seconds=2)
         res = app.redis.zscore("rq:scheduler:scheduled_jobs", res[0])
-        expect(int(res)).to_equal(int(time.timestamp()))
+        expect(int(res)).to_be_greater_than(int(time.timestamp()) - 2)
+        expect(int(res)).to_be_lesser_than(int(time.timestamp()) + 2)
 
         nj = app.redis.zrange("rq:scheduler:scheduled_jobs", 0, 0)[0].decode("utf-8")
         next_job_id = f"rq:job:{nj}"
