@@ -93,7 +93,7 @@ def test_validate_max1(client):
         pool_mock = PoolFixture.new(
             clients={match: [("host", 1234, client_mock)]},
             clients_per_regex=[(match, [("host", 1234, client_mock)])],
-            max_running={match: 3},
+            max_running={match: 1},
         )
         executor = Executor(app, pool_mock)
 
@@ -109,19 +109,38 @@ def test_validate_max2(client):
     app = client.application
 
     with app.app_context():
-        match = re.compile(r"other.+")
-        containers = [ContainerFixture.new(name="fastlane-job-123")]
+        pool_mock = PoolFixture.new()
+        executor = Executor(app, pool_mock)
+
+        result = executor.validate_max_running_executions("test123")
+        expect(result).to_be_true()
+
+
+def test_validate_max3(client):
+    """
+    Tests validating max current executions returns False
+    if max concurrent containers already running
+    """
+
+    app = client.application
+
+    with app.app_context():
+        match = re.compile(r"test.+")
+        containers = [
+            ContainerFixture.new(name="fastlane-job-123"),
+            ContainerFixture.new(name="fastlane-job-456"),
+        ]
         client_mock = ClientFixture.new(containers)
 
         pool_mock = PoolFixture.new(
             clients={match: [("host", 1234, client_mock)]},
             clients_per_regex=[(match, [("host", 1234, client_mock)])],
-            max_running={match: 3},
+            max_running={match: 1},
         )
         executor = Executor(app, pool_mock)
 
         result = executor.validate_max_running_executions("test123")
-        expect(result).to_be_true()
+        expect(result).to_be_false()
 
 
 def test_get_result1(client):
