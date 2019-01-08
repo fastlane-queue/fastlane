@@ -1,4 +1,5 @@
 # Standard Library
+import re
 from unittest.mock import MagicMock
 from uuid import uuid4
 
@@ -8,6 +9,7 @@ from preggy import expect
 
 # Fastlane
 from fastlane.worker.docker_executor import Executor
+from tests.fixtures.docker import ClientFixture, ContainerFixture, PoolFixture
 
 
 def test_pull1(client):
@@ -81,7 +83,22 @@ def test_validate_max1(client):
     Tests validating max current executions for a docker host
     """
 
-    pytest.skip("Not implemented")
+    app = client.application
+
+    with app.app_context():
+        match = re.compile(r"test.+")
+        containers = [ContainerFixture.new(name="fastlane-job-123")]
+        client_mock = ClientFixture.new(containers)
+
+        pool_mock = PoolFixture.new(
+            clients={match: [("host", 1234, client_mock)]},
+            clients_per_regex=[(match, [("host", 1234, client_mock)])],
+            max_running={match: 3},
+        )
+        executor = Executor(app, pool_mock)
+
+        result = executor.validate_max_running_executions("test123")
+        expect(result).to_be_true()
 
 
 def test_validate_max2(client):
@@ -89,7 +106,22 @@ def test_validate_max2(client):
     Tests validating max current executions works even if no hosts match task_id
     """
 
-    pytest.skip("Not implemented")
+    app = client.application
+
+    with app.app_context():
+        match = re.compile(r"other.+")
+        containers = [ContainerFixture.new(name="fastlane-job-123")]
+        client_mock = ClientFixture.new(containers)
+
+        pool_mock = PoolFixture.new(
+            clients={match: [("host", 1234, client_mock)]},
+            clients_per_regex=[(match, [("host", 1234, client_mock)])],
+            max_running={match: 3},
+        )
+        executor = Executor(app, pool_mock)
+
+        result = executor.validate_max_running_executions("test123")
+        expect(result).to_be_true()
 
 
 def test_get_result1(client):
@@ -97,7 +129,8 @@ def test_get_result1(client):
     Tests getting container result returns status, exit_code and log when successful
     """
 
-    pytest.skip("Not implemented")
+    with client.application.app_context():
+        pytest.skip("Not implemented")
 
 
 def test_get_result2(client):
@@ -105,7 +138,8 @@ def test_get_result2(client):
     Tests getting container result returns status, exit_code and log when failed
     """
 
-    pytest.skip("Not implemented")
+    with client.application.app_context():
+        pytest.skip("Not implemented")
 
 
 def test_stop1(client):
@@ -113,7 +147,8 @@ def test_stop1(client):
     Tests stopping a job stops the container in docker
     """
 
-    pytest.skip("Not implemented")
+    with client.application.app_context():
+        pytest.skip("Not implemented")
 
 
 def test_circuit1(client):
@@ -122,7 +157,8 @@ def test_circuit1(client):
     the circuit is open and a HostUnavailableError is raised
     """
 
-    pytest.skip("Not implemented")
+    with client.application.app_context():
+        pytest.skip("Not implemented")
 
 
 def test_circuit2(client):
@@ -132,7 +168,8 @@ def test_circuit2(client):
     and a HostUnavailableError is raised
     """
 
-    pytest.skip("Not implemented")
+    with client.application.app_context():
+        pytest.skip("Not implemented")
 
 
 def test_circuit3(client):
@@ -141,7 +178,8 @@ def test_circuit3(client):
     the circuit is open and a HostUnavailableError is raised
     """
 
-    pytest.skip("Not implemented")
+    with client.application.app_context():
+        pytest.skip("Not implemented")
 
 
 def test_circuit4(client):
@@ -150,7 +188,8 @@ def test_circuit4(client):
     the circuit is open and a HostUnavailableError is raised
     """
 
-    pytest.skip("Not implemented")
+    with client.application.app_context():
+        pytest.skip("Not implemented")
 
 
 def test_circuit5(client):
@@ -160,7 +199,8 @@ def test_circuit5(client):
     a HostUnavailableError is raised
     """
 
-    pytest.skip("Not implemented")
+    with client.application.app_context():
+        pytest.skip("Not implemented")
 
 
 def test_circuit6(client):
@@ -170,7 +210,8 @@ def test_circuit6(client):
     a HostUnavailableError is raised
     """
 
-    pytest.skip("Not implemented")
+    with client.application.app_context():
+        pytest.skip("Not implemented")
 
 
 def test_circuit7(client):
@@ -180,7 +221,8 @@ def test_circuit7(client):
     a HostUnavailableError is raised
     """
 
-    pytest.skip("Not implemented")
+    with client.application.app_context():
+        pytest.skip("Not implemented")
 
 
 def test_pool1(client):
@@ -188,7 +230,8 @@ def test_pool1(client):
     Tests that when getting docker hosts, hosts with open circuits are not returned
     """
 
-    pytest.skip("Not implemented")
+    with client.application.app_context():
+        pytest.skip("Not implemented")
 
 
 def test_pool2(client):
@@ -196,7 +239,8 @@ def test_pool2(client):
     Tests that when getting docker hosts, hosts with half-open circuits are returned
     """
 
-    pytest.skip("Not implemented")
+    with client.application.app_context():
+        pytest.skip("Not implemented")
 
 
 def test_pool3(client):
@@ -204,7 +248,17 @@ def test_pool3(client):
     Tests that when getting docker hosts, the circuit is refreshed
     """
 
-    pytest.skip("Not implemented")
+    with client.application.app_context():
+        pytest.skip("Not implemented")
+
+
+def test_pool4(client):
+    """
+    Tests that when creating docker executor, the pool is configured properly
+    """
+
+    with client.application.app_context():
+        pytest.skip("Not implemented")
 
 
 def test_get_running1(client):
@@ -212,7 +266,8 @@ def test_get_running1(client):
     Tests getting running containers
     """
 
-    pytest.skip("Not implemented")
+    with client.application.app_context():
+        pytest.skip("Not implemented")
 
 
 def test_get_running2(client):
@@ -220,7 +275,8 @@ def test_get_running2(client):
     Tests getting running containers when some hosts are unavailable
     """
 
-    pytest.skip("Not implemented")
+    with client.application.app_context():
+        pytest.skip("Not implemented")
 
 
 def test_get_running3(client):
@@ -228,7 +284,8 @@ def test_get_running3(client):
     Tests getting running containers when some hosts are blacklisted
     """
 
-    pytest.skip("Not implemented")
+    with client.application.app_context():
+        pytest.skip("Not implemented")
 
 
 def test_get_running4(client):
@@ -236,7 +293,8 @@ def test_get_running4(client):
     Tests getting running containers when some circuits are open
     """
 
-    pytest.skip("Not implemented")
+    with client.application.app_context():
+        pytest.skip("Not implemented")
 
 
 def test_get_current_logs1(client):
@@ -244,7 +302,8 @@ def test_get_current_logs1(client):
     Tests getting logs for a containers' stderr and stdout
     """
 
-    pytest.skip("Not implemented")
+    with client.application.app_context():
+        pytest.skip("Not implemented")
 
 
 def test_get_blacklisted_hosts(client):
@@ -252,7 +311,8 @@ def test_get_blacklisted_hosts(client):
     Tests getting the blacklisted hosts
     """
 
-    pytest.skip("Not implemented")
+    with client.application.app_context():
+        pytest.skip("Not implemented")
 
 
 def test_mark_as_done1(client):
@@ -260,7 +320,8 @@ def test_mark_as_done1(client):
     Tests marking a container as done renames the container
     """
 
-    pytest.skip("Not implemented")
+    with client.application.app_context():
+        pytest.skip("Not implemented")
 
 
 def test_remove_done1(client):
@@ -268,4 +329,5 @@ def test_remove_done1(client):
     Tests removing all defunct containers
     """
 
-    pytest.skip("Not implemented")
+    with client.application.app_context():
+        pytest.skip("Not implemented")

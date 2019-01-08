@@ -99,7 +99,8 @@ class DockerPool:
 
     def __init_clients(self):
         for regex, docker_hosts, max_running in self.docker_hosts:
-            clients = (regex, [])
+            client_list = []
+            clients = (regex, client_list)
             self.clients_per_regex.append(clients)
             self.max_running[regex] = max_running
 
@@ -107,7 +108,7 @@ class DockerPool:
                 host, port = address.split(":")
                 cl = docker.DockerClient(base_url=address)
                 self.clients[address] = (host, port, cl)
-                clients[1].append((host, port, cl))
+                client_list.append((host, port, cl))
 
     def refresh_circuits(self, executor, clients, logger):
         def ps(client):
@@ -227,7 +228,8 @@ class Executor:
 
                 continue
 
-            total_running = len(self.get_running_containers(regex)["running"])
+            running = self.get_running_containers(regex)
+            total_running = len(running["running"])
             max_running = self.pool.max_running[regex]
             logger.debug(
                 "Found number of running containers.",
@@ -516,7 +518,7 @@ class Executor:
 
             for host, port, client in clients
 
-            if f"{host}:{port}" in blacklisted_hosts
+            if f"{host}:{port}" not in blacklisted_hosts
         ]
 
     def _list_containers(self, host, port, client, circuit):
@@ -560,11 +562,11 @@ class Executor:
                     "port": port,
                     "available": True,
                     "blacklisted": f"{host}:{port}" in blacklisted_hosts,
-                    "circuit": self.get_circuit(f"{host}:{port}").current_state,
+                    "circuit": circuit.current_state,
                     "error": None,
                 }
 
-                for (host, port, client) in clients
+                for (host, port, client, circuit) in clients
 
                 if f"{host}:{port}" not in unavailable_clients_set
             ],
@@ -640,7 +642,7 @@ class Executor:
             task_id=task.task_id,
             job=str(job.job_id),
             execution_id=str(execution.execution_id),
-            operation="docker_host.validate_max_running_executions",
+            operation="docker_host.mark_as_done",
             host=host,
             port=port,
             container_id=container_id,
