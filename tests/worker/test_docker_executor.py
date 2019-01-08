@@ -5,11 +5,13 @@ from uuid import uuid4
 
 # 3rd Party
 import pytest
+from dateutil.parser import parse
 from preggy import expect
 
 # Fastlane
 from fastlane.worker.docker_executor import Executor
 from tests.fixtures.docker import ClientFixture, ContainerFixture, PoolFixture
+from tests.fixtures.models import JobExecutionFixture, TaskFixture
 
 
 def test_pull1(client):
@@ -86,15 +88,11 @@ def test_validate_max1(client):
     app = client.application
 
     with app.app_context():
-        match = re.compile(r"test.+")
         containers = [ContainerFixture.new(name="fastlane-job-123")]
-        client_mock = ClientFixture.new(containers)
-
-        pool_mock = PoolFixture.new(
-            clients={match: [("host", 1234, client_mock)]},
-            clients_per_regex=[(match, [("host", 1234, client_mock)])],
-            max_running={match: 1},
+        match, pool_mock, client_mock = PoolFixture.new_defaults(
+            r"test.+", max_running=1, containers=containers
         )
+
         executor = Executor(app, pool_mock)
 
         result = executor.validate_max_running_executions("test123")
@@ -125,17 +123,13 @@ def test_validate_max3(client):
     app = client.application
 
     with app.app_context():
-        match = re.compile(r"test.+")
         containers = [
             ContainerFixture.new(name="fastlane-job-123"),
             ContainerFixture.new(name="fastlane-job-456"),
         ]
-        client_mock = ClientFixture.new(containers)
 
-        pool_mock = PoolFixture.new(
-            clients={match: [("host", 1234, client_mock)]},
-            clients_per_regex=[(match, [("host", 1234, client_mock)])],
-            max_running={match: 1},
+        match, pool_mock, client_mock = PoolFixture.new_defaults(
+            r"test.+", max_running=1, containers=containers
         )
         executor = Executor(app, pool_mock)
 
@@ -145,16 +139,72 @@ def test_validate_max3(client):
 
 def test_get_result1(client):
     """
-    Tests getting container result returns status, exit_code and log when successful
+    Tests getting container result returns status, exit_code and log when running
+    """
+
+    app = client.application
+
+    with app.app_context():
+        match, pool_mock, client_mock = PoolFixture.new_defaults(
+            r"test[-].+", max_running=1
+        )
+
+        started_at = "2018-08-27T17:14:14.1951232Z"
+        container_mock = ContainerFixture.new_with_status(
+            name="fastlane-job-123",
+            status="running",
+            started_at=started_at,
+            custom_error="custom error",
+        )
+        client_mock.containers.get.return_value = container_mock
+
+        executor = Executor(app, pool_mock)
+
+        task_id = f"test-{uuid4()}"
+        task = TaskFixture.new(task_id)
+        job, execution = JobExecutionFixture.new(
+            "image",
+            "command",
+            task=task,
+            metadata={
+                "docker_host": "host",
+                "docker_port": 1234,
+                "container_id": str(uuid4()),
+            },
+        )
+
+        result = executor.get_result(job.task, job, execution)
+        expect(result.status).to_equal("running")
+        expect(result.exit_code).to_be_null()
+        expect(result.log).to_be_empty()
+        expect(result.error).to_equal("custom error")
+        dt = parse(started_at)
+        expect(result.started_at).to_equal(dt)
+        expect(result.finished_at).to_be_null()
+
+
+def test_get_result2(client):
+    """
+    Tests getting container result returns status, exit_code, stdout and stderr when successful
     """
 
     with client.application.app_context():
         pytest.skip("Not implemented")
 
 
-def test_get_result2(client):
+def test_get_result3(client):
     """
-    Tests getting container result returns status, exit_code and log when failed
+    Tests getting container result returns status, exit_code, stdout and stderr when failed
+    """
+
+    with client.application.app_context():
+        pytest.skip("Not implemented")
+
+
+def test_get_result4(client):
+    """
+    Tests getting container result returns status, exit_code, stdout and
+    stderr when failed with previous error
     """
 
     with client.application.app_context():

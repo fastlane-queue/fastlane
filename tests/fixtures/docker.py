@@ -1,15 +1,51 @@
 # Standard Library
+import re
 from unittest.mock import MagicMock, PropertyMock
 
 
 class ContainerFixture:
     @staticmethod
-    def new(name):
-        container_mock = MagicMock()
+    def new(name, state=None, status="created"):
+        container_mock = MagicMock(attrs={}, status=status)
         name = PropertyMock(return_value=name)
         type(container_mock).name = name
 
+        if state is not None:
+            container_mock.attrs["State"] = state
+
         return container_mock
+
+    @staticmethod
+    def new_with_status(
+        name,
+        status="created",
+        paused=False,
+        restarting=False,
+        oom_killed=False,
+        dead=False,
+        pid=0,
+        exit_code=None,
+        custom_error=None,
+        started_at=None,
+        finished_at=None,
+    ):
+        return ContainerFixture.new(
+            name,
+            state={
+                "Status": status,
+                "Running": status == "running",
+                "Paused": paused,
+                "Restarting": restarting,
+                "OOMKilled": oom_killed,
+                "Dead": dead,
+                "Pid": pid,
+                "ExitCode": exit_code,
+                "Error": custom_error,
+                "StartedAt": started_at,
+                "FinishedAt": finished_at,
+            },
+            status=status,
+        )
 
 
 class ClientFixture:
@@ -36,8 +72,27 @@ class PoolFixture:
         if max_running is None:
             max_running = {}
 
-        return MagicMock(
+        pool = MagicMock(
             clients=clients,
             clients_per_regex=clients_per_regex,
             max_running=max_running,
         )
+
+        return pool
+
+    @staticmethod
+    def new_defaults(regex, host="host", port=1234, max_running=3, containers=None):
+        if containers is None:
+            containers = []
+
+        match = re.compile(regex)
+        client_mock = ClientFixture.new(containers)
+
+        pool_mock = PoolFixture.new(
+            clients={match: [(host, port, client_mock)]},
+            clients_per_regex=[(match, [(host, port, client_mock)])],
+            max_running={match: max_running},
+        )
+        pool_mock.get_client.return_value = (host, port, client_mock)
+
+        return match, pool_mock, client_mock
