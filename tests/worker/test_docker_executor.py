@@ -9,7 +9,7 @@ from dateutil.parser import parse
 from preggy import expect
 
 # Fastlane
-from fastlane.worker.docker_executor import Executor
+from fastlane.worker.docker_executor import STATUS, Executor
 from tests.fixtures.docker import ClientFixture, ContainerFixture, PoolFixture
 from tests.fixtures.models import JobExecutionFixture, TaskFixture
 
@@ -139,9 +139,56 @@ def test_validate_max3(client):
 
 def test_get_result1(client):
     """
-    Tests getting container result returns status, exit_code and log when running
+    Tests getting container result returns status, exit_code and log
     """
 
+    # status, exit_code, stdout, stderr, custom_error, started_at, finished_at
+    cases = (
+        (
+            "running",  # status
+            None,  # exit_code
+            None,  # stdout
+            None,  # stderr
+            "custom error",  # custom_error
+            "2018-08-27T17:14:14.1951232Z",  # started_at
+            None,  # finished_at
+        ),
+        (
+            "exited",  # status
+            0,  # exit_code
+            "some log",  # stdout
+            "some error",  # stderr
+            "",  # custom_error
+            "2018-08-27T17:14:14.1951232Z",  # started_at
+            "2018-08-27T17:14:17.1951232Z",  # finished_at
+        ),
+        (
+            "dead",  # status
+            1,  # exit_code
+            "some log",  # stdout
+            "some error",  # stderr
+            "",  # custom_error
+            "2018-08-27T17:14:14.1951232Z",  # started_at
+            "2018-08-27T17:14:17.1951232Z",  # finished_at
+        ),
+        (
+            "dead",  # status
+            1,  # exit_code
+            "some log",  # stdout
+            "some error",  # stderr
+            "previous",  # custom_error
+            "2018-08-27T17:14:14.1951232Z",  # started_at
+            "2018-08-27T17:14:17.1951232Z",  # finished_at
+        ),
+    )
+
+    for case in cases:
+        verify_get_result(client, *case)
+
+
+def verify_get_result(
+    client, status, exit_code, stdout, stderr, custom_error, started_at, finished_at
+):
     app = client.application
 
     with app.app_context():
@@ -149,53 +196,15 @@ def test_get_result1(client):
             r"test[-].+", max_running=1
         )
 
-        started_at = "2018-08-27T17:14:14.1951232Z"
         container_mock = ContainerFixture.new_with_status(
             name="fastlane-job-123",
-            status="running",
-            started_at=started_at,
-            custom_error="custom error",
-        )
-        client_mock.containers.get.return_value = container_mock
-
-        executor = Executor(app, pool_mock)
-
-        task, job, execution = JobExecutionFixture.new_defaults()
-
-        result = executor.get_result(task, job, execution)
-        expect(result.status).to_equal("running")
-        expect(result.exit_code).to_be_null()
-        expect(result.log).to_be_empty()
-        expect(result.error).to_equal("custom error")
-        dt = parse(started_at)
-        expect(result.started_at).to_equal(dt)
-        expect(result.finished_at).to_be_null()
-
-
-def test_get_result2(client):
-    """
-    Tests getting container result returns status, exit_code,
-    stdout and stderr when successful
-    """
-
-    app = client.application
-
-    with app.app_context():
-        match, pool_mock, client_mock = PoolFixture.new_defaults(
-            r"test[-].+", max_running=1
-        )
-
-        started_at = "2018-08-27T17:14:14.1951232Z"
-        finished_at = "2018-08-27T17:14:18.1951232Z"
-        container_mock = ContainerFixture.new_with_status(
-            name="fastlane-job-123",
-            status="exited",
-            exit_code=0,
+            status=status,
+            exit_code=exit_code,
             started_at=started_at,
             finished_at=finished_at,
-            custom_error="",
-            stdout="some log",
-            stderr="some error",
+            custom_error=custom_error,
+            stdout=stdout,
+            stderr=stderr,
         )
         client_mock.containers.get.return_value = container_mock
 
@@ -204,33 +213,30 @@ def test_get_result2(client):
         task, job, execution = JobExecutionFixture.new_defaults()
 
         result = executor.get_result(job.task, job, execution)
-        expect(result.status).to_equal("done")
-        expect(result.exit_code).to_equal(0)
-        expect(result.log).to_equal("some log")
-        expect(result.error).to_equal("some error")
+        expect(result.status).to_equal(STATUS.get(status))
+        expect(result.exit_code).to_equal(exit_code)
+
+        if stdout is None:
+            expect(result.log).to_be_empty()
+        else:
+            expect(result.log).to_equal(stdout)
+
+        if stderr is not None and custom_error != "":
+            expect(result.error).to_equal(f"{custom_error}\n\nstderr:\n{stderr}")
+        else:
+            if stderr is not None:
+                expect(result.error).to_equal(stderr)
+            else:
+                expect(result.error).to_equal(custom_error)
+
         dt = parse(started_at)
         expect(result.started_at).to_equal(dt)
-        dt = parse(finished_at)
+
+        if finished_at is not None:
+            dt = parse(finished_at)
+        else:
+            dt = finished_at
         expect(result.finished_at).to_equal(dt)
-
-
-def test_get_result3(client):
-    """
-    Tests getting container result returns status, exit_code, stdout and stderr when failed
-    """
-
-    with client.application.app_context():
-        pytest.skip("Not implemented")
-
-
-def test_get_result4(client):
-    """
-    Tests getting container result returns status, exit_code, stdout and
-    stderr when failed with previous error
-    """
-
-    with client.application.app_context():
-        pytest.skip("Not implemented")
 
 
 def test_stop1(client):
