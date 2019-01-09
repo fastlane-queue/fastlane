@@ -1,6 +1,7 @@
 # Standard Library
 import re
 from unittest.mock import MagicMock, PropertyMock
+from uuid import uuid4
 
 
 class ContainerFixture:
@@ -20,8 +21,13 @@ class ContainerFixture:
         return get
 
     @staticmethod
-    def new(name, state=None, status="created", stdout=None, stderr=None):
-        container_mock = MagicMock(attrs={}, status=status)
+    def new(
+        name, container_id=None, state=None, status="created", stdout=None, stderr=None
+    ):
+        if container_id is None:
+            container_id = f"fastlane-job-{str(uuid4())}"
+
+        container_mock = MagicMock(attrs={}, status=status, id=container_id)
         name = PropertyMock(return_value=name)
         type(container_mock).name = name
 
@@ -112,7 +118,7 @@ class PoolFixture:
         client_mock = ClientFixture.new(containers)
 
         pool_mock = PoolFixture.new(
-            clients={match: [(host, port, client_mock)]},
+            clients={match: (host, port, client_mock)},
             clients_per_regex=[(match, [(host, port, client_mock)])],
             max_running={match: max_running},
         )

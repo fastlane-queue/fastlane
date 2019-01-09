@@ -388,7 +388,39 @@ def test_get_running1(client):
     """
 
     with client.application.app_context():
-        pytest.skip("Not implemented")
+        containers = [
+            ContainerFixture.new(
+                name="fastlane-job-123", container_id="fastlane-job-123"
+            )
+        ]
+        match, pool_mock, client_mock = PoolFixture.new_defaults(
+            r"test.+", max_running=1, containers=containers
+        )
+
+        executor = Executor(client.application, pool_mock)
+        result = executor.get_running_containers()
+
+        expect(result).to_include("available")
+        available = result["available"]
+        expect(available).to_length(1)
+        expect(available[0]).to_equal(
+            {
+                "host": "host",
+                "port": 1234,
+                "available": True,
+                "blacklisted": False,
+                "circuit": "closed",
+                "error": None,
+            }
+        )
+
+        expect(result).to_include("running")
+        running = result["running"]
+        expect(running).to_length(1)
+        host, port, container_id = running[0]
+        expect(host).to_equal("host")
+        expect(port).to_equal(1234)
+        expect(container_id).to_equal("fastlane-job-123")
 
 
 def test_get_running2(client):
