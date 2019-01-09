@@ -244,8 +244,24 @@ def test_stop1(client):
     Tests stopping a job stops the container in docker
     """
 
-    with client.application.app_context():
-        pytest.skip("Not implemented")
+    app = client.application
+
+    with app.app_context():
+        match, pool_mock, client_mock = PoolFixture.new_defaults(
+            r"test[-].+", max_running=1
+        )
+
+        container_mock = ContainerFixture.new_with_status(name="fastlane-job-1234")
+        client_mock.containers.get.return_value = container_mock
+
+        task, job, execution = JobExecutionFixture.new_defaults(
+            container_id="fastlane-job-1234"
+        )
+
+        executor = Executor(app, pool_mock)
+
+        executor.stop_job(task, job, execution)
+        container_mock.stop.assert_called()
 
 
 def test_circuit1(client):

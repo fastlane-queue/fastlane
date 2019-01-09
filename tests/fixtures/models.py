@@ -84,7 +84,7 @@ class JobExecutionFixture:
         return job, execution
 
     @staticmethod
-    def new_defaults(image=None, command=None, task_id=None):
+    def new_defaults(image=None, command=None, task_id=None, container_id=None):
         if task_id is None:
             task_id = f"test-{uuid4()}"
 
@@ -94,6 +94,9 @@ class JobExecutionFixture:
         if command is None:
             command = "command"
 
+        if container_id is None:
+            container_id = str(uuid4())
+
         job, execution = JobExecutionFixture.new(
             image,
             command,
@@ -101,7 +104,7 @@ class JobExecutionFixture:
             metadata={
                 "docker_host": "host",
                 "docker_port": 1234,
-                "container_id": str(uuid4()),
+                "container_id": container_id,
             },
         )
 
