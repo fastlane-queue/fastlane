@@ -110,11 +110,14 @@ class DockerPool:
                 self.clients[address] = (host, int(port), cl)
                 client_list.append((host, int(port), cl))
 
-    def refresh_circuits(self, executor, clients, logger):
+    def refresh_circuits(self, executor, clients, blacklisted_hosts, logger):
         def ps(client):
             client.containers.list(sparse=False)
 
         for host, port, client in clients:
+            if f"{host}:{port}" in blacklisted_hosts:
+                continue
+
             try:
                 logger.debug("Refreshing host...", host=host, port=port)
                 circuit = executor.get_circuit(f"{host}:{port}")
@@ -144,7 +147,7 @@ class DockerPool:
 
                 continue
 
-            self.refresh_circuits(executor, clients, logger)
+            self.refresh_circuits(executor, clients, blacklist, logger)
             filtered = [
                 (host, port, client)
 

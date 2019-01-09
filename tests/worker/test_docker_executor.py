@@ -335,6 +335,22 @@ def test_pool1(client):
 
 def test_pool2(client):
     """
+    Tests that when getting docker hosts, hosts in the blacklist are not returned
+    """
+
+    with client.application.app_context():
+        pool = DockerPool(([None, ["localhost:1234", "localhost:4567"], 2],))
+        executor = Executor(client.application, pool)
+
+        host, port, client = pool.get_client(
+            executor, "test-123", blacklist=set(["localhost:4567"])
+        )
+        expect(host).to_equal("localhost")
+        expect(port).to_equal(1234)
+
+
+def test_pool3(client):
+    """
     Tests that when getting docker hosts, hosts with half-open circuits are returned
     """
 
@@ -348,7 +364,7 @@ def test_pool2(client):
         expect(port).to_equal(1234)
 
 
-def test_pool3(client):
+def test_pool4(client):
     """
     Tests that when creating docker executor, the pool is configured properly
     """
