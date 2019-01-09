@@ -160,20 +160,9 @@ def test_get_result1(client):
 
         executor = Executor(app, pool_mock)
 
-        task_id = f"test-{uuid4()}"
-        task = TaskFixture.new(task_id)
-        job, execution = JobExecutionFixture.new(
-            "image",
-            "command",
-            task=task,
-            metadata={
-                "docker_host": "host",
-                "docker_port": 1234,
-                "container_id": str(uuid4()),
-            },
-        )
+        task, job, execution = JobExecutionFixture.new_defaults()
 
-        result = executor.get_result(job.task, job, execution)
+        result = executor.get_result(task, job, execution)
         expect(result.status).to_equal("running")
         expect(result.exit_code).to_be_null()
         expect(result.log).to_be_empty()
@@ -185,11 +174,44 @@ def test_get_result1(client):
 
 def test_get_result2(client):
     """
-    Tests getting container result returns status, exit_code, stdout and stderr when successful
+    Tests getting container result returns status, exit_code,
+    stdout and stderr when successful
     """
 
-    with client.application.app_context():
-        pytest.skip("Not implemented")
+    app = client.application
+
+    with app.app_context():
+        match, pool_mock, client_mock = PoolFixture.new_defaults(
+            r"test[-].+", max_running=1
+        )
+
+        started_at = "2018-08-27T17:14:14.1951232Z"
+        finished_at = "2018-08-27T17:14:18.1951232Z"
+        container_mock = ContainerFixture.new_with_status(
+            name="fastlane-job-123",
+            status="exited",
+            exit_code=0,
+            started_at=started_at,
+            finished_at=finished_at,
+            custom_error="",
+            stdout="some log",
+            stderr="some error",
+        )
+        client_mock.containers.get.return_value = container_mock
+
+        executor = Executor(app, pool_mock)
+
+        task, job, execution = JobExecutionFixture.new_defaults()
+
+        result = executor.get_result(job.task, job, execution)
+        expect(result.status).to_equal("done")
+        expect(result.exit_code).to_equal(0)
+        expect(result.log).to_equal("some log")
+        expect(result.error).to_equal("some error")
+        dt = parse(started_at)
+        expect(result.started_at).to_equal(dt)
+        dt = parse(finished_at)
+        expect(result.finished_at).to_equal(dt)
 
 
 def test_get_result3(client):

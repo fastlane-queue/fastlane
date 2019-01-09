@@ -45,12 +45,16 @@ class JobExecutionFixture:
         error=None,
         exit_code=None,
         job=None,
+        task_id=None,
         task=None,
         metadata=None,
     ):
+        if task_id is None:
+            task_id = str(uuid4())
+
         if job is None:
             if task is None:
-                task = TaskFixture.new(str(uuid4()))
+                task = TaskFixture.new(task_id)
 
             job = JobFixture.new(task=task)
 
@@ -78,3 +82,27 @@ class JobExecutionFixture:
         job.save()
 
         return job, execution
+
+    @staticmethod
+    def new_defaults(image=None, command=None, task_id=None):
+        if task_id is None:
+            task_id = f"test-{uuid4()}"
+
+        if image is None:
+            image = "image"
+
+        if command is None:
+            command = "command"
+
+        job, execution = JobExecutionFixture.new(
+            image,
+            command,
+            task_id=task_id,
+            metadata={
+                "docker_host": "host",
+                "docker_port": 1234,
+                "container_id": str(uuid4()),
+            },
+        )
+
+        return job.task, job, execution

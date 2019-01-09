@@ -5,13 +5,32 @@ from unittest.mock import MagicMock, PropertyMock
 
 class ContainerFixture:
     @staticmethod
-    def new(name, state=None, status="created"):
+    def get_logs(container_mock):
+        def get(stdout=False, stderr=False):
+            logs = []
+
+            if stdout and isinstance(container_mock.stdout, (str, bytes)):
+                logs.append(container_mock.stdout)
+
+            if stderr and isinstance(container_mock.stderr, (str, bytes)):
+                logs.append(container_mock.stderr)
+
+            return "\n".join(logs)
+
+        return get
+
+    @staticmethod
+    def new(name, state=None, status="created", stdout=None, stderr=None):
         container_mock = MagicMock(attrs={}, status=status)
         name = PropertyMock(return_value=name)
         type(container_mock).name = name
 
         if state is not None:
             container_mock.attrs["State"] = state
+
+        container_mock.logs.side_effect = ContainerFixture.get_logs(container_mock)
+        container_mock.stdout = stdout
+        container_mock.stderr = stderr
 
         return container_mock
 
@@ -28,6 +47,8 @@ class ContainerFixture:
         custom_error=None,
         started_at=None,
         finished_at=None,
+        stdout=None,
+        stderr=None,
     ):
         return ContainerFixture.new(
             name,
@@ -45,6 +66,8 @@ class ContainerFixture:
                 "FinishedAt": finished_at,
             },
             status=status,
+            stdout=stdout,
+            stderr=stderr,
         )
 
 
