@@ -1,5 +1,4 @@
 # Standard Library
-import re
 from unittest.mock import MagicMock
 from uuid import uuid4
 
@@ -10,73 +9,54 @@ from preggy import expect
 
 # Fastlane
 from fastlane.worker.docker_executor import STATUS, Executor
-from tests.fixtures.docker import ClientFixture, ContainerFixture, PoolFixture
-from tests.fixtures.models import JobExecutionFixture, TaskFixture
+from tests.fixtures.docker import ContainerFixture, PoolFixture
+from tests.fixtures.models import JobExecutionFixture
 
 
 def test_pull1(client):
     """Tests that a docker executor can pull images"""
 
     with client.application.app_context():
-        task_mock = MagicMock()
-        job_mock = MagicMock(id=uuid4())
-        execution_mock = MagicMock()
-        app = MagicMock()
-        client = MagicMock()
-        pool = MagicMock()
-        pool.get_client.return_value = ("localhost", 1010, client)
-        exe = Executor(app=app, pool=pool)
+        task, job, execution = JobExecutionFixture.new_defaults()
+        match, pool_mock, client_mock = PoolFixture.new_defaults(r"test-.+")
+
+        exe = Executor(app=client.application, pool=pool_mock)
         exe.update_image(
-            task_mock,
-            job_mock,
-            execution_mock,
-            "mock-image",
-            "latest",
-            blacklisted_hosts=set(),
+            task, job, execution, "mock-image", "latest", blacklisted_hosts=set()
         )
 
-        expect(client.images.pull.call_count).to_equal(1)
-        client.images.pull.assert_called_with("mock-image", tag="latest")
+        expect(client_mock.images.pull.call_count).to_equal(1)
+        client_mock.images.pull.assert_called_with("mock-image", tag="latest")
 
 
 def test_run1(client):
     """Tests that a docker executor can run containers"""
 
     with client.application.app_context():
-        task_mock = MagicMock()
-        job_mock = MagicMock(metadata={})
+        task, job, execution = JobExecutionFixture.new_defaults()
+        match, pool_mock, client_mock = PoolFixture.new_defaults(r"test-.+")
 
-        execution_mock = MagicMock(
-            metadata={"docker_host": "localhost", "docker_port": 1010},
-            execution_id=uuid4(),
-        )
+        client_mock.containers.run.return_value = MagicMock(id="job_id")
 
-        app = MagicMock()
-        client = MagicMock()
-        client.containers.run.return_value = MagicMock(id="job_id")
-
-        pool = MagicMock()
-        pool.get_client.return_value = ("localhost", 1010, client)
-
-        exe = Executor(app=app, pool=pool)
+        exe = Executor(app=client.application, pool=pool_mock)
         exe.run(
-            task_mock,
-            job_mock,
-            execution_mock,
+            task,
+            job,
+            execution,
             "mock-image",
             "latest",
             "command",
             blacklisted_hosts=set(),
         )
 
-        expect(execution_mock.metadata).to_include("container_id")
-        expect(client.containers.run.call_count).to_equal(1)
-        client.containers.run.assert_called_with(
+        expect(execution.metadata).to_include("container_id")
+        expect(client_mock.containers.run.call_count).to_equal(1)
+        client_mock.containers.run.assert_called_with(
             image=f"mock-image:latest",
             environment={},
             command="command",
             detach=True,
-            name=f"fastlane-job-{execution_mock.execution_id}",
+            name=f"fastlane-job-{execution.execution_id}",
         )
 
 
