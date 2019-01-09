@@ -107,8 +107,8 @@ class DockerPool:
             for address in docker_hosts:
                 host, port = address.split(":")
                 cl = docker.DockerClient(base_url=address)
-                self.clients[address] = (host, port, cl)
-                client_list.append((host, port, cl))
+                self.clients[address] = (host, int(port), cl)
+                client_list.append((host, int(port), cl))
 
     def refresh_circuits(self, executor, clients, logger):
         def ps(client):
@@ -167,7 +167,9 @@ class DockerPool:
                 clients=[f"{host}:{port}" for (host, port, client) in filtered],
             )
 
-            return random.choice(filtered)
+            host, port, client = random.choice(filtered)
+
+            return host, int(port), client
 
         msg = f"Failed to find a docker host for task id {task_id}."
         logger.error(msg)

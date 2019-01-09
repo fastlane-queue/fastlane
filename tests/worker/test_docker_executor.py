@@ -1,14 +1,14 @@
 # Standard Library
 from unittest.mock import MagicMock
-from uuid import uuid4
 
 # 3rd Party
+import docker
 import pytest
 from dateutil.parser import parse
 from preggy import expect
 
 # Fastlane
-from fastlane.worker.docker_executor import STATUS, Executor
+from fastlane.worker.docker_executor import STATUS, DockerPool, Executor
 from tests.fixtures.docker import ContainerFixture, PoolFixture
 from tests.fixtures.models import JobExecutionFixture
 
@@ -324,7 +324,13 @@ def test_pool1(client):
     """
 
     with client.application.app_context():
-        pytest.skip("Not implemented")
+        pool = DockerPool(([None, ["localhost:1234", "localhost:4567"], 2],))
+        executor = Executor(client.application, pool)
+        executor.get_circuit("localhost:4567").open()
+
+        host, port, client = pool.get_client(executor, "test-123")
+        expect(host).to_equal("localhost")
+        expect(port).to_equal(1234)
 
 
 def test_pool2(client):
@@ -333,25 +339,31 @@ def test_pool2(client):
     """
 
     with client.application.app_context():
-        pytest.skip("Not implemented")
+        pool = DockerPool(([None, ["localhost:1234"], 2],))
+        executor = Executor(client.application, pool)
+        executor.get_circuit("localhost:1234").half_open()
+
+        host, port, client = pool.get_client(executor, "test-123")
+        expect(host).to_equal("localhost")
+        expect(port).to_equal(1234)
 
 
 def test_pool3(client):
-    """
-    Tests that when getting docker hosts, the circuit is refreshed
-    """
-
-    with client.application.app_context():
-        pytest.skip("Not implemented")
-
-
-def test_pool4(client):
     """
     Tests that when creating docker executor, the pool is configured properly
     """
 
     with client.application.app_context():
-        pytest.skip("Not implemented")
+        executor = Executor(client.application)
+        pool = executor.pool
+        expect(pool.clients).to_include("localhost:2375")
+
+        host, port, client = pool.clients["localhost:2375"]
+        expect(host).to_equal("localhost")
+        expect(port).to_equal(2375)
+        expect(client).to_be_instance_of(docker.client.DockerClient)
+
+        expect(pool.max_running).to_equal({None: 2})
 
 
 def test_get_running1(client):
