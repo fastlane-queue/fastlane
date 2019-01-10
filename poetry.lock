@@ -677,14 +677,6 @@ watchdog = ">=0.6.0"
 
 [[package]]
 category = "main"
-description = "Simple implementation of the Circuit Breaker pattern"
-name = "python-circuit"
-optional = false
-python-versions = "*"
-version = "0.1.9"
-
-[[package]]
-category = "main"
 description = "Extensions to the standard Python datetime module"
 name = "python-dateutil"
 optional = false
@@ -1001,7 +993,7 @@ python-versions = "*"
 version = "2.2.1"
 
 [metadata]
-content-hash = "3af11dffc8fd0246006a9a4878feed7cfd2bde32abd8e1d7c5ce3959d435c517"
+content-hash = "94a02bc692f63bb5aa37234925ec1a4c1288704e5166b94830e3081507d242d9"
 python-versions = "^3.6"
 
 [metadata.hashes]
@@ -1068,7 +1060,6 @@ pytest = ["3f193df1cfe1d1609d4c583838bea3d532b18d6160fd3f55c9447fdca30848ec", "e
 pytest-cov = ["513c425e931a0344944f84ea47f3956be0e416d95acbd897a44970c8d926d5d7", "e360f048b7dae3f2f2a9a4d067b2dd6b6a015d384d1577c994a43f3f7cbad762"]
 pytest-sugar = ["26cf8289fe10880cbbc130bd77398c4e6a8b936d8393b116a5c16121d95ab283", "fcd87a74b2bce5386d244b49ad60549bfbc4602527797fac167da147983f58ab"]
 pytest-watch = ["06136f03d5b361718b8d0d234042f7b2f203910d8568f63df2f866b547b3d4b9"]
-python-circuit = ["166724c36c4801c3bda372c1ee49de60f074ca3686bb553efac76271f2d59807", "c025a4ef15dde2498f1f7e86fa9f1186c77d76230426a083e83b9a16a8df30d4"]
 python-dateutil = ["063df5763652e21de43de7d9e00ccf239f953a832941e37be541614732cdfc93", "88f9287c0174266bb0d8cedd395cfba9c58e87e5ad86b2ce58859bc11be3cf02"]
 python-engineio = ["a437bda348b8325a1a09bc2e04c5fff8bb8cbe674b5ba41adbb2a8eeacc98457", "bb8b5888adb852614b4b1861586ee7d89145cbd2ebba03ed7043e64c029bbb3b"]
 python-jsonrpc-server = ["533434fa982eb42c36ddb0b6758cef8e6eaf46d014f76b70a401b8790a3e6d57"]

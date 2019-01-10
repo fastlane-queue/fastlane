@@ -45,7 +45,7 @@ docker-push: docker-build
 	@docker tag fastlane heynemann/fastlane:latest
 	@docker push heynemann/fastlane:latest
 
-test:
+test: deps
 	@poetry run pytest -sv --quiet --nf --cov=fastlane tests/
 
 focus:

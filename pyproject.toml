@@ -26,7 +26,6 @@ flask-sockets = "^0.2.1"
 wsaccel = "^0.6.2"
 flask-socketio = "^3.1"
 requests = "^2.21"
-python-circuit = "^0.1.9"
 pybreaker = "^0.4.5"
 
 [tool.poetry.dev-dependencies]
