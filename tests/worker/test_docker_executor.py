@@ -10,7 +10,7 @@ from dateutil.parser import parse
 from preggy import expect
 
 # Fastlane
-from fastlane.worker.docker_executor import STATUS, DockerPool, Executor
+from fastlane.worker.docker_executor import STATUS, DockerPool, Executor, blacklist_key
 from fastlane.worker.errors import HostUnavailableError
 from tests.fixtures.docker import ClientFixture, ContainerFixture, PoolFixture
 from tests.fixtures.models import JobExecutionFixture
@@ -705,13 +705,25 @@ def test_get_current_logs1(client):
         expect(result).to_equal("stdout\nstderr")
 
 
-def test_get_blacklisted_hosts(client):
+def test_get_blacklisted_hosts1(client):
     """
     Tests getting the blacklisted hosts
     """
 
-    with client.application.app_context():
-        pytest.skip("Not implemented")
+    app = client.application
+    with app.app_context():
+        match, pool_mock, client_mock = PoolFixture.new_defaults(r"test-.+")
+
+        executor = Executor(client.application, pool_mock)
+        hosts = executor.get_blacklisted_hosts()
+        expect(hosts).to_be_empty()
+
+        redis = app.redis
+        redis.sadd(blacklist_key, "localhost:5678")
+
+        hosts = executor.get_blacklisted_hosts()
+        expect(hosts).to_length(1)
+        expect(list(hosts)[0]).to_equal("localhost:5678")
 
 
 def test_mark_as_done1(client):
