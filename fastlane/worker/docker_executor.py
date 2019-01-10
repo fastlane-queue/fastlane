@@ -506,7 +506,7 @@ class Executor:
 
         return result
 
-    def _get_all_clients(self, regex, blacklisted_hosts):
+    def _get_all_clients(self, regex):
         clients = self.pool.clients.values()
 
         if regex is not None:
@@ -522,8 +522,6 @@ class Executor:
             (host, port, client, self.get_circuit(f"{host}:{port}"))
 
             for host, port, client in clients
-
-            if f"{host}:{port}" not in blacklisted_hosts
         ]
 
     def _list_containers(self, host, port, client, circuit):
@@ -551,9 +549,17 @@ class Executor:
 
         unavailable_clients = []
         unavailable_clients_set = set()
-        clients = self._get_all_clients(regex, blacklisted_hosts)
+        clients = self._get_all_clients(regex)
 
         for (host, port, client, circuit) in clients:
+            if f"{host}:{port}" in blacklisted_hosts:
+                unavailable_clients_set.add(f"{host}:{port}")
+                unavailable_clients.append(
+                    (host, port, RuntimeError("server is blacklisted"))
+                )
+
+                continue
+
             try:
                 running += self._list_containers(host, port, client, circuit)
             except Exception as err:

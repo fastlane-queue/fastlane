@@ -118,7 +118,7 @@ class PoolFixture:
         client_mock = ClientFixture.new(containers)
 
         pool_mock = PoolFixture.new(
-            clients={match: (host, port, client_mock)},
+            clients={f"{host}:{port}": (host, port, client_mock)},
             clients_per_regex=[(match, [(host, port, client_mock)])],
             max_running={match: max_running},
         )

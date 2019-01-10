@@ -1,5 +1,6 @@
 # Standard Library
 from unittest.mock import MagicMock
+import re
 
 # 3rd Party
 import docker
@@ -9,7 +10,7 @@ from preggy import expect
 
 # Fastlane
 from fastlane.worker.docker_executor import STATUS, DockerPool, Executor
-from tests.fixtures.docker import ContainerFixture, PoolFixture
+from tests.fixtures.docker import ContainerFixture, PoolFixture, ClientFixture
 from tests.fixtures.models import JobExecutionFixture
 
 
@@ -429,7 +430,75 @@ def test_get_running2(client):
     """
 
     with client.application.app_context():
-        pytest.skip("Not implemented")
+        match = re.compile(r"test-.+")
+        client_mock = ClientFixture.new(
+            [
+                ContainerFixture.new(
+                    name="fastlane-job-123", container_id="fastlane-job-123"
+                )
+            ]
+        )
+        faulty_client = ClientFixture.new(
+            [
+                ContainerFixture.new(
+                    name="fastlane-job-456", container_id="fastlane-job-456"
+                )
+            ]
+        )
+        faulty_client.containers.list.side_effect = RuntimeError("failed")
+
+        pool_mock = PoolFixture.new(
+            clients={
+                "host:1234": ("host", 1234, client_mock),
+                "host:4567": ("host", 4567, faulty_client),
+            },
+            clients_per_regex=[
+                (match, [("host", 1234, client_mock), ("host", 4567, faulty_client)])
+            ],
+            max_running={match: 2},
+        )
+
+        executor = Executor(client.application, pool_mock)
+        result = executor.get_running_containers()
+
+        expect(result).to_include("available")
+        available = result["available"]
+        expect(available).to_be_like(
+            [
+                {
+                    "host": "host",
+                    "port": 1234,
+                    "available": True,
+                    "blacklisted": False,
+                    "circuit": "closed",
+                    "error": None,
+                }
+            ]
+        )
+
+        expect(result).to_include("unavailable")
+        unavailable = result["unavailable"]
+
+        expect(unavailable).to_be_like(
+            [
+                {
+                    "host": "host",
+                    "port": 4567,
+                    "available": False,
+                    "blacklisted": False,
+                    "circuit": "closed",
+                    "error": "failed",
+                }
+            ]
+        )
+
+        expect(result).to_include("running")
+        running = result["running"]
+        expect(running).to_length(1)
+        host, port, container_id = running[0]
+        expect(host).to_equal("host")
+        expect(port).to_equal(1234)
+        expect(container_id).to_equal("fastlane-job-123")
 
 
 def test_get_running3(client):
@@ -438,7 +507,47 @@ def test_get_running3(client):
     """
 
     with client.application.app_context():
-        pytest.skip("Not implemented")
+        match = re.compile(r"test-.+")
+        client_mock = ClientFixture.new(
+            [
+                ContainerFixture.new(
+                    name="fastlane-job-123", container_id="fastlane-job-123"
+                )
+            ]
+        )
+
+        pool_mock = PoolFixture.new(
+            clients={"host:1234": ("host", 1234, client_mock)},
+            clients_per_regex=[(match, [("host", 1234, client_mock)])],
+            max_running={match: 2},
+        )
+
+        executor = Executor(client.application, pool_mock)
+        result = executor.get_running_containers(blacklisted_hosts=set(["host:1234"]))
+
+        expect(result).to_include("available")
+        available = result["available"]
+        expect(available).to_be_empty()
+
+        expect(result).to_include("unavailable")
+        unavailable = result["unavailable"]
+
+        expect(unavailable).to_be_like(
+            [
+                {
+                    "host": "host",
+                    "port": 1234,
+                    "available": False,
+                    "blacklisted": True,
+                    "circuit": "closed",
+                    "error": "server is blacklisted",
+                }
+            ]
+        )
+
+        expect(result).to_include("running")
+        running = result["running"]
+        expect(running).to_length(0)
 
 
 def test_get_running4(client):
@@ -447,7 +556,70 @@ def test_get_running4(client):
     """
 
     with client.application.app_context():
-        pytest.skip("Not implemented")
+        match = re.compile(r"test-.+")
+        client_mock = ClientFixture.new(
+            [
+                ContainerFixture.new(
+                    name="fastlane-job-123", container_id="fastlane-job-123"
+                )
+            ]
+        )
+
+        pool_mock = PoolFixture.new(
+            clients={
+                "host:1234": ("host", 1234, client_mock),
+                "host:4567": ("host", 4567, client_mock),
+            },
+            clients_per_regex=[
+                (match, [("host", 1234, client_mock), ("host", 4567, client_mock)])
+            ],
+            max_running={match: 2},
+        )
+
+        executor = Executor(client.application, pool_mock)
+
+        executor.get_circuit("host:4567").open()
+
+        result = executor.get_running_containers()
+
+        expect(result).to_include("available")
+        available = result["available"]
+        expect(available).to_be_like(
+            [
+                {
+                    "host": "host",
+                    "port": 1234,
+                    "available": True,
+                    "blacklisted": False,
+                    "circuit": "closed",
+                    "error": None,
+                }
+            ]
+        )
+
+        expect(result).to_include("unavailable")
+        unavailable = result["unavailable"]
+
+        expect(unavailable).to_be_like(
+            [
+                {
+                    "host": "host",
+                    "port": 4567,
+                    "available": False,
+                    "blacklisted": False,
+                    "circuit": "open",
+                    "error": "Timeout not elapsed yet, circuit breaker still open",
+                }
+            ]
+        )
+
+        expect(result).to_include("running")
+        running = result["running"]
+        expect(running).to_length(1)
+        host, port, container_id = running[0]
+        expect(host).to_equal("host")
+        expect(port).to_equal(1234)
+        expect(container_id).to_equal("fastlane-job-123")
 
 
 def test_get_current_logs1(client):
