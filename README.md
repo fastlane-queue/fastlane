@@ -20,8 +20,8 @@ Instead of the tedious, repetitive work of yesteryear where you had to implement
 -   [x]  API to retrieve tasks, `/tasks`;
 -   [x]  API to retrieve task details, `/tasks/my-task` (`<taskUrl>`);
 -   [x]  API to retrieve job details, `<taskUrl>/jobs/<jobId>` (`<jobUrl>`);
--   [x]  API to stop running task (`<jobUrl>/stop`);
--   [x]  API to retry task (`<jobUrl>/retry`);
+-   [x]  API to stop running job (`<jobUrl>/stop`);
+-   [x]  API to retry job (`<jobUrl>/retry`);
 -   [x]  API to get stdout (`<jobUrl>/stdout`) and stderr (`<jobUrl>/stderr`) for last execution in jobs;
 -   [x]  Job log output streaming using WebSockets (`ws://<jobUrl>/ws`) and `<jobUrl>/stream`;
 -   [x]  Additional Job Metadata (useful for webhooks);
