@@ -11,12 +11,12 @@ class ContainerFixture:
             logs = []
 
             if stdout and isinstance(container_mock.stdout, (str, bytes)):
-                logs.append(container_mock.stdout)
+                logs.append(container_mock.stdout.encode("utf-8"))
 
             if stderr and isinstance(container_mock.stderr, (str, bytes)):
-                logs.append(container_mock.stderr)
+                logs.append(container_mock.stderr.encode("utf-8"))
 
-            return "\n".join(logs)
+            return b"\n".join(logs)
 
         return get
 
@@ -43,6 +43,7 @@ class ContainerFixture:
     @staticmethod
     def new_with_status(
         name,
+        container_id=None,
         status="created",
         paused=False,
         restarting=False,
@@ -58,6 +59,7 @@ class ContainerFixture:
     ):
         return ContainerFixture.new(
             name,
+            container_id=container_id,
             state={
                 "Status": status,
                 "Running": status == "running",
@@ -79,12 +81,26 @@ class ContainerFixture:
 
 class ClientFixture:
     @staticmethod
+    def get_container_by_id(client_mock, containers):
+        def get(container_id):
+            for container in containers:
+                if container.id == container_id:
+                    return container
+
+            return None
+
+        return get
+
+    @staticmethod
     def new(containers=None):
         if containers is None:
             containers = []
 
         client_mock = MagicMock()
         client_mock.containers.list.return_value = containers
+        client_mock.containers.get.side_effect = ClientFixture.get_container_by_id(
+            client_mock, containers
+        )
 
         return client_mock
 

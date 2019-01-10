@@ -1,6 +1,6 @@
 # Standard Library
-from unittest.mock import MagicMock
 import re
+from unittest.mock import MagicMock
 
 # 3rd Party
 import docker
@@ -10,7 +10,7 @@ from preggy import expect
 
 # Fastlane
 from fastlane.worker.docker_executor import STATUS, DockerPool, Executor
-from tests.fixtures.docker import ContainerFixture, PoolFixture, ClientFixture
+from tests.fixtures.docker import ClientFixture, ContainerFixture, PoolFixture
 from tests.fixtures.models import JobExecutionFixture
 
 
@@ -173,11 +173,8 @@ def verify_get_result(
     app = client.application
 
     with app.app_context():
-        match, pool_mock, client_mock = PoolFixture.new_defaults(
-            r"test[-].+", max_running=1
-        )
-
         container_mock = ContainerFixture.new_with_status(
+            container_id="fastlane-job-123",
             name="fastlane-job-123",
             status=status,
             exit_code=exit_code,
@@ -187,11 +184,16 @@ def verify_get_result(
             stdout=stdout,
             stderr=stderr,
         )
-        client_mock.containers.get.return_value = container_mock
+
+        match, pool_mock, client_mock = PoolFixture.new_defaults(
+            r"test[-].+", max_running=1, containers=[container_mock]
+        )
 
         executor = Executor(app, pool_mock)
 
-        task, job, execution = JobExecutionFixture.new_defaults()
+        task, job, execution = JobExecutionFixture.new_defaults(
+            container_id="fastlane-job-123"
+        )
 
         result = executor.get_result(job.task, job, execution)
         expect(result.status).to_equal(STATUS.get(status))
@@ -228,12 +230,12 @@ def test_stop1(client):
     app = client.application
 
     with app.app_context():
-        match, pool_mock, client_mock = PoolFixture.new_defaults(
-            r"test[-].+", max_running=1
+        container_mock = ContainerFixture.new_with_status(
+            name="fastlane-job-1234", container_id="fastlane-job-1234"
         )
-
-        container_mock = ContainerFixture.new_with_status(name="fastlane-job-1234")
-        client_mock.containers.get.return_value = container_mock
+        match, pool_mock, client_mock = PoolFixture.new_defaults(
+            r"test[-].+", max_running=1, containers=[container_mock]
+        )
 
         task, job, execution = JobExecutionFixture.new_defaults(
             container_id="fastlane-job-1234"
@@ -628,7 +630,25 @@ def test_get_current_logs1(client):
     """
 
     with client.application.app_context():
-        pytest.skip("Not implemented")
+        containers = [
+            ContainerFixture.new(
+                container_id="fastlane-job-123",
+                name="fastlane-job-123",
+                stdout="stdout",
+                stderr="stderr",
+            )
+        ]
+        match, pool_mock, client_mock = PoolFixture.new_defaults(
+            r"test.+", max_running=1, containers=containers
+        )
+
+        task, job, execution = JobExecutionFixture.new_defaults(
+            container_id="fastlane-job-123"
+        )
+        executor = Executor(client.application, pool_mock)
+
+        result = executor.get_current_logs(task.task_id, job, execution)
+        expect(result).to_equal("stdout\nstderr")
 
 
 def test_get_blacklisted_hosts(client):

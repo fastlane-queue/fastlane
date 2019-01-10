@@ -496,9 +496,7 @@ class Executor:
             result.log = container.logs(stdout=True, stderr=False)
 
             if result.error != "":
-                result.error += (
-                    f"\n\nstderr:\n{container.logs(stdout=False, stderr=True)}"
-                )
+                result.error += f"\n\nstderr:\n{container.logs(stdout=False, stderr=True).decode('utf-8')}"
             else:
                 result.error = container.logs(stdout=False, stderr=True)
 
