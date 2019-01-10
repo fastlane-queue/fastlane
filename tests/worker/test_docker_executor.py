@@ -5,11 +5,13 @@ from unittest.mock import MagicMock
 # 3rd Party
 import docker
 import pytest
+import requests
 from dateutil.parser import parse
 from preggy import expect
 
 # Fastlane
 from fastlane.worker.docker_executor import STATUS, DockerPool, Executor
+from fastlane.worker.errors import HostUnavailableError
 from tests.fixtures.docker import ClientFixture, ContainerFixture, PoolFixture
 from tests.fixtures.models import JobExecutionFixture
 
@@ -243,8 +245,60 @@ def test_stop1(client):
 
         executor = Executor(app, pool_mock)
 
-        executor.stop_job(task, job, execution)
+        result = executor.stop_job(task, job, execution)
         container_mock.stop.assert_called()
+        expect(result).to_be_true()
+
+
+def test_stop2(client):
+    """
+    Tests stopping a job stops fails if container is not in metadata
+    """
+
+    app = client.application
+
+    with app.app_context():
+        match, pool_mock, client_mock = PoolFixture.new_defaults(
+            r"test[-].+", max_running=1, containers=[]
+        )
+
+        task, job, execution = JobExecutionFixture.new_defaults()
+        del execution.metadata["container_id"]
+
+        executor = Executor(app, pool_mock)
+
+        result = executor.stop_job(task, job, execution)
+        expect(result).to_be_false()
+
+
+def test_stop3(client):
+    """
+    Tests stopping a job raises HostUnavailableError
+    """
+
+    app = client.application
+
+    with app.app_context():
+        container_mock = ContainerFixture.new_with_status(
+            name="fastlane-job-1234", container_id="fastlane-job-1234"
+        )
+        match, pool_mock, client_mock = PoolFixture.new_defaults(
+            r"test[-].+", max_running=1, containers=[container_mock]
+        )
+
+        client_mock.containers.get.side_effect = requests.exceptions.ConnectionError(
+            "failed"
+        )
+
+        task, job, execution = JobExecutionFixture.new_defaults(
+            container_id="fastlane-job-1234"
+        )
+
+        executor = Executor(app, pool_mock)
+
+        msg = "Connection to host host:1234 failed with error: failed"
+        with expect.error_to_happen(HostUnavailableError, message=msg):
+            executor.stop_job(task, job, execution)
 
 
 def test_circuit1(client):

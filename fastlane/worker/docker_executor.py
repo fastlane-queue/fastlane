@@ -400,7 +400,7 @@ class Executor:
                 "Can't stop Job Execution, since it has not been started. Aborting..."
             )
 
-            return
+            return False
 
         h = execution.metadata["docker_host"]
         p = execution.metadata["docker_port"]
@@ -428,6 +428,8 @@ class Executor:
                 raise HostUnavailableError(host, port, err)
 
         run(logger)
+
+        return True
 
     def convert_date(self, dt):
         return parse(dt)
