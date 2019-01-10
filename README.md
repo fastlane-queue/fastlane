@@ -1,4 +1,4 @@
-![fastlane](fastlane-logo.png)
+![fastlane](fastlane-logo.svg)
 
 [![Build Status](https://travis-ci.org/heynemann/fastlane.svg?branch=master)](https://travis-ci.org/heynemann/fastlane) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/55791f14727846f5a330f409ff4266c1)](https://www.codacy.com/app/heynemann/fastlane?utm_source=github.com&utm_medium=referral&utm_content=heynemann/fastlane&utm_campaign=Badge_Grade) [![BCH compliance](https://bettercodehub.com/edge/badge/heynemann/fastlane?branch=master)](https://bettercodehub.com/results/heynemann/fastlane)
 
