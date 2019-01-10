@@ -260,18 +260,6 @@ six = "*"
 
 [[package]]
 category = "main"
-description = "Socket.IO integration for Flask applications"
-name = "flask-socketio"
-optional = false
-python-versions = "*"
-version = "3.1.0"
-
-[package.dependencies]
-Flask = ">=0.9"
-python-socketio = ">=1.6.1"
-
-[[package]]
-category = "main"
 description = "Elegant WebSockets for your Flask apps."
 name = "flask-sockets"
 optional = false
@@ -687,17 +675,6 @@ version = "2.7.5"
 six = ">=1.5"
 
 [[package]]
-category = "main"
-description = "Engine.IO server"
-name = "python-engineio"
-optional = false
-python-versions = "*"
-version = "3.0.0"
-
-[package.dependencies]
-six = ">=1.9.0"
-
-[[package]]
 category = "dev"
 description = "JSON RPC 2.0 server library"
 name = "python-jsonrpc-server"
@@ -721,18 +698,6 @@ future = ">=0.14.0"
 jedi = ">=0.12"
 pluggy = "*"
 python-jsonrpc-server = "*"
-
-[[package]]
-category = "main"
-description = "Socket.IO server"
-name = "python-socketio"
-optional = false
-python-versions = "*"
-version = "2.1.1"
-
-[package.dependencies]
-python-engineio = ">=2.2.0"
-six = ">=1.9.0"
 
 [[package]]
 category = "main"
@@ -993,7 +958,7 @@ python-versions = "*"
 version = "2.2.1"
 
 [metadata]
-content-hash = "94a02bc692f63bb5aa37234925ec1a4c1288704e5166b94830e3081507d242d9"
+content-hash = "70c29a0455e4a67b9874ac56f9652d1ff790042b34718425f7b9d3773768180f"
 python-versions = "^3.6"
 
 [metadata.hashes]
@@ -1022,7 +987,6 @@ flask = ["2271c0070dbcb5275fad4a82e29f23ab92682dc45f9dfbc22c02ba9b9322ce48", "a0
 flask-mongoengine = ["0f426aeafc4be2c37e9b4c0f8b5d02d012b7afc4b3b97a4119024684fe148fc1", "b6376b33cd1e624c09983a0884dc87303e54084f0e6b7f8df6794d56d35fa66f"]
 flask-redis = ["56ebd5e69a42988e9a7a904f07b37cd625a7dbcdfbfe31797885c3c4a92516f5", "ffb8e636c7af0226a3074860200602850a5a871169bc53fcde05b7d973aad714"]
 flask-redis-sentinel = ["0deb2bef4977144a008bae2457c931ff8b1f3f97dce94c09003ed360e39f89a4", "a17ef135f607f1531fd80a283368ef5f11ecf5a4237b48fd192549e8c8998f02"]
-flask-socketio = ["86a747d3dbb5b18b83092b75494c29effcaddf7d3f645105747ec3be8d4b92a1", "a7188b35f7874903f554b3a1a3a4465213e765c4f17182fa5cb3d9f6915da4c1"]
 flask-sockets = ["072927da8edca0e81e024f5787e643c87d80b351b714de95d723becb30e0643b", "350a76d55f5889f64afd2ca9b32f262680b7960965f0830365576307d30cfe1e"]
 flask-wtf = ["5d14d55cfd35f613d99ee7cba0fc3fbbe63ba02f544d349158c14ca15561cc36", "d9a9e366b32dcbb98ef17228e76be15702cd2600675668bca23f63a7947fd5ac"]
 future = ["67045236dcfd6816dc439556d009594abf643e5eb48992e36beac09c2ca659b8"]
@@ -1061,10 +1025,8 @@ pytest-cov = ["513c425e931a0344944f84ea47f3956be0e416d95acbd897a44970c8d926d5d7"
 pytest-sugar = ["26cf8289fe10880cbbc130bd77398c4e6a8b936d8393b116a5c16121d95ab283", "fcd87a74b2bce5386d244b49ad60549bfbc4602527797fac167da147983f58ab"]
 pytest-watch = ["06136f03d5b361718b8d0d234042f7b2f203910d8568f63df2f866b547b3d4b9"]
 python-dateutil = ["063df5763652e21de43de7d9e00ccf239f953a832941e37be541614732cdfc93", "88f9287c0174266bb0d8cedd395cfba9c58e87e5ad86b2ce58859bc11be3cf02"]
-python-engineio = ["a437bda348b8325a1a09bc2e04c5fff8bb8cbe674b5ba41adbb2a8eeacc98457", "bb8b5888adb852614b4b1861586ee7d89145cbd2ebba03ed7043e64c029bbb3b"]
 python-jsonrpc-server = ["533434fa982eb42c36ddb0b6758cef8e6eaf46d014f76b70a401b8790a3e6d57"]
 python-language-server = ["51d238ffefda57b23e4a4cf728532ab0a70b778fc7fa765d7a910fd08683d2fa"]
-python-socketio = ["15dc3db711916e9f6dfd97d65d7a2d861906fb2e42faa72922dfe8ddbc3f4e08", "e50752ad2514b6c02743dd3d2a153c4dc544f43af0fce8f83310cd15fee61aeb"]
 pywin32 = ["22e218832a54ed206452c8f3ca9eff07ef327f8e597569a4c2828be5eaa09a77", "32b37abafbfeddb0fe718008d6aada5a71efa2874f068bee1f9e703983dcc49a", "35451edb44162d2f603b5b18bd427bc88fcbc74849eaa7a7e7cfe0f507e5c0c8", "4eda2e1e50faa706ff8226195b84fbcbd542b08c842a9b15e303589f85bfb41c", "5f265d72588806e134c8e1ede8561739071626ea4cc25c12d526aa7b82416ae5", "6852ceac5fdd7a146b570655c37d9eacd520ed1eaeec051ff41c6fc94243d8bf", "6dbc4219fe45ece6a0cc6baafe0105604fdee551b5e876dc475d3955b77190ec", "9bd07746ce7f2198021a9fa187fa80df7b221ec5e4c234ab6f00ea355a3baf99"]
 pyyaml = ["3d7da3009c0f3e783b2c873687652d83b1bbfd5c88e9813fb7e5b03c0dd3108b", "3ef3092145e9b70e3ddd2c7ad59bdd0252a94dfe3949721633e41344de00a6bf", "40c71b8e076d0550b2e6380bada1f1cd1017b882f7e16f09a65be98e017f211a", "558dd60b890ba8fd982e05941927a3911dc409a63dcb8b634feaa0cda69330d3", "a7c28b45d9f99102fa092bb213aa12e0aaf9a6a1f5e395d36166639c1f96c3a1", "aa7dd4a6a427aed7df6fb7f08a580d68d9b118d90310374716ae90b710280af1", "bc558586e6045763782014934bfaf39d48b8ae85a2713117d16c39864085c613", "d46d7982b62e0729ad0175a9bc7e10a566fc07b224d2c79fafb5e032727eaa04", "d5eef459e30b09f5a098b9cea68bebfeb268697f78d647bd255a085371ac7f3f", "e01d3203230e1786cd91ccfdc8f8454c8069c91bee3962ad93b87a4b2860f537", "e170a9e6fcfd19021dd29845af83bb79236068bf5fd4df3327c1be18182b2531"]
 raven = ["3fd787d19ebb49919268f06f19310e8112d619ef364f7989246fc8753d469888", "95f44f3ea2c1b176d5450df4becdb96c15bf2632888f9ab193e9dd22300ce46a"]
