@@ -10,7 +10,7 @@ from dateutil.parser import parse
 from preggy import expect
 
 # Fastlane
-from fastlane.worker.docker_executor import STATUS, DockerPool, Executor, blacklist_key
+from fastlane.worker.docker_executor import BLACKLIST_KEY, STATUS, DockerPool, Executor
 from fastlane.worker.errors import HostUnavailableError, NoAvailableHostsError
 from tests.fixtures.docker import ClientFixture, ContainerFixture, PoolFixture
 from tests.fixtures.models import JobExecutionFixture
@@ -21,7 +21,7 @@ def test_pull1(client):
 
     with client.application.app_context():
         task, job, execution = JobExecutionFixture.new_defaults()
-        match, pool_mock, client_mock = PoolFixture.new_defaults(r"test-.+")
+        _, pool_mock, client_mock = PoolFixture.new_defaults(r"test-.+")
 
         exe = Executor(app=client.application, pool=pool_mock)
         exe.update_image(
@@ -41,7 +41,7 @@ def test_pull2(client):
 
     with client.application.app_context():
         task, job, execution = JobExecutionFixture.new_defaults(task_id="test-123")
-        match, pool_mock, client_mock = PoolFixture.new_defaults(r"test-.+")
+        _, pool_mock, client_mock = PoolFixture.new_defaults(r"test-.+")
 
         exe = Executor(app=client.application, pool=pool_mock)
         client_mock.images.pull.side_effect = requests.exceptions.ConnectionError(
@@ -63,7 +63,7 @@ def test_run1(client):
 
     with client.application.app_context():
         task, job, execution = JobExecutionFixture.new_defaults()
-        match, pool_mock, client_mock = PoolFixture.new_defaults(r"test-.+")
+        _, pool_mock, client_mock = PoolFixture.new_defaults(r"test-.+")
 
         client_mock.containers.run.return_value = MagicMock(id="job_id")
 
@@ -98,7 +98,7 @@ def test_run2(client):
 
     with client.application.app_context():
         task, job, execution = JobExecutionFixture.new_defaults()
-        match, pool_mock, client_mock = PoolFixture.new_defaults(r"test-.+")
+        _, pool_mock, client_mock = PoolFixture.new_defaults(r"test-.+")
 
         client_mock.containers.run.side_effect = requests.exceptions.ConnectionError(
             "failed"
@@ -130,7 +130,7 @@ def test_run3(client):
 
     with client.application.app_context():
         task, job, execution = JobExecutionFixture.new_defaults()
-        match, pool_mock, client_mock = PoolFixture.new_defaults(r"test-.+")
+        _, pool_mock, _ = PoolFixture.new_defaults(r"test-.+")
 
         exe = Executor(app=client.application, pool=pool_mock)
 
@@ -162,7 +162,7 @@ def test_validate_max1(client):
 
     with app.app_context():
         containers = [ContainerFixture.new(name="fastlane-job-123")]
-        match, pool_mock, client_mock = PoolFixture.new_defaults(
+        _, pool_mock, _ = PoolFixture.new_defaults(
             r"test.+", max_running=1, containers=containers
         )
 
@@ -201,7 +201,7 @@ def test_validate_max3(client):
             ContainerFixture.new(name="fastlane-job-456"),
         ]
 
-        match, pool_mock, client_mock = PoolFixture.new_defaults(
+        _, pool_mock, _ = PoolFixture.new_defaults(
             r"test.+", max_running=1, containers=containers
         )
         executor = Executor(app, pool_mock)
@@ -277,13 +277,13 @@ def verify_get_result(
             stderr=stderr,
         )
 
-        match, pool_mock, client_mock = PoolFixture.new_defaults(
+        _, pool_mock, _ = PoolFixture.new_defaults(
             r"test[-].+", max_running=1, containers=[container_mock]
         )
 
         executor = Executor(app, pool_mock)
 
-        task, job, execution = JobExecutionFixture.new_defaults(
+        _, job, execution = JobExecutionFixture.new_defaults(
             container_id="fastlane-job-123"
         )
 
@@ -304,14 +304,14 @@ def verify_get_result(
             else:
                 expect(result.error).to_equal(custom_error)
 
-        dt = parse(started_at)
-        expect(result.started_at).to_equal(dt)
+        parsed_started_at = parse(started_at)
+        expect(result.started_at).to_equal(parsed_started_at)
 
         if finished_at is not None:
-            dt = parse(finished_at)
+            parsed_finished_at = parse(finished_at)
         else:
-            dt = finished_at
-        expect(result.finished_at).to_equal(dt)
+            parsed_finished_at = finished_at
+        expect(result.finished_at).to_equal(parsed_finished_at)
 
 
 def test_get_result3(client):
@@ -322,7 +322,7 @@ def test_get_result3(client):
             container_id="fastlane-job-123", name="fastlane-job-123"
         )
 
-        match, pool_mock, client_mock = PoolFixture.new_defaults(
+        _, pool_mock, client_mock = PoolFixture.new_defaults(
             r"test[-].+", max_running=1, containers=[container_mock]
         )
         client_mock.containers.get.side_effect = requests.exceptions.ConnectionError(
@@ -331,7 +331,7 @@ def test_get_result3(client):
 
         executor = Executor(app, pool_mock)
 
-        task, job, execution = JobExecutionFixture.new_defaults(
+        _, job, execution = JobExecutionFixture.new_defaults(
             container_id="fastlane-job-123"
         )
 
@@ -351,7 +351,7 @@ def test_stop1(client):
         container_mock = ContainerFixture.new_with_status(
             name="fastlane-job-1234", container_id="fastlane-job-1234"
         )
-        match, pool_mock, client_mock = PoolFixture.new_defaults(
+        _, pool_mock, _ = PoolFixture.new_defaults(
             r"test[-].+", max_running=1, containers=[container_mock]
         )
 
@@ -374,7 +374,7 @@ def test_stop2(client):
     app = client.application
 
     with app.app_context():
-        match, pool_mock, client_mock = PoolFixture.new_defaults(
+        _, pool_mock, _ = PoolFixture.new_defaults(
             r"test[-].+", max_running=1, containers=[]
         )
 
@@ -398,7 +398,7 @@ def test_stop3(client):
         container_mock = ContainerFixture.new_with_status(
             name="fastlane-job-1234", container_id="fastlane-job-1234"
         )
-        match, pool_mock, client_mock = PoolFixture.new_defaults(
+        _, pool_mock, client_mock = PoolFixture.new_defaults(
             r"test[-].+", max_running=1, containers=[container_mock]
         )
 
@@ -607,7 +607,7 @@ def test_get_running1(client):
                 name="fastlane-job-123", container_id="fastlane-job-123"
             )
         ]
-        match, pool_mock, client_mock = PoolFixture.new_defaults(
+        _, pool_mock, _ = PoolFixture.new_defaults(
             r"test.+", max_running=1, containers=containers
         )
 
@@ -849,16 +849,16 @@ def test_get_current_logs1(client):
                 stderr="stderr",
             )
         ]
-        match, pool_mock, client_mock = PoolFixture.new_defaults(
+        _, pool_mock, _ = PoolFixture.new_defaults(
             r"test.+", max_running=1, containers=containers
         )
 
-        task, job, execution = JobExecutionFixture.new_defaults(
+        task, _, execution = JobExecutionFixture.new_defaults(
             container_id="fastlane-job-123"
         )
         executor = Executor(client.application, pool_mock)
 
-        result = executor.get_current_logs(task.task_id, job, execution)
+        result = executor.get_current_logs(task.task_id, execution)
         expect(result).to_equal("stdout\nstderr")
 
 
@@ -869,14 +869,14 @@ def test_get_blacklisted_hosts1(client):
 
     app = client.application
     with app.app_context():
-        match, pool_mock, client_mock = PoolFixture.new_defaults(r"test-.+")
+        _, pool_mock, _ = PoolFixture.new_defaults(r"test-.+")
 
         executor = Executor(client.application, pool_mock)
         hosts = executor.get_blacklisted_hosts()
         expect(hosts).to_be_empty()
 
         redis = app.redis
-        redis.sadd(blacklist_key, "localhost:5678")
+        redis.sadd(BLACKLIST_KEY, "localhost:5678")
 
         hosts = executor.get_blacklisted_hosts()
         expect(hosts).to_length(1)
@@ -897,7 +897,7 @@ def test_mark_as_done1(client):
                 stderr="stderr",
             )
         ]
-        match, pool_mock, client_mock = PoolFixture.new_defaults(
+        _, pool_mock, _ = PoolFixture.new_defaults(
             r"test.+", max_running=1, containers=containers
         )
 
@@ -927,7 +927,7 @@ def test_mark_as_done2(client):
                 stderr="stderr",
             )
         ]
-        match, pool_mock, client_mock = PoolFixture.new_defaults(
+        _, pool_mock, _ = PoolFixture.new_defaults(
             r"test.+", max_running=1, containers=containers
         )
 
@@ -957,13 +957,11 @@ def test_remove_done1(client):
                 stderr="stderr",
             )
         ]
-        match, pool_mock, client_mock = PoolFixture.new_defaults(
+        _, pool_mock, _ = PoolFixture.new_defaults(
             r"test.+", max_running=1, containers=containers
         )
 
-        task, job, execution = JobExecutionFixture.new_defaults(
-            container_id="fastlane-job-123"
-        )
+        JobExecutionFixture.new_defaults(container_id="fastlane-job-123")
         executor = Executor(client.application, pool_mock)
         result = executor.remove_done()
 

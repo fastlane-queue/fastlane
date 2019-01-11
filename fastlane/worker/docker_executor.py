@@ -24,9 +24,15 @@ STATUS = {
     "running": ExecutionResult.Status.running,
 }
 
-bp = Blueprint("docker", __name__, url_prefix="/docker-executor")
-blacklist_key = "docker-executor::blacklisted-hosts"
-job_prefix = "fastlane-job"
+bp = Blueprint(  # pylint: disable=invalid-name
+    "docker", __name__, url_prefix="/docker-executor"
+)
+BLACKLIST_KEY = "docker-executor::blacklisted-hosts"
+JOB_PREFIX = "fastlane-job"
+
+
+def convert_date(date_to_parse):
+    return parse(date_to_parse)
 
 
 def get_details():
@@ -58,7 +64,7 @@ def add_to_blacklist():
 
     host = data["host"]
 
-    redis.sadd(blacklist_key, host)
+    redis.sadd(BLACKLIST_KEY, host)
 
     return ""
 
@@ -76,14 +82,17 @@ def remove_from_blacklist():
         return make_response(msg, 400)
 
     if "host" not in data:
-        msg = "Failed to remove host from blacklist because 'host' attribute was not found in JSON body."
+        msg = (
+            "Failed to remove host from blacklist because 'host'"
+            " attribute was not found in JSON body."
+        )
         g.logger.warn(msg)
 
         return make_response(msg, 400)
 
     host = data["host"]
 
-    redis.srem(blacklist_key, host)
+    redis.srem(BLACKLIST_KEY, host)
 
     return ""
 
@@ -106,12 +115,13 @@ class DockerPool:
 
             for address in docker_hosts:
                 host, port = address.split(":")
-                cl = docker.DockerClient(base_url=address)
-                self.clients[address] = (host, int(port), cl)
-                client_list.append((host, int(port), cl))
+                docker_client = docker.DockerClient(base_url=address)
+                self.clients[address] = (host, int(port), docker_client)
+                client_list.append((host, int(port), docker_client))
 
-    def refresh_circuits(self, executor, clients, blacklisted_hosts, logger):
-        def ps(client):
+    @staticmethod
+    def refresh_circuits(executor, clients, blacklisted_hosts, logger):
+        def docker_ps(client):
             client.containers.list(sparse=False)
 
         for host, port, client in clients:
@@ -121,7 +131,7 @@ class DockerPool:
             try:
                 logger.debug("Refreshing host...", host=host, port=port)
                 circuit = executor.get_circuit(f"{host}:{port}")
-                circuit.call(ps, client)
+                circuit.call(docker_ps, client)
             except pybreaker.CircuitBreakerError:
                 error = traceback.format_exc()
                 logger.error("Failed to refresh host.", error=error)
@@ -134,12 +144,12 @@ class DockerPool:
         if host is not None and port is not None:
             logger.debug("Custom host returned.")
 
-            cl = self.clients.get(f"{host}:{port}")
+            docker_client = self.clients.get(f"{host}:{port}")
 
-            if cl is None:
+            if docker_client is None:
                 return host, port, None
 
-            return cl
+            return docker_client
 
         if blacklist is None:
             blacklist = set()
@@ -152,7 +162,7 @@ class DockerPool:
 
                 continue
 
-            self.refresh_circuits(executor, clients, blacklist, logger)
+            DockerPool.refresh_circuits(executor, clients, blacklist, logger)
             filtered = [
                 (host, port, client)
 
@@ -282,7 +292,7 @@ class Executor:
             operation="docker_executor.update_image",
         )
 
-        host, port, cl = self.pool.get_client(
+        host, port, client = self.pool.get_client(
             self, task.task_id, blacklist=blacklisted_hosts
         )
         circuit = self.get_circuit(f"{host}:{port}")
@@ -293,11 +303,12 @@ class Executor:
         def run(logger):
             try:
                 logger.debug("Updating image in docker host...")
-                cl.images.pull(image, tag=tag)
+                client.images.pull(image, tag=tag)
                 execution.metadata["docker_host"] = host
                 execution.metadata["docker_port"] = port
                 logger.info(
-                    "Image updated successfully. Docker host and port stored in Job Execution for future reference."
+                    "Image updated successfully. Docker host and port "
+                    "stored in Job Execution for future reference."
                 )
             except requests.exceptions.ConnectionError as err:
                 error = traceback.format_exc()
@@ -317,8 +328,6 @@ class Executor:
         run(logger)
 
     def run(self, task, job, execution, image, tag, command, blacklisted_hosts=None):
-        host, port, cl = None, None, None
-
         logger = self.logger.bind(
             task_id=task.task_id,
             job_id=str(job.job_id),
@@ -335,9 +344,11 @@ class Executor:
                 "Can't run job without docker_host and docker_port in execution metadata."
             )
 
-        h = execution.metadata["docker_host"]
-        p = execution.metadata["docker_port"]
-        host, port, cl = self.pool.get_client(self, task.task_id, h, p)
+        docker_host = execution.metadata["docker_host"]
+        docker_port = execution.metadata["docker_port"]
+        host, port, client = self.pool.get_client(
+            self, task.task_id, docker_host, docker_port
+        )
 
         logger = logger.bind(host=host, port=port)
 
@@ -346,11 +357,11 @@ class Executor:
         @circuit
         def run(logger):
             try:
-                container_name = f"{job_prefix}-{execution.execution_id}"
+                container_name = f"{JOB_PREFIX}-{execution.execution_id}"
                 envs = job.metadata.get("envs", {})
                 logger = logger.bind(container_name=container_name, envs=envs)
                 logger.debug("Running the Job in Docker Host...")
-                container = cl.containers.run(
+                container = client.containers.run(
                     image=f"{image}:{tag}",
                     name=container_name,
                     command=command,
@@ -359,7 +370,8 @@ class Executor:
                 )
                 execution.metadata["container_id"] = container.id
                 logger.info(
-                    "Container started successfully. Container ID stored as Job Execution metadata.",
+                    "Container started successfully. Container ID "
+                    "stored as Job Execution metadata.",
                     container_id=container.id,
                 )
             except requests.exceptions.ConnectionError as err:
@@ -396,9 +408,11 @@ class Executor:
 
             return False
 
-        h = execution.metadata["docker_host"]
-        p = execution.metadata["docker_port"]
-        host, port, cl = self.pool.get_client(self, task.task_id, h, p)
+        docker_host = execution.metadata["docker_host"]
+        docker_port = execution.metadata["docker_port"]
+        host, port, client = self.pool.get_client(
+            self, task.task_id, docker_host, docker_port
+        )
 
         logger = logger.bind(host=host, port=port)
 
@@ -410,7 +424,7 @@ class Executor:
                 container_id = execution.metadata["container_id"]
                 logger = logger.bind(container_id=container_id)
                 logger.debug("Finding container...")
-                container = cl.containers.get(container_id)
+                container = client.containers.get(container_id)
                 logger.info("Container found.")
                 logger.debug("Stopping container...")
                 container.stop()
@@ -425,13 +439,12 @@ class Executor:
 
         return True
 
-    def convert_date(self, dt):
-        return parse(dt)
-
     def get_result(self, task, job, execution):
-        h = execution.metadata["docker_host"]
-        p = execution.metadata["docker_port"]
-        host, port, cl = self.pool.get_client(self, task.task_id, h, p)
+        execution_host = execution.metadata["docker_host"]
+        execution_port = execution.metadata["docker_port"]
+        host, port, client = self.pool.get_client(
+            self, task.task_id, execution_host, execution_port
+        )
 
         logger = self.logger.bind(
             task_id=task.task_id,
@@ -448,7 +461,7 @@ class Executor:
                 container_id = execution.metadata["container_id"]
                 logger = logger.bind(container_id=container_id)
                 logger.debug("Finding container...")
-                container = cl.containers.get(container_id)
+                container = client.containers.get(container_id)
                 logger.info("Container found.")
 
                 return container
@@ -473,7 +486,7 @@ class Executor:
         state = container.attrs["State"]
         result.exit_code = state["ExitCode"]
         result.error = state["Error"]
-        result.started_at = self.convert_date(state["StartedAt"])
+        result.started_at = convert_date(state["StartedAt"])
 
         logger = logger.bind(
             status=container.status,
@@ -488,11 +501,12 @@ class Executor:
             result.status == ExecutionResult.Status.done
             or result.status == ExecutionResult.Status.failed
         ):
-            result.finished_at = self.convert_date(state["FinishedAt"])
+            result.finished_at = convert_date(state["FinishedAt"])
             result.log = container.logs(stdout=True, stderr=False)
 
             if result.error != "":
-                result.error += f"\n\nstderr:\n{container.logs(stdout=False, stderr=True).decode('utf-8')}"
+                logs = container.logs(stdout=False, stderr=True).decode("utf-8")
+                result.error += f"\n\nstderr:\n{logs}"
             else:
                 result.error = container.logs(stdout=False, stderr=True)
 
@@ -504,11 +518,11 @@ class Executor:
         clients = self.pool.clients.values()
 
         if regex is not None:
-            for r, cl in self.pool.clients_per_regex:
-                if r is not None and r != regex:
+            for cluster_regex, cluster_clients in self.pool.clients_per_regex:
+                if cluster_regex is not None and cluster_regex != regex:
                     continue
 
-                clients = cl
+                clients = cluster_clients
 
                 break
 
@@ -527,7 +541,7 @@ class Executor:
             )
 
             for container in containers:
-                if not container.name.startswith(job_prefix):
+                if not container.name.startswith(JOB_PREFIX):
                     continue
                 running.append((host, port, container.id))
 
@@ -590,22 +604,26 @@ class Executor:
             "running": running,
         }
 
-    def get_current_logs(self, task_id, job, execution):
-        h = execution.metadata["docker_host"]
-        p = execution.metadata["docker_port"]
-        host, port, cl = self.pool.get_client(self, task_id, h, p)
+    def get_current_logs(self, task_id, execution):
+        execution_host = execution.metadata["docker_host"]
+        execution_port = execution.metadata["docker_port"]
+        _, _, client = self.pool.get_client(
+            self, task_id, execution_host, execution_port
+        )
 
         container_id = execution.metadata["container_id"]
-        container = cl.containers.get(container_id)
+        container = client.containers.get(container_id)
 
         log = container.logs(stdout=True, stderr=True).decode("utf-8")
 
         return log
 
     def get_streaming_logs(self, task_id, job, execution):
-        h = execution.metadata["docker_host"]
-        p = execution.metadata["docker_port"]
-        host, port, cl = self.pool.get_client(self, task_id, h, p)
+        execution_host = execution.metadata["docker_host"]
+        execution_port = execution.metadata["docker_port"]
+        host, port, client = self.pool.get_client(
+            self, task_id, execution_host, execution_port
+        )
 
         container_id = execution.metadata["container_id"]
 
@@ -620,7 +638,7 @@ class Executor:
         )
 
         try:
-            container = cl.containers.get(container_id)
+            container = client.containers.get(container_id)
 
             for log in container.logs(stdout=True, stderr=True, stream=True):
                 yield log.decode("utf-8")
@@ -631,15 +649,17 @@ class Executor:
             raise HostUnavailableError(host, port, err)
 
     def get_blacklisted_hosts(self):
-        redis = current_app.redis
-        hosts = redis.smembers(blacklist_key)
+        redis = self.app.redis
+        hosts = redis.smembers(BLACKLIST_KEY)
 
-        return set([host.decode("utf-8") for host in hosts])
+        return {host.decode("utf-8") for host in hosts}
 
     def mark_as_done(self, task, job, execution):
-        h = execution.metadata["docker_host"]
-        p = execution.metadata["docker_port"]
-        host, port, cl = self.pool.get_client(self, task.task_id, h, p)
+        execution_host = execution.metadata["docker_host"]
+        execution_port = execution.metadata["docker_port"]
+        host, port, client = self.pool.get_client(
+            self, task.task_id, execution_host, execution_port
+        )
 
         container_id = execution.metadata["container_id"]
 
@@ -655,7 +675,7 @@ class Executor:
 
         try:
             logger.debug("Finding container...")
-            container = cl.containers.get(container_id)
+            container = client.containers.get(container_id)
             logger.info("Container found.")
 
             new_name = f"defunct-{container.name}"
@@ -674,7 +694,7 @@ class Executor:
 
         for (host, port, client) in clients:
             containers = client.containers.list(
-                sparse=False, all=True, filters={"name": f"defunct-{job_prefix}"}
+                sparse=False, all=True, filters={"name": f"defunct-{JOB_PREFIX}"}
             )
 
             for container in containers:

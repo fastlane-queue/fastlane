@@ -7,7 +7,7 @@ import pytest
 from preggy import expect
 
 # Fastlane
-from fastlane.worker.docker_executor import blacklist_key
+from fastlane.worker.docker_executor import BLACKLIST_KEY
 
 
 def test_docker_blacklist1(client):
@@ -26,10 +26,10 @@ def test_docker_blacklist1(client):
 
         app = client.application
 
-        res = app.redis.exists(blacklist_key)
+        res = app.redis.exists(BLACKLIST_KEY)
         expect(res).to_be_true()
 
-        res = app.redis.sismember(blacklist_key, docker_host)
+        res = app.redis.sismember(BLACKLIST_KEY, docker_host)
         expect(res).to_be_true()
 
     for method in ["post", "put"]:
@@ -59,10 +59,10 @@ def test_docker_blacklist3(client):
 
     app = client.application
 
-    res = app.redis.exists(blacklist_key)
+    res = app.redis.exists(BLACKLIST_KEY)
     expect(res).to_be_true()
 
-    res = app.redis.sismember(blacklist_key, docker_host)
+    res = app.redis.sismember(BLACKLIST_KEY, docker_host)
     expect(res).to_be_true()
 
     data = {"host": docker_host}
@@ -75,7 +75,7 @@ def test_docker_blacklist3(client):
 
     app = client.application
 
-    res = app.redis.exists(blacklist_key)
+    res = app.redis.exists(BLACKLIST_KEY)
     expect(res).to_be_false()
 
 

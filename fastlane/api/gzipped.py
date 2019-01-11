@@ -5,11 +5,10 @@ from io import BytesIO as IO
 # 3rd Party
 from flask import Blueprint, request
 
-bp = Blueprint("gzip", __name__)
+bp = Blueprint("gzip", __name__)  # pylint: disable=invalid-name
 
 
 def init_app(app):
-    @app.after_request
     def gzip_response(response):
         if response.headers["Content-Type"] != "application/json":
             return response
@@ -39,3 +38,5 @@ def init_app(app):
         response.headers["Content-Length"] = len(response.data)
 
         return response
+
+    app.after_request(gzip_response)
