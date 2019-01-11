@@ -13,7 +13,7 @@ from flask import Blueprint, current_app, g, make_response, request
 
 # Fastlane
 from fastlane.worker import ExecutionResult
-from fastlane.worker.errors import HostUnavailableError
+from fastlane.worker.errors import HostUnavailableError, NoAvailableHostsError
 
 # http://docs.docker.com/engine/reference/commandline/ps/#examples
 # One of created, restarting, running, removing, paused, exited, or dead
@@ -134,7 +134,12 @@ class DockerPool:
         if host is not None and port is not None:
             logger.debug("Custom host returned.")
 
-            return self.clients.get(f"{host}:{port}")
+            cl = self.clients.get(f"{host}:{port}")
+
+            if cl is None:
+                return host, port, None
+
+            return cl
 
         if blacklist is None:
             blacklist = set()
@@ -176,7 +181,7 @@ class DockerPool:
 
         msg = f"Failed to find a docker host for task id {task_id}."
         logger.error(msg)
-        raise RuntimeError(msg)
+        raise NoAvailableHostsError(msg)
 
 
 class Executor:
@@ -325,25 +330,14 @@ class Executor:
             operation="docker_executor.run",
         )
 
-        if "docker_host" in execution.metadata:
-            h = execution.metadata["docker_host"]
-            p = execution.metadata["docker_port"]
-            host, port, cl = self.pool.get_client(self, task.task_id, h, p)
-        else:
-            if blacklisted_hosts is None:
-                blacklisted_hosts = self.get_blacklisted_hosts()
-            host, port, cl = self.pool.get_client(
-                self, task.task_id, blacklist=blacklisted_hosts
+        if "docker_host" not in execution.metadata:
+            raise RuntimeError(
+                "Can't run job without docker_host and docker_port in execution metadata."
             )
-            execution.metadata["docker_host"] = host
-            execution.metadata["docker_port"] = port
-            logger.warn(
-                "Docker Host and Port were not found in the execution metadata. "
-                "This is weird, since the update image part of running a job "
-                "should have selected a docker host.",
-                new_host=host,
-                new_port=port,
-            )
+
+        h = execution.metadata["docker_host"]
+        p = execution.metadata["docker_port"]
+        host, port, cl = self.pool.get_client(self, task.task_id, h, p)
 
         logger = logger.bind(host=host, port=port)
 

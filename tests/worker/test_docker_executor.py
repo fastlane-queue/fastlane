@@ -11,7 +11,7 @@ from preggy import expect
 
 # Fastlane
 from fastlane.worker.docker_executor import STATUS, DockerPool, Executor, blacklist_key
-from fastlane.worker.errors import HostUnavailableError
+from fastlane.worker.errors import HostUnavailableError, NoAvailableHostsError
 from tests.fixtures.docker import ClientFixture, ContainerFixture, PoolFixture
 from tests.fixtures.models import JobExecutionFixture
 
@@ -30,6 +30,32 @@ def test_pull1(client):
 
         expect(client_mock.images.pull.call_count).to_equal(1)
         client_mock.images.pull.assert_called_with("mock-image", tag="latest")
+
+
+def test_pull2(client):
+    """
+    Tests that a docker executor raises HostUnavailableError
+    when host is not available when updating an image and
+    deletes host and port metadata from execution
+    """
+
+    with client.application.app_context():
+        task, job, execution = JobExecutionFixture.new_defaults(task_id="test-123")
+        match, pool_mock, client_mock = PoolFixture.new_defaults(r"test-.+")
+
+        exe = Executor(app=client.application, pool=pool_mock)
+        client_mock.images.pull.side_effect = requests.exceptions.ConnectionError(
+            "failed"
+        )
+
+        msg = "Connection to host host:1234 failed with error: failed"
+        with expect.error_to_happen(HostUnavailableError, message=msg):
+            exe.update_image(
+                task, job, execution, "mock-image", "latest", blacklisted_hosts=set()
+            )
+
+        expect(execution.metadata).not_to_include("docker_host")
+        expect(execution.metadata).not_to_include("docker_port")
 
 
 def test_run1(client):
@@ -61,6 +87,70 @@ def test_run1(client):
             detach=True,
             name=f"fastlane-job-{execution.execution_id}",
         )
+
+
+def test_run2(client):
+    """
+    Tests that a docker executor raises HostUnavailableError
+    when host is not available when running a container and
+    deletes host and port metadata from execution
+    """
+
+    with client.application.app_context():
+        task, job, execution = JobExecutionFixture.new_defaults()
+        match, pool_mock, client_mock = PoolFixture.new_defaults(r"test-.+")
+
+        client_mock.containers.run.side_effect = requests.exceptions.ConnectionError(
+            "failed"
+        )
+
+        exe = Executor(app=client.application, pool=pool_mock)
+
+        msg = "Connection to host host:1234 failed with error: failed"
+        with expect.error_to_happen(HostUnavailableError, message=msg):
+            exe.run(
+                task,
+                job,
+                execution,
+                "mock-image",
+                "latest",
+                "command",
+                blacklisted_hosts=set(),
+            )
+
+        expect(execution.metadata).not_to_include("docker_host")
+        expect(execution.metadata).not_to_include("docker_port")
+
+
+def test_run3(client):
+    """
+    Tests that a docker executor raises RuntimeError if no
+    docker_host and docker_port available in execution
+    """
+
+    with client.application.app_context():
+        task, job, execution = JobExecutionFixture.new_defaults()
+        match, pool_mock, client_mock = PoolFixture.new_defaults(r"test-.+")
+
+        exe = Executor(app=client.application, pool=pool_mock)
+
+        del execution.metadata["docker_host"]
+        del execution.metadata["docker_port"]
+
+        msg = "Can't run job without docker_host and docker_port in execution metadata."
+        with expect.error_to_happen(RuntimeError, message=msg):
+            exe.run(
+                task,
+                job,
+                execution,
+                "mock-image",
+                "latest",
+                "command",
+                blacklisted_hosts=set(),
+            )
+
+        expect(execution.metadata).not_to_include("docker_host")
+        expect(execution.metadata).not_to_include("docker_port")
 
 
 def test_validate_max1(client):
@@ -222,6 +312,32 @@ def verify_get_result(
         else:
             dt = finished_at
         expect(result.finished_at).to_equal(dt)
+
+
+def test_get_result3(client):
+    app = client.application
+
+    with app.app_context():
+        container_mock = ContainerFixture.new_with_status(
+            container_id="fastlane-job-123", name="fastlane-job-123"
+        )
+
+        match, pool_mock, client_mock = PoolFixture.new_defaults(
+            r"test[-].+", max_running=1, containers=[container_mock]
+        )
+        client_mock.containers.get.side_effect = requests.exceptions.ConnectionError(
+            "failed"
+        )
+
+        executor = Executor(app, pool_mock)
+
+        task, job, execution = JobExecutionFixture.new_defaults(
+            container_id="fastlane-job-123"
+        )
+
+        msg = "Connection to host host:1234 failed with error: failed"
+        with expect.error_to_happen(HostUnavailableError, message=msg):
+            executor.get_result(job.task, job, execution)
 
 
 def test_stop1(client):
@@ -437,6 +553,47 @@ def test_pool4(client):
         expect(client).to_be_instance_of(docker.client.DockerClient)
 
         expect(pool.max_running).to_equal({None: 2})
+
+
+def test_pool5(client):
+    """
+    Tests getting client with specific host and port
+    """
+
+    with client.application.app_context():
+        executor = Executor(client.application)
+        pool = executor.pool
+        expect(pool.clients).to_include("localhost:2375")
+
+        host, port, client = pool.get_client(
+            executor, "test-123", host="localhost", port=2375
+        )
+        expect(host).to_equal("localhost")
+        expect(port).to_equal(2375)
+        expect(client).to_be_instance_of(docker.client.DockerClient)
+
+        host, port, client = pool.get_client(
+            executor, "test-123", host="localhost", port=4000
+        )
+        expect(host).to_equal("localhost")
+        expect(port).to_equal(4000)
+        expect(client).to_be_null()
+
+
+def test_pool6(client):
+    """
+    Tests getting client when no farms match raises
+    """
+
+    with client.application.app_context():
+        pool = DockerPool(
+            ([re.compile(r"test-.+"), ["localhost:1234", "localhost:4567"], 2],)
+        )
+        executor = Executor(client.application, pool=pool)
+
+        message = "Failed to find a docker host for task id qwe-123."
+        with expect.error_to_happen(NoAvailableHostsError, message=message):
+            pool.get_client(executor, "qwe-123")
 
 
 def test_get_running1(client):
@@ -732,7 +889,58 @@ def test_mark_as_done1(client):
     """
 
     with client.application.app_context():
-        pytest.skip("Not implemented")
+        containers = [
+            ContainerFixture.new(
+                container_id="fastlane-job-123",
+                name="fastlane-job-123",
+                stdout="stdout",
+                stderr="stderr",
+            )
+        ]
+        match, pool_mock, client_mock = PoolFixture.new_defaults(
+            r"test.+", max_running=1, containers=containers
+        )
+
+        task, job, execution = JobExecutionFixture.new_defaults(
+            container_id="fastlane-job-123"
+        )
+        executor = Executor(client.application, pool_mock)
+
+        executor.mark_as_done(task, job, execution)
+
+        new_name = f"defunct-fastlane-job-123"
+        containers[0].rename.assert_called_with(new_name)
+
+
+def test_mark_as_done2(client):
+    """
+    Tests marking a container as done raises HostUnavailableError
+    when docker host is not available
+    """
+
+    with client.application.app_context():
+        containers = [
+            ContainerFixture.new(
+                container_id="fastlane-job-123",
+                name="fastlane-job-123",
+                stdout="stdout",
+                stderr="stderr",
+            )
+        ]
+        match, pool_mock, client_mock = PoolFixture.new_defaults(
+            r"test.+", max_running=1, containers=containers
+        )
+
+        task, job, execution = JobExecutionFixture.new_defaults(
+            container_id="fastlane-job-123"
+        )
+        executor = Executor(client.application, pool_mock)
+
+        containers[0].rename.side_effect = requests.exceptions.ConnectionError("failed")
+
+        message = "Connection to host host:1234 failed with error: failed"
+        with expect.error_to_happen(HostUnavailableError, message=message):
+            executor.mark_as_done(task, job, execution)
 
 
 def test_remove_done1(client):
@@ -741,4 +949,32 @@ def test_remove_done1(client):
     """
 
     with client.application.app_context():
-        pytest.skip("Not implemented")
+        containers = [
+            ContainerFixture.new(
+                container_id="fastlane-job-123",
+                name="defunct-fastlane-job-123",
+                stdout="stdout",
+                stderr="stderr",
+            )
+        ]
+        match, pool_mock, client_mock = PoolFixture.new_defaults(
+            r"test.+", max_running=1, containers=containers
+        )
+
+        task, job, execution = JobExecutionFixture.new_defaults(
+            container_id="fastlane-job-123"
+        )
+        executor = Executor(client.application, pool_mock)
+        result = executor.remove_done()
+
+        containers[0].remove.assert_called()
+
+        expect(result).to_length(1)
+        expect(result[0]).to_be_like(
+            {
+                "host": "host:1234",
+                "name": "defunct-fastlane-job-123",
+                "id": "fastlane-job-123",
+                "image": "ubuntu:latest",
+            }
+        )

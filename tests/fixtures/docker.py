@@ -37,6 +37,7 @@ class ContainerFixture:
         container_mock.logs.side_effect = ContainerFixture.get_logs(container_mock)
         container_mock.stdout = stdout
         container_mock.stderr = stderr
+        container_mock.image = MagicMock(attrs={"RepoTags": ["ubuntu:latest"]})
 
         return container_mock
 

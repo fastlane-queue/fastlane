@@ -4,3 +4,7 @@ class HostUnavailableError(RuntimeError):
         self.port = port
         self.error = error
         self.message = f"Connection to host {self.host}:{self.port} failed with error: {self.error}"
+
+
+class NoAvailableHostsError(RuntimeError):
+    pass
