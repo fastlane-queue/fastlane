@@ -10,14 +10,14 @@ from fastlane.models.task import Task
 
 def test_get_tasks(client):
     """Test getting tasks"""
-    Task.create_task('my-task-1')
-    Task.create_task('my-task-2')
-    Task.create_task('my-task-3')
+    Task.create_task("my-task-1")
+    Task.create_task("my-task-2")
+    Task.create_task("my-task-3")
 
     resp = client.get("/tasks")
     expect(resp.status_code).to_equal(200)
 
-    data = loads(resp.data)    
+    data = loads(resp.data)
     expect(data["items"]).to_length(3)
     expect(data["total"]).to_equal(3)
     expect(data["page"]).to_equal(1)
@@ -26,9 +26,10 @@ def test_get_tasks(client):
     expect(data["hasNext"]).to_be_false()
     expect(data["hasPrev"]).to_be_false()
 
+
 def test_get_tasks_data(client):
     """Test getting tasks resource data"""
-    task = Task.create_task('my-task')
+    task = Task.create_task("my-task")
 
     resp = client.get("/tasks")
 
@@ -41,13 +42,13 @@ def test_get_tasks_data(client):
 
 def test_get_tasks_pagination(client):
     """Test getting tasks pagination"""
-    Task.create_task('my-task-1')
-    Task.create_task('my-task-2')
-    Task.create_task('my-task-3')
-    Task.create_task('my-task-4')
+    Task.create_task("my-task-1")
+    Task.create_task("my-task-2")
+    Task.create_task("my-task-3")
+    Task.create_task("my-task-4")
 
     app = client.application
-    server_name = app.config['SERVER_NAME']
+    server_name = app.config["SERVER_NAME"]
 
     resp = client.get("/tasks?page=2")
 
@@ -56,7 +57,7 @@ def test_get_tasks_pagination(client):
     expect(data["page"]).to_equal(2)
     expect(data["hasNext"]).to_be_false()
     expect(data["hasPrev"]).to_be_true()
-    expect(data["prevUrl"]).to_equal(f'http://{server_name}/tasks?page=1')
+    expect(data["prevUrl"]).to_equal(f"http://{server_name}/tasks?page=1")
     expect(data["nextUrl"]).to_be_null()
 
 

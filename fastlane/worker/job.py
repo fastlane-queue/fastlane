@@ -370,6 +370,8 @@ def reenqueue_monitor_due_to_break(task_id, job_id, execution_id):
     dt = datetime.utcnow() + delta
     enqueued = scheduler.enqueue_at(dt, monitor_job, *args)
 
+    return enqueued.id
+
 
 def monitor_job(task_id, job_id, execution_id):
     try:
