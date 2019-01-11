@@ -7,8 +7,8 @@ from gevent import monkey
 monkey.patch_all()  # isort:skip
 
 # Fastlane
-from fastlane.api.app import Application  # NOQA
-from fastlane.config import Config  # NOQA
+from fastlane.api.app import Application  # NOQA pylint: disable=wrong-import-position
+from fastlane.config import Config  # NOQA pylint: disable=wrong-import-position
 
 
 class APIHandler:

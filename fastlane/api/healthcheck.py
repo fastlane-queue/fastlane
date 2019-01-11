@@ -4,7 +4,9 @@ from flask import Blueprint, current_app, jsonify
 # Fastlane
 from fastlane.models import db
 
-bp = Blueprint("healthcheck", __name__, url_prefix="/healthcheck")
+bp = Blueprint(  # pylint: disable=invalid-name
+    "healthcheck", __name__, url_prefix="/healthcheck"
+)
 
 
 @bp.route("/", methods=("GET",))
@@ -32,7 +34,7 @@ def healthcheck():
 
     code = 200
 
-    if len(status["errors"]) > 0:
+    if status["errors"]:
         code = 500
 
     return jsonify(status), code

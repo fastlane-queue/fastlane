@@ -15,7 +15,7 @@ try:
 except ImportError:
     from json import loads
 
-bp = Blueprint("enqueue", __name__)
+bp = Blueprint("enqueue", __name__)  # pylint: disable=invalid-name
 
 
 def get_details():
@@ -76,21 +76,21 @@ def enqueue_job(task, job, image, command, start_at, start_in, cron, logger):
     queue_job_id = None
 
     if start_at is not None:
-        dt = datetime.utcfromtimestamp(int(start_at))
-        logger.debug("Enqueuing job execution in the future...", start_at=dt)
-        result = scheduler.enqueue_at(dt, run_job, *args)
+        future_date = datetime.utcfromtimestamp(int(start_at))
+        logger.debug("Enqueuing job execution in the future...", start_at=future_date)
+        result = scheduler.enqueue_at(future_date, run_job, *args)
         job.metadata["enqueued_id"] = str(result.id)
         queue_job_id = str(result.id)
         job.save()
-        logger.info("Job execution enqueued successfully.", start_at=dt)
+        logger.info("Job execution enqueued successfully.", start_at=future_date)
     elif start_in is not None:
-        dt = datetime.now(tz=timezone.utc) + start_in
-        logger.debug("Enqueuing job execution in the future...", start_at=dt)
-        result = scheduler.enqueue_at(dt, run_job, *args)
+        future_date = datetime.now(tz=timezone.utc) + start_in
+        logger.debug("Enqueuing job execution in the future...", start_at=future_date)
+        result = scheduler.enqueue_at(future_date, run_job, *args)
         job.metadata["enqueued_id"] = str(result.id)
         queue_job_id = str(result.id)
         job.save()
-        logger.info("Job execution enqueued successfully.", start_at=dt)
+        logger.info("Job execution enqueued successfully.", start_at=future_date)
     elif cron is not None:
         logger.debug("Enqueuing job execution using cron...", cron=cron)
         result = scheduler.cron(

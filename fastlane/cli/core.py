@@ -26,20 +26,20 @@ def main():
 @click.option("-v", "--verbose", default=0, count=True)
 @click.option(
     "-c",
-    "--config",
+    "--config-file",
     default=ROOT_CONFIG,
     help="configuration file to use with fastlane",
 )
-def api(host, port, verbose, config):
+def api(host, port, verbose, config_file):
     """Runs fastlane API in the specified host and port."""
 
     log_level = LEVELS.get(verbose, "ERROR")
-    handler = APIHandler(click, host, port, config, log_level)
+    handler = APIHandler(click, host, port, config_file, log_level)
     handler()
 
 
 @click.command()
-@click.option("-i", "--id", default=None, help="ID for this worker")
+@click.option("-i", "--worker-id", default=None, help="ID for this worker")
 @click.option(
     "-j", "--no-jobs", default=False, help="""Process the 'jobs' queue?""", is_flag=True
 )
@@ -67,11 +67,13 @@ def api(host, port, verbose, config):
 @click.option("-v", "--verbose", default=0, count=True)
 @click.option(
     "-c",
-    "--config",
+    "--config-file",
     default=ROOT_CONFIG,
     help="configuration file to use with fastlane",
 )
-def worker(id, no_jobs, no_monitor, no_notify, no_webhooks, verbose, config):
+def worker(
+    worker_id, no_jobs, no_monitor, no_notify, no_webhooks, verbose, config_file
+):
     """Runs an fastlane Worker with the specified queue name and starts processing."""
     jobs = not no_jobs
     monitor = not no_monitor
@@ -86,7 +88,7 @@ def worker(id, no_jobs, no_monitor, no_notify, no_webhooks, verbose, config):
 
     log_level = LEVELS.get(verbose, "ERROR")
     handler = WorkerHandler(
-        click, id, jobs, monitor, notify, webhooks, config, log_level
+        click, worker_id, jobs, monitor, notify, webhooks, config_file, log_level
     )
     handler()
 
@@ -103,14 +105,14 @@ def config():
 @click.option("-v", "--verbose", default=0, count=True)
 @click.option(
     "-c",
-    "--config",
+    "--config-file",
     default=ROOT_CONFIG,
     help="configuration file to use with fastlane",
 )
-def prune(verbose, config):
+def prune(verbose, config_file):
     """Removes all containers that have already been processed by fastlane."""
     log_level = LEVELS.get(verbose, "ERROR")
-    handler = PruneHandler(click, config, log_level)
+    handler = PruneHandler(click, config_file, log_level)
     handler()
 
 

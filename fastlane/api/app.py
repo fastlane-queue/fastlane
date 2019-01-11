@@ -35,6 +35,7 @@ from fastlane.models import db
 class Application:
     def __init__(self, config, log_level, testing=False):
         self.config = config
+        self.logger = None
         self.log_level = log_level
 
         self.create_app(testing)
@@ -176,10 +177,10 @@ class Application:
 
         self.app.executor_module = executor_module
 
-        bp = getattr(executor_module, "bp", None)
+        blueprint = getattr(executor_module, "bp", None)
 
-        if bp is not None:
-            self.app.register_blueprint(bp)
+        if blueprint is not None:
+            self.app.register_blueprint(blueprint)
 
         self.app.executor = self.app.executor_module.Executor(self.app)
 

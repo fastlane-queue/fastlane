@@ -46,7 +46,8 @@ Config.define(
 Config.define(
     "WEBHOOKS_EXPONENTIAL_BACKOFF_MIN_MS",
     5000,
-    "Number of milliseconds that fastlane must wait before the first retry in each webhook dispatch",
+    "Number of milliseconds that fastlane must wait before "
+    "the first retry in each webhook dispatch",
     "Worker",
 )
 

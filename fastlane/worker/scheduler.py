@@ -20,5 +20,6 @@ class QueueScheduler:
                 self.scheduler.remove_lock()
         else:
             self.logger.debug(
-                "Lock could not be acquired. Enqueuing scheduled jobs skipped. Trying again next cycle."
+                "Lock could not be acquired. Enqueuing scheduled "
+                "jobs skipped. Trying again next cycle."
             )

@@ -4,6 +4,7 @@ from requests import Request, Session
 
 class WebhooksDispatchError(RuntimeError):
     def __init__(self, status_code, method, url, body, headers, error=None):
+        super(WebhooksDispatchError, self).__init__("Webhook dispatch error")
         self.status_code = status_code
         self.method = method
         self.url = url
@@ -39,13 +40,13 @@ class Response:
 class WebhooksDispatcher:
     def dispatch(self, method, url, body, headers, timeout=1):
         try:
-            s = Session()
+            session = Session()
 
             req = Request(method, url, data=body, headers=headers)
-            prepped = s.prepare_request(req)
+            prepped = session.prepare_request(req)
             prepped.body = body
 
-            resp = s.send(prepped, timeout=timeout, verify=False)
+            resp = session.send(prepped, timeout=timeout, verify=False)
 
             if resp.status_code > 399:
                 raise WebhooksDispatchError(

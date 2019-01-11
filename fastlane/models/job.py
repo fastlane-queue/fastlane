@@ -4,15 +4,22 @@ from uuid import uuid4
 
 # 3rd Party
 import mongoengine.errors
-from mongoengine import (BooleanField, DateTimeField, DictField,
-                         EmbeddedDocumentField, IntField, ListField,
-                         ReferenceField, StringField)
+from mongoengine import (
+    BooleanField,
+    DateTimeField,
+    DictField,
+    EmbeddedDocumentField,
+    IntField,
+    ListField,
+    ReferenceField,
+    StringField,
+)
 
 # Fastlane
 from fastlane.models import db
 
 
-class JobExecution(db.EmbeddedDocument):
+class JobExecution(db.EmbeddedDocument):  # pylint: disable=no-member
     class Status:
         enqueued = "enqueued"
         pulling = "pulling"
@@ -150,10 +157,10 @@ class Job(db.Document):
                 "Task ID and Job ID are required and can't be None or empty."
             )
 
-        t = Task.objects(task_id=task_id).first()
-        j = cls.objects(task=t, job_id=job_id).first()
+        task = Task.objects(task_id=task_id).first()
+        job = cls.objects(task=task, job_id=job_id).first()
 
-        return j
+        return job
 
     def get_execution_by_id(self, execution_id):
         for job_execution in self.executions:

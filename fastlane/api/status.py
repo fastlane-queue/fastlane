@@ -9,33 +9,33 @@ from flask import Blueprint, current_app, jsonify, url_for
 from fastlane.models.job import Job
 from fastlane.models.task import Task
 
-bp = Blueprint("status", __name__, url_prefix="/status")
+bp = Blueprint("status", __name__, url_prefix="/status")  # pylint: disable=invalid-name
 
 
 @bp.route("/", methods=("GET",))
 def status():
     executor = current_app.executor
-    status = {"hosts": [], "containers": {"running": []}}
+    metadata = {"hosts": [], "containers": {"running": []}}
 
     containers = executor.get_running_containers()
 
     for host, port, container_id in containers["running"]:
-        status["containers"]["running"].append(
+        metadata["containers"]["running"].append(
             {"host": host, "port": port, "id": container_id}
         )
 
-    status["hosts"] = [] + containers["available"] + containers["unavailable"]
-    status["queues"] = {"jobs": {}, "monitor": {}, "error": {}}
+    metadata["hosts"] = [] + containers["available"] + containers["unavailable"]
+    metadata["queues"] = {"jobs": {}, "monitor": {}, "error": {}}
 
     for queue in ["jobs", "monitor", "error"]:
         jobs_queue_size = current_app.redis.llen(f"rq:queue:{queue}")
-        status["queues"][queue]["length"] = jobs_queue_size
+        metadata["queues"][queue]["length"] = jobs_queue_size
 
-    status["tasks"] = {"count": Task.objects.count()}
+    metadata["tasks"] = {"count": Task.objects.count()}
 
-    status["jobs"] = {"count": Job.objects.count()}
+    metadata["jobs"] = {"count": Job.objects.count()}
 
-    status["jobs"]["scheduled"] = []
+    metadata["jobs"]["scheduled"] = []
     scheduled_jobs = Job.objects(scheduled=True).all()
 
     for job in scheduled_jobs:
@@ -60,6 +60,6 @@ def status():
         del j["taskId"]
         j["task"] = {"id": task_id, "url": task_url}
 
-        status["scheduled"].append(j)
+        metadata["scheduled"].append(j)
 
-    return jsonify(status), 200
+    return jsonify(metadata), 200

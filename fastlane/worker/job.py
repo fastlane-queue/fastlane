@@ -39,8 +39,8 @@ def validate_max_concurrent(executor, task_id, job, image, command, logger):
 
 
 def validate_expiration(job, ex, logger):
-    d = datetime.utcnow()
-    unixtime = calendar.timegm(d.utctimetuple())
+    now = datetime.utcnow()
+    unixtime = calendar.timegm(now.utctimetuple())
 
     if (
         job.metadata.get("expiration") is not None
@@ -50,7 +50,7 @@ def validate_expiration(job, ex, logger):
         ex.status = JobExecution.Status.expired
         ex.error = "Job was supposed to be done before %s, but was started at %s." % (
             expiration_utc.isoformat(),
-            d.isoformat(),
+            now.isoformat(),
         )
         ex.finished_at = datetime.utcnow()
         job.save()
@@ -70,8 +70,8 @@ def reenqueue_job_due_to_break(task_id, job_id, image, command):
     delta = timedelta(seconds=1.0)
 
     scheduler = Scheduler("jobs", connection=current_app.redis)
-    dt = datetime.utcnow() + delta
-    enqueued = scheduler.enqueue_at(dt, run_job, *args)
+    future_date = datetime.utcnow() + delta
+    enqueued = scheduler.enqueue_at(future_date, run_job, *args)
 
     return enqueued.id
 
@@ -367,8 +367,8 @@ def reenqueue_monitor_due_to_break(task_id, job_id, execution_id):
     delta = timedelta(seconds=1.0)
 
     scheduler = Scheduler("monitor", connection=current_app.redis)
-    dt = datetime.utcnow() + delta
-    enqueued = scheduler.enqueue_at(dt, monitor_job, *args)
+    future_date = datetime.utcnow() + delta
+    enqueued = scheduler.enqueue_at(future_date, monitor_job, *args)
 
     return enqueued.id
 
@@ -474,8 +474,8 @@ def monitor_job(task_id, job_id, execution_id):
                 delta = timedelta(
                     seconds=math.pow(factor, job.metadata["retry_count"]) * min_backoff
                 )
-            dt = datetime.utcnow() + delta
-            enqueued = scheduler.enqueue_at(dt, run_job, *args)
+            future_date = datetime.utcnow() + delta
+            enqueued = scheduler.enqueue_at(future_date, run_job, *args)
 
             job.metadata["enqueued_id"] = enqueued.id
             job.save()
@@ -535,10 +535,8 @@ def monitor_job(task_id, job_id, execution_id):
 
 
 def send_email(task_id, job_id, execution_id, subject, to_email):
-    app = current_app
-
     job = Job.get_by_id(task_id, job_id)
-    logger = app.logger.bind(
+    logger = current_app.logger.bind(
         operation="send_email",
         task_id=task_id,
         job_id=job_id,
@@ -555,9 +553,9 @@ def send_email(task_id, job_id, execution_id, subject, to_email):
     execution = job.get_execution_by_id(execution_id)
     logger.info("Execution loaded successfully")
 
-    smtp_host = app.config["SMTP_HOST"]
-    smtp_port = app.config["SMTP_PORT"]
-    smtp_from = app.config["SMTP_FROM"]
+    smtp_host = current_app.config["SMTP_HOST"]
+    smtp_port = current_app.config["SMTP_PORT"]
+    smtp_from = current_app.config["SMTP_FROM"]
 
     if smtp_host is None or smtp_port is None or smtp_from is None:
         logger.error(
@@ -575,12 +573,12 @@ def send_email(task_id, job_id, execution_id, subject, to_email):
         server = smtplib.SMTP(smtp_host, smtp_port)
         server.set_debuglevel(0)
 
-        if app.config.get("SMTP_USE_SSL"):
+        if current_app.config.get("SMTP_USE_SSL"):
             logger.info("Starting TLS...")
             server.starttls()
 
-        smtp_user = app.config.get("SMTP_USER")
-        smtp_password = app.config.get("SMTP_PASSWORD")
+        smtp_user = current_app.config.get("SMTP_USER")
+        smtp_password = current_app.config.get("SMTP_PASSWORD")
 
         if smtp_user and smtp_password:
             logger.info(
@@ -590,7 +588,7 @@ def send_email(task_id, job_id, execution_id, subject, to_email):
             )
             server.login(smtp_user, smtp_password)
 
-        from_email = app.config["SMTP_FROM"]
+        from_email = current_app.config["SMTP_FROM"]
 
         task_url = url_for("task.get_task", task_id=task_id, _external=True)
         job_url = url_for(
@@ -644,9 +642,12 @@ Job Details:
         server.quit()
         logger.info("Email sent successfully.")
     except Exception as exc:
-        error = traceback.format_exc()
-        logger.error("Sending e-mail failed with exception!", error=error)
+        logger.error(
+            "Sending e-mail failed with exception!", error=traceback.format_exc()
+        )
         raise exc
+
+    return True
 
 
 def send_webhook(
@@ -682,8 +683,8 @@ def send_webhook(
     data["metadata"]["custom"] = job.metadata.get("custom", {})
     data = json.dumps(data)
     try:
-        w = WebhooksDispatcher()
-        response = w.dispatch(method, url, data, headers)
+        dispatcher = WebhooksDispatcher()
+        response = dispatcher.dispatch(method, url, data, headers)
 
         execution.metadata.setdefault("webhookDispatch", [])
         execution.metadata["webhookDispatch"].append(
@@ -732,3 +733,5 @@ def send_webhook(
             delta = timedelta(seconds=math.pow(factor, retry_count) * min_backoff)
             scheduler.enqueue_in(delta, send_webhook, *args)
             logger.info("Webhook dispatch retry scheduled.", date=delta)
+
+    return True

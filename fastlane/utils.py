@@ -2,15 +2,14 @@
 import re
 from datetime import timedelta
 
-regex = re.compile(
-    r'((?P<hours>\d+?)h)?((?P<minutes>\d+?)m)?((?P<seconds>\d+?)s)?')
+REGEX = re.compile(r"((?P<hours>\d+?)h)?((?P<minutes>\d+?)m)?((?P<seconds>\d+?)s)?")
 
 
 def parse_time(time_str):
     if time_str is None:
         return None
 
-    parts = regex.match(time_str)
+    parts = REGEX.match(time_str)
 
     if not parts:
         return None

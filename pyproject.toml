@@ -43,6 +43,9 @@ requests-mock = "^1.5"
 flake8 = "^3.6"
 isort = "^4.3"
 pylint = "^2.2"
+pylint-venv = "^1.0"
+pylint-mongoengine = "^0.2.1"
+pylint-plugin-utils = "^0.4.0"
 
 [tool.poetry.scripts]
 fl = 'fastlane.cli:main'

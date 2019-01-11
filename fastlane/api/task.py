@@ -6,6 +6,7 @@ from flask import (
     current_app,
     g,
     jsonify,
+    make_response,
     render_template,
     request,
     url_for,
@@ -17,7 +18,7 @@ from fastlane.models.job import Job, JobExecution
 from fastlane.models.task import Task
 from fastlane.worker.job import run_job
 
-bp = Blueprint("task", __name__)
+bp = Blueprint("task", __name__)  # pylint: disable=invalid-name
 
 
 @bp.route("/tasks", methods=("GET",))
@@ -25,7 +26,7 @@ def get_tasks():
     logger = g.logger.bind(operation="get_tasks")
 
     try:
-        page = int(request.args.get('page', 1))
+        page = int(request.args.get("page", 1))
     except ValueError:
         logger.error(f"Tasks pagination page param should be an integer.")
         abort(404)
@@ -39,12 +40,14 @@ def get_tasks():
 
     tasks_url = url_for("task.get_tasks", _external=True)
     next_url = None
+
     if paginator.has_next:
-        next_url = f'{tasks_url}?page={paginator.next_num}'
+        next_url = f"{tasks_url}?page={paginator.next_num}"
 
     prev_url = None
+
     if paginator.has_prev:
-        prev_url = f'{tasks_url}?page={paginator.prev_num}'
+        prev_url = f"{tasks_url}?page={paginator.prev_num}"
 
     data = {
         "items": [],
@@ -59,7 +62,7 @@ def get_tasks():
     }
 
     for task in paginator.items:
-        data['items'].append(task.to_dict())
+        data["items"].append(task.to_dict())
 
     return jsonify(data)
 
@@ -73,9 +76,9 @@ def get_task(task_id):
 
     if task is None:
         logger.error("Task not found.")
-        abort(404)
 
-        return
+        return make_response("Task not found", 404)
+
     logger.debug("Task retrieved successfully...")
 
     jobs = []
@@ -99,9 +102,9 @@ def get_job(task_id, job_id):
 
     if job is None:
         logger.error("Job not found in task.")
-        abort(404)
 
-        return
+        return make_response("Job not found in task", 404)
+
     logger.debug("Job retrieved successfully...")
 
     details = job.to_dict(
@@ -124,9 +127,8 @@ def stop_job(task_id, job_id):
 
     if job is None:
         logger.error("Job not found in task.")
-        abort(404)
 
-        return
+        return make_response("Job not found in task", 404)
 
     execution = job.get_last_execution()
 
@@ -157,26 +159,23 @@ def retry_job(task_id, job_id):
 
     if job is None:
         logger.error("Job not found in task.")
-        abort(404)
 
-        return
+        return make_response("Job not found in task", 404)
 
     execution = job.get_last_execution()
 
     if execution is None:
         logger.error("No execution yet to retry.")
-        abort(Response(response="No execution yet to retry.", status=400))
 
-        return
+        return make_response("No execution yet to retry.", 400)
 
     scheduler = Scheduler("jobs", connection=current_app.redis)
 
     if "enqueued_id" in job.metadata and job.metadata["enqueued_id"] in scheduler:
         msg = "Can't retry a scheduled job."
         logger.error(msg)
-        abort(Response(response=msg, status=400))
 
-        return
+        return make_response(msg, 400)
 
     if execution.status == JobExecution.Status.running:
         logger.debug("Stopping current execution...")
@@ -228,15 +227,13 @@ def get_response(task_id, job_id, get_data_fn):
 
     if job is None:
         logger.error("Job not found in task.")
-        abort(404)
 
-        return
+        return make_response("Job not found in task.", 404)
 
     if not job.executions:
         logger.error("No executions found in job.")
-        abort(400)
 
-        return
+        return make_response("No executions found in job.", 400)
 
     execution = job.get_last_execution()
 

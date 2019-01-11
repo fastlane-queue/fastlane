@@ -43,34 +43,32 @@ class Task(db.Document):
 
     def to_dict(self):
         res = {
-            'taskId': self.task_id,
-            'createdAt': self.created_at.timestamp(),
-            'lastModifiedAt': self.last_modified_at.timestamp(),
-            'url': self.get_url(),
-            'jobsCount': len(self.jobs),
+            "taskId": self.task_id,
+            "createdAt": self.created_at.timestamp(),
+            "lastModifiedAt": self.last_modified_at.timestamp(),
+            "url": self.get_url(),
+            "jobsCount": len(self.jobs),
         }
 
         return res
 
     @classmethod
     def create_task(cls, task_id):
-        t = cls(task_id=task_id)
-        t.save()
+        new_task = cls(task_id=task_id)
+        new_task.save()
 
-        return t
+        return new_task
 
     @classmethod
     def get_tasks(cls, page=1, per_page=20):
-        return cls.objects.paginate(page, per_page)
+        return cls.objects.paginate(page, per_page)  # pylint: disable=no-member
 
     @classmethod
     def get_by_task_id(cls, task_id):
         if task_id is None or task_id == "":
             raise RuntimeError("Task ID is required and can't be None or empty.")
 
-        t = cls.objects(task_id=task_id).no_dereference().first()
-
-        return t
+        return cls.objects(task_id=task_id).no_dereference().first()
 
     def create_job(self):
         from fastlane.models.job import Job
