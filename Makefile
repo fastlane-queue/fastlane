@@ -83,3 +83,7 @@ readme:
 	#ensure remark is installed with
 	#npm install --global remark-cli remark-preset-lint-recommended remark-stringify
 	@remark README.md -o README.md
+
+lint:
+	@pylint fastlane
+	@flake8
