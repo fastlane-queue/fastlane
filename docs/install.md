@@ -1,4 +1,4 @@
-# 2 install
+# Installing and Running
 
 ## Pre-Requisites
 

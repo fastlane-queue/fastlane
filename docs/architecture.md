@@ -1,4 +1,4 @@
-# 6 architecture
+# Architecture and Design
 
 ## An example situation
 
