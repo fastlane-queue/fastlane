@@ -8,7 +8,7 @@ atomicwrites==1.2.1
 attrs==18.2.0
 Babel==2.6.0
 backcall==0.1.0
-black==18.9b0
+black
 CacheControl==0.12.5
 cachy==0.2.0
 certifi==2018.11.29
