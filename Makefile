@@ -2,6 +2,8 @@ COMPOSE := $(shell command -v docker-compose 2> /dev/null)
 POETRY := $(shell command -v poetry 2> /dev/null)
 LAST_TAG := $(shell git for-each-ref --format='%(*committerdate:raw)%(committerdate:raw) %(refname) %(*objectname) %(objectname)' refs/tags 2>/dev/null | sort -n | awk '{ print $$3 }' | tail -n1 | sed s@refs/tags/@@g)
 
+.PHONY: docs
+
 setup:
 ifndef POETRY
 	@echo "You must have poetry installed (https://github.com/sdispater/poetry)."
@@ -72,6 +74,7 @@ coverage:
 	@open htmlcov/index.html
 
 sample:
+	@rm -rf /tmp/fastlane
 	@mkdir -p /tmp/fastlane/{mongo,redis}
 ifdef COMPOSE
 	@echo "Starting fastlane..."
@@ -87,3 +90,6 @@ readme:
 lint:
 	@pylint fastlane
 	@flake8
+
+docs:
+	@cd docs && make html && open build/html/index.html

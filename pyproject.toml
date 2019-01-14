@@ -46,6 +46,10 @@ pylint = "^2.2"
 pylint-venv = "^1.0"
 pylint-mongoengine = "^0.2.1"
 pylint-plugin-utils = "^0.4.0"
+Sphinx = "^1.8"
+typing = "^3.6"
+recommonmark = "^0.5.0"
+pygments = "^2.3"
 
 [tool.poetry.scripts]
 fl = 'fastlane.cli:main'
