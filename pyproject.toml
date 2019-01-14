@@ -50,6 +50,7 @@ Sphinx = "^1.8"
 typing = "^3.6"
 recommonmark = "^0.5.0"
 pygments = "^2.3"
+sphinx_bootstrap_theme = "^0.6.5"
 
 [tool.poetry.scripts]
 fl = 'fastlane.cli:main'

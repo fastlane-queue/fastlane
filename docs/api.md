@@ -1,49 +1,55 @@
-# API
+# API && Workers
 
-## Enqueue Route
+## Rest API
 
-TBW.
-
-## Tasks Route
+### Enqueue Route
 
 TBW.
 
-## Task Route
+### Tasks Route
 
 TBW.
 
-## Job Route
+### Task Route
 
 TBW.
 
-## Job STDOUT Route
+### Job Route
 
 TBW.
 
-## Job STDERR Route
+### Job STDOUT Route
 
 TBW.
 
-## Stop Job Route
+### Job STDERR Route
 
 TBW.
 
-## Retry Job Route
+### Stop Job Route
 
 TBW.
 
-## Stream Job Route
+### Retry Job Route
 
 TBW.
 
-## Websocket Job Route
+### Stream Job Route
 
 TBW.
 
-## Healthcheck Route
+### Websocket Job Route
 
 TBW.
 
-## Status Route
+### Healthcheck Route
+
+TBW.
+
+### Status Route
+
+TBW.
+
+## Workers
 
 TBW.

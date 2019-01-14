@@ -1050,6 +1050,17 @@ sphinxcontrib-websupport = "*"
 
 [[package]]
 category = "dev"
+description = "Sphinx Bootstrap Theme."
+name = "sphinx-bootstrap-theme"
+optional = false
+python-versions = "*"
+version = "0.6.5"
+
+[package.dependencies]
+setuptools = "*"
+
+[[package]]
+category = "dev"
 description = "Sphinx API for Web Apps"
 name = "sphinxcontrib-websupport"
 optional = false
@@ -1204,7 +1215,7 @@ python-versions = "*"
 version = "2.2.1"
 
 [metadata]
-content-hash = "d74148a8173cc6ff669ebf705a91947752b2c223192914e8d61bbff04a070a5f"
+content-hash = "facb6908c5c9cdc9a9256dd8a39b8796ad338f1acedb21bcf8ddca14cb13d7cf"
 python-versions = "^3.6"
 
 [metadata.hashes]
@@ -1306,6 +1317,7 @@ sentry-sdk = ["7625cfc4eb3673997a757a0f367c6899beda15e447becb6571fa95a3134c0ce8"
 six = ["70e8a77beed4562e7f14fe23a786b54f6296e34344c23bc42f07b15018ff98e9", "832dc0e10feb1aa2c68dcc57dbb658f1c7e65b9b61af69048abc87a2db00a0eb"]
 snowballstemmer = ["919f26a68b2c17a7634da993d91339e288964f93c274f1343e3bbbe2096e1128", "9f3bcd3c401c3e862ec0ebe6d2c069ebc012ce142cce209c098ccb5b09136e89"]
 sphinx = ["429e3172466df289f0f742471d7e30ba3ee11f3b5aecd9a840480d03f14bcfe5", "c4cb17ba44acffae3d3209646b6baec1e215cad3065e852c68cc569d4df1b9f8"]
+sphinx-bootstrap-theme = ["82936109a05b84029052e7efb1756161c3b4c27ae18512a90234d50fe608cba7"]
 sphinxcontrib-websupport = ["68ca7ff70785cbe1e7bccc71a48b5b6d965d79ca50629606c7861a21b206d9dd", "9de47f375baf1ea07cdb3436ff39d7a9c76042c10a769c52353ec46e4e8fc3b9"]
 structlog = ["e361edb3b9aeaa85cd38a1bc9ddbb60cda8a991fc29de9db26832f6300e81eb4", "e912c03a3cf6876803c3f1b1e4b09dd4b9e4bcd0977586cb59cf538351ba6b1b"]
 termcolor = ["1d6d69ce66211143803fbc56652b41d73b4a400a2891d7bf7a1cdf4c02de613b"]

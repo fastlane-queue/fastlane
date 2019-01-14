@@ -8,6 +8,7 @@
 
 # 3rd Party
 import recommonmark
+import sphinx_bootstrap_theme
 from recommonmark.transform import AutoStructify
 
 # -- Path setup --------------------------------------------------------------
@@ -80,7 +81,9 @@ pygments_style = None
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = "alabaster"
+# html_theme = "alabaster"
+html_theme = "bootstrap"
+html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
