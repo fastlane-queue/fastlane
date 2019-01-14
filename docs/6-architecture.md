@@ -1,4 +1,4 @@
-# Design decisions
+# 6 architecture
 
 ## An example situation
 

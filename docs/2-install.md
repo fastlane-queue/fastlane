@@ -1,4 +1,4 @@
-# Installing
+# 2 install
 
 ## Pre-Requisites
 
