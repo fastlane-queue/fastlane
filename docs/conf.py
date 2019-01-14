@@ -90,9 +90,7 @@ pygments_style = None
 #
 # html_theme_options = {}
 
-html_context = {
-    "css_files": ["_static/css/custom.css"]  # override wide tables in RTD theme
-}
+extra_css = ["_static/css/custom.css"]
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -196,4 +194,3 @@ def setup(app):
         True,
     )
     app.add_transform(AutoStructify)
-    app.add_stylesheet("css/custom.css")
