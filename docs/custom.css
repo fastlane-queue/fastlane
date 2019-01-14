@@ -2,3 +2,17 @@
    border: none;
    background-color: transparent;
 }
+.navbar-right li:last-child {
+   display: none;
+}
+
+@media (min-width: 768px) {
+   .navbar-right {
+      position: absolute;
+      right: 20px;
+   }
+
+   .container .navbar-header {
+      display: none !important;
+   }
+}
