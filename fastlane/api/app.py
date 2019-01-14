@@ -160,7 +160,15 @@ class Application:
         rqb.init_app(self.app)
 
     def connect_db(self):
-        self.app.config["MONGODB_SETTINGS"] = loads(self.app.config["MONGODB_CONFIG"])
+        settings = self.app.config["MONGODB_CONFIG"]
+
+        if isinstance(settings, (dict,)):
+            self.app.config["MONGODB_SETTINGS"] = settings
+        else:
+            self.app.config["MONGODB_SETTINGS"] = loads(
+                self.app.config["MONGODB_CONFIG"]
+            )
+
         self.logger.info(
             "Connecting to MongoDB...", mongo=self.app.config["MONGODB_SETTINGS"]
         )

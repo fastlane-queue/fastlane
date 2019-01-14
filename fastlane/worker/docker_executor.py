@@ -203,7 +203,14 @@ class Executor:
 
         if pool is None:
             docker_hosts = []
-            clusters = loads(self.app.config["DOCKER_HOSTS"])
+            hosts = self.app.config["DOCKER_HOSTS"]
+
+            if isinstance(hosts, (tuple, list)):
+                clusters = list(hosts)
+            elif isinstance(hosts, (dict)):
+                clusters = [hosts]
+            else:
+                clusters = loads(hosts)
 
             self.logger.debug("Initializing docker pool...", clusters=clusters)
 

@@ -67,7 +67,7 @@ Config.define(
 
 Config.define(
     "DOCKER_HOSTS",
-    '[{"match": "", "hosts": ["localhost:2375"], "maxRunning":2}]',
+    [{"match": "", "hosts": ["localhost:2375"], "maxRunning": 2}],
     "Docker Hosts to add to pool",
     "Docker Executor",
 )
@@ -88,12 +88,12 @@ Config.define(
 
 Config.define(
     "MONGODB_CONFIG",
-    """{
+    {
         "host": "mongodb://localhost:10101/fastlane",
         "db": "fastlane",
         "serverSelectionTimeoutMS": 100,
-        "connect": false
-    }""",
+        "connect": False,
+    },
     "MongoDB configuration",
     "Models",
 )

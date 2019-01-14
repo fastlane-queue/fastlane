@@ -1,6 +1,6 @@
 ![](_static/fastlane-logo.svg)
 
-[![](https://travis-ci.org/heynemann/fastlane.svg?branch=master)](https://travis-ci.org/heynemann/fastlane) [![](https://api.codacy.com/project/badge/Grade/55791f14727846f5a330f409ff4266c1)](https://www.codacy.com/app/heynemann/fastlane?utm_source=github.com&utm_medium=referral&utm_content=heynemann/fastlane&utm_campaign=Badge_Grade) [![](https://bettercodehub.com/edge/badge/heynemann/fastlane?branch=master)](https://bettercodehub.com/results/heynemann/fastlane)
+[![](https://travis-ci.org/heynemann/fastlane.svg?branch=master)](https://travis-ci.org/heynemann/fastlane)[![](https://readthedocs.org/projects/fastlane/badge/?version=latest)](https://fastlane.readthedocs.io/en/latest/?badge=latest) [![](https://api.codacy.com/project/badge/Grade/55791f14727846f5a330f409ff4266c1)](https://www.codacy.com/app/heynemann/fastlane?utm_source=github.com&utm_medium=referral&utm_content=heynemann/fastlane&utm_campaign=Badge_Grade) [![](https://bettercodehub.com/edge/badge/heynemann/fastlane?branch=master)](https://bettercodehub.com/results/heynemann/fastlane)
 
 [![](https://asciinema.org/a/219455.svg)](https://asciinema.org/a/219455)
 
@@ -8,6 +8,13 @@
 
 * [Getting Started](getting_started.md)
 * [Installing and Running](installing.md)
+* [Job Payload](payload.md)
+* [How To](how-to.md)
+* [Executors](executors.md)
+* [Docker Executor](docker-executor.md)
+* [Architecture and Design](arch.md)
+* [API](api.md)
+* [Workers](worker.md)
 
 # Why [fastlane](https://github.com/fastlane)?
 
@@ -64,3 +71,10 @@ Instead of the tedious, repetitive work of yesteryear where you had to implement
 -   [x]  gzip all JSON responses for the API (for requests that accept gzip);
 -   [ ]  Admin to inspect tasks and jobs.
 
+## License
+
+fastlane is [MIT licensed](https://opensource.org/licenses/MIT).
+
+## Contributions
+
+Logo was created by [Artur Sousa](https://github.com/arturfsousa).
