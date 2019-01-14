@@ -92,4 +92,4 @@ lint:
 	@flake8
 
 docs:
-	@cd docs && make html && open build/html/index.html
+	@mkdocs build && open site/index.html
