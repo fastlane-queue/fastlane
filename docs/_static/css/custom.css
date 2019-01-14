@@ -2,3 +2,7 @@
    border: none;
    background-color: transparent;
 }
+
+body {
+    background: #ff0000 !important;
+}

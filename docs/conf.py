@@ -90,7 +90,7 @@ pygments_style = None
 #
 # html_theme_options = {}
 
-extra_css = ["_static/css/custom.css"]
+extra_css = ["css/custom.css"]
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
