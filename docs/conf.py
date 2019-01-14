@@ -84,6 +84,7 @@ pygments_style = None
 # html_theme = "alabaster"
 html_theme = "bootstrap"
 html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
+html_style = "/default.css"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
