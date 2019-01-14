@@ -6,7 +6,7 @@
 
 ## Contents:
 
-* [Getting Started](getting_started.md)
+* [Getting Started](1-getting-started.md)
 * [Installing and Running](installing.md)
 * [Job Payload](job-payload.md)
 * [How To](how-to.md)
