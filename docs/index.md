@@ -6,15 +6,14 @@
 
 ## Contents:
 
-* [Getting Started](getting_started.md)
-* [Installing and Running](installing.md)
-* [Job Payload](payload.md)
-* [How To](how-to.md)
-* [Executors](executors.md)
-* [Docker Executor](docker-executor.md)
-* [Architecture and Design](arch.md)
-* [API](api.md)
-* [Workers](worker.md)
+* [1 Getting Started](getting_started.md)
+* [2 Installing and Running](installing.md)
+* [3 Job Payload](payload.md)
+* [4 How To](how-to.md)
+* [5 Executors](executors.md)
+* [6 Docker Executor](docker-executor.md)
+* [7 Architecture and Design](arch.md)
+* [8 API/Workers](api.md)
 
 # Why [fastlane](https://github.com/fastlane)?
 
