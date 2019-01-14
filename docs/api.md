@@ -1,4 +1,4 @@
-# API && Workers
+# API
 
 ## Rest API
 

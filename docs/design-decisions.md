@@ -1,4 +1,4 @@
-# Architecture and Design
+# Design decisions
 
 ## An example situation
 

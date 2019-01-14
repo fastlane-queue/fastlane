@@ -1,4 +1,4 @@
-# How To?
+# How to
 
 ## How do I run a new job?
 
