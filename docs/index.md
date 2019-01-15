@@ -4,17 +4,6 @@
 
 [![](https://asciinema.org/a/219455.svg)](https://asciinema.org/a/219455)
 
-## Contents:
-
-* [Home](index.md)
-* [Getting Started](getting-started.md)
-* [Installing and Running](install.md)
-* [Job Payload](job-payload.md)
-* [How To](how-to.md)
-* [Executors](executors.md)
-* [Architecture and Design](architecture.md)
-* [API/Workers](api.md)
-
 # Why [fastlane](https://github.com/heynemann/fastlane)?
 
 [fastlane](https://github.com/heynemann/fastlane) is a [redis](https://redis.io/)-based queueing service that outsmarts everyone else by using containers.
