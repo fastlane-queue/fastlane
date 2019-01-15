@@ -242,6 +242,34 @@ class Executor:
 
             self.pool = DockerPool(docker_hosts)
 
+    def get_container_by_id(self, container_id, host, port, client):
+        logger = self.logger.bind(
+            host=host,
+            port=port,
+            container_id=container_id,
+            operation="docker_host.get_container_by_id",
+        )
+
+        circuit = self.get_circuit(f"{host}:{port}")
+
+        @circuit
+        def run(logger):
+            try:
+                logger = logger.bind(container_id=container_id)
+                logger.debug("Finding container...")
+                container = client.containers.get(container_id)
+                logger.info("Container found.")
+
+                return container
+
+            except requests.exceptions.ConnectionError as err:
+                raise HostUnavailableError(host, port, err) from err
+
+        try:
+            return run(logger)
+        except pybreaker.CircuitBreakerError as err:
+            raise HostUnavailableError(host, port, err) from err
+
     def validate_max_running_executions(self, task_id):
         total_running = 0
         max_running = 0
@@ -431,13 +459,14 @@ class Executor:
 
         circuit = self.get_circuit(f"{host}:{port}")
 
+        container_id = execution.metadata["container_id"]
+        logger = logger.bind(container_id=container_id)
+        logger.debug("Finding container...")
+        container = self.get_container_by_id(container_id, host, port, client)
+
         @circuit
         def run(logger):
             try:
-                container_id = execution.metadata["container_id"]
-                logger = logger.bind(container_id=container_id)
-                logger.debug("Finding container...")
-                container = client.containers.get(container_id)
                 logger.info("Container found.")
                 logger.debug("Stopping container...")
                 container.stop()
@@ -469,33 +498,14 @@ class Executor:
             operation="docker_executor.get_result",
         )
 
-        circuit = self.get_circuit(f"{host}:{port}")
-
-        @circuit
-        def run(logger):
-            try:
-                container_id = execution.metadata["container_id"]
-                logger = logger.bind(container_id=container_id)
-                logger.debug("Finding container...")
-                container = client.containers.get(container_id)
-                logger.info("Container found.")
-
-                return container
-
-            except requests.exceptions.ConnectionError as err:
-                raise HostUnavailableError(host, port, err) from err
-
-        try:
-            container = run(logger)
-        except pybreaker.CircuitBreakerError as err:
-            raise HostUnavailableError(host, port, err) from err
+        container_id = execution.metadata["container_id"]
+        container = self.get_container_by_id(container_id, host, port, client)
 
         # container.attrs['State']
         # {'Status': 'exited', 'Running': False, 'Paused': False, 'Restarting': False,
         # 'OOMKilled': False, 'Dead': False, 'Pid': 0, 'ExitCode': 0, 'Error': '',
         # 'StartedAt': '2018-08-27T17:14:14.1951232Z', 'FinishedAt': '2018-08-27T17:14:14.2707026Z'}
 
-        container_id = execution.metadata["container_id"]
         logger = logger.bind(container_id=container_id)
 
         result = ExecutionResult(
@@ -632,7 +642,9 @@ class Executor:
         )
 
         container_id = execution.metadata["container_id"]
-        container = client.containers.get(container_id)
+        container = self.get_container_by_id(
+            container_id, execution_host, execution_port, client
+        )
 
         log = container.logs(stdout=True, stderr=True).decode("utf-8")
 
@@ -657,21 +669,11 @@ class Executor:
             container_id=container_id,
         )
 
-        circuit = self.get_circuit(f"{host}:{port}")
-
-        @circuit
-        def run(logger):
-            try:
-                container = client.containers.get(container_id)
-
-                return container
-            except requests.exceptions.ConnectionError as err:
-                raise HostUnavailableError(host, port, err) from err
-
-        try:
-            container = run(logger)
-        except pybreaker.CircuitBreakerError as err:
-            raise HostUnavailableError(host, port, err) from err
+        logger.debug("Getting container...")
+        container = self.get_container_by_id(
+            container_id, execution_host, execution_port, client
+        )
+        logger.info("Container found successfully.")
 
         for log in container.logs(stdout=True, stderr=True, stream=True):
             yield log.decode("utf-8")
@@ -701,16 +703,16 @@ class Executor:
             container_id=container_id,
         )
 
+        container = self.get_container_by_id(container_id, host, port, client)
         try:
-            logger.debug("Finding container...")
-            container = client.containers.get(container_id)
-            logger.info("Container found.")
-
             new_name = f"defunct-{container.name}"
             logger.debug("Renaming container...", new_name=new_name)
             container.rename(new_name)
             logger.debug("Container renamed.", new_name=new_name)
-        except requests.exceptions.ConnectionError as err:
+        except (
+            pybreaker.CircuitBreakerError,
+            requests.exceptions.ConnectionError,
+        ) as err:
             error = traceback.format_exc()
             logger.error("Failed to connect to Docker Host.", error=error)
 
