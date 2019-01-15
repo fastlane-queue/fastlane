@@ -8,9 +8,13 @@ pages:
     - 'Job Payload': job-payload.md
   - 'Configuration':
     - 'Installing and Running': install.md
+    - 'Configuration Options': configuration.md
   - 'Reference':
     - 'Executors': executors.md
     - 'Architecture and Design': architecture.md
     - 'API/Workers': api.md
+  - 'Contributing':
+    - 'Contributions': contributions.md
+    - 'License': license.md
 extra_css:
   - custom.css
