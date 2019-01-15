@@ -3,7 +3,7 @@ repo_url: https://github.com/heynemann/fastlane/
 pages:
   - 'Home': index.md
   - 'Getting Started': 
-    - 'The First 5 Minutes': getting-started.md
+    - 'Your First 5 Minutes': getting-started.md
     - 'How To': how-to.md
     - 'Job Payload': job-payload.md
   - 'Configuration':

@@ -1,4 +1,4 @@
-# Getting Started
+# Your first 5 minutes
 
 The team behind [fastlane](https://github.com/fastlane) firmly believes the first 5 minutes with the tool should allow any developer to feel what this tool is all about. So, without further ado let's get some work done.
 
