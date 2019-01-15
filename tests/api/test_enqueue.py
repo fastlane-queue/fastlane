@@ -4,7 +4,6 @@ from json import dumps, loads
 from uuid import uuid4
 
 # 3rd Party
-import pytest
 from croniter import croniter
 from preggy import expect
 
@@ -17,11 +16,11 @@ def test_enqueue1(client):
     """Test enqueue a job works"""
     task_id = str(uuid4())
     data = {"image": "ubuntu", "command": "ls"}
-    rv = client.post(f"/tasks/{task_id}", data=dumps(data), follow_redirects=True)
+    response = client.post(f"/tasks/{task_id}", data=dumps(data), follow_redirects=True)
 
-    expect(rv.status_code).to_equal(200)
+    expect(response.status_code).to_equal(200)
 
-    obj = loads(rv.data)
+    obj = loads(response.data)
     job_id = obj["jobId"]
     expect(job_id).not_to_be_null()
     expect(obj["queueJobId"]).not_to_be_null()
@@ -67,11 +66,11 @@ def test_enqueue1(client):
     j = task.jobs[0]
     expect(str(j.id)).to_equal(job_id)
 
-    q = "rq:queue:jobs"
-    res = app.redis.llen(q)
+    queue_name = "rq:queue:jobs"
+    res = app.redis.llen(queue_name)
     expect(res).to_equal(1)
 
-    res = app.redis.lpop(q)
+    res = app.redis.lpop(queue_name)
     expect(res).to_equal(queue_job_id)
 
     with app.app_context():
@@ -92,17 +91,17 @@ def test_enqueue2(client):
         follow_redirects=True,
     )
 
-    rv = client.post(f"/tasks/{task_id}", **options)
-    expect(rv.status_code).to_equal(200)
+    response = client.post(f"/tasks/{task_id}", **options)
+    expect(response.status_code).to_equal(200)
 
-    obj = loads(rv.data)
+    obj = loads(response.data)
     job_id = obj["jobId"]
     expect(job_id).not_to_be_null()
     expect(obj["queueJobId"]).not_to_be_null()
 
-    rv = client.post(f"/tasks/{task_id}", **options)
-    expect(rv.status_code).to_equal(200)
-    obj = loads(rv.data)
+    response = client.post(f"/tasks/{task_id}", **options)
+    expect(response.status_code).to_equal(200)
+    obj = loads(response.data)
     job_id = obj["jobId"]
     expect(job_id).not_to_be_null()
     expect(obj["queueJobId"]).not_to_be_null()
@@ -133,9 +132,9 @@ def test_enqueue3(client):
         follow_redirects=True,
     )
 
-    rv = client.post(f"/tasks/{task_id}", **options)
-    expect(rv.status_code).to_equal(200)
-    obj = loads(rv.data)
+    response = client.post(f"/tasks/{task_id}", **options)
+    expect(response.status_code).to_equal(200)
+    obj = loads(response.data)
     job_id = obj["jobId"]
     expect(job_id).not_to_be_null()
     expect(obj["queueJobId"]).not_to_be_null()
@@ -175,9 +174,9 @@ def enqueue_in(client, start_in, delta):
         follow_redirects=True,
     )
 
-    rv = client.post(f"/tasks/{task_id}", **options)
-    expect(rv.status_code).to_equal(200)
-    obj = loads(rv.data)
+    response = client.post(f"/tasks/{task_id}", **options)
+    expect(response.status_code).to_equal(200)
+    obj = loads(response.data)
     job_id = obj["jobId"]
     expect(job_id).not_to_be_null()
     expect(obj["queueJobId"]).not_to_be_null()
@@ -207,9 +206,9 @@ def test_enqueue5(client):
         follow_redirects=True,
     )
 
-    rv = client.post(f"/tasks/{task_id}", **options)
-    expect(rv.status_code).to_equal(200)
-    obj = loads(rv.data)
+    response = client.post(f"/tasks/{task_id}", **options)
+    expect(response.status_code).to_equal(200)
+    obj = loads(response.data)
     job_id = obj["jobId"]
     expect(job_id).not_to_be_null()
     expect(obj["queueJobId"]).not_to_be_null()
@@ -245,9 +244,9 @@ def test_enqueue6(client):
         follow_redirects=True,
     )
 
-    rv = client.post(f"/tasks/{task_id}", **options)
-    expect(rv.status_code).to_equal(200)
-    obj = loads(rv.data)
+    response = client.post(f"/tasks/{task_id}", **options)
+    expect(response.status_code).to_equal(200)
+    obj = loads(response.data)
     job_id = obj["jobId"]
     expect(job_id).not_to_be_null()
     expect(obj["queueJobId"]).not_to_be_null()
@@ -255,8 +254,8 @@ def test_enqueue6(client):
     j = Job.get_by_id(task_id, job_id)
     expect(j.metadata).to_include("webhooks")
 
-    wh = j.metadata["webhooks"]
-    expect(wh).to_be_like(data["webhooks"])
+    webhooks = j.metadata["webhooks"]
+    expect(webhooks).to_be_like(data["webhooks"])
 
 
 def test_enqueue7(client):
@@ -273,9 +272,9 @@ def test_enqueue7(client):
         follow_redirects=True,
     )
 
-    rv = client.post(f"/tasks/{task_id}", **options)
-    expect(rv.status_code).to_equal(200)
-    obj = loads(rv.data)
+    response = client.post(f"/tasks/{task_id}", **options)
+    expect(response.status_code).to_equal(200)
+    obj = loads(response.data)
     job_id = obj["jobId"]
     expect(job_id).not_to_be_null()
     expect(obj["queueJobId"]).not_to_be_null()
@@ -297,16 +296,16 @@ def test_enqueue8(client):
 
         task_id = str(uuid4())
 
-        data = {"image": "ubuntu", "command": "ls", "metadata": "qwe"}
+        data = {"image": "ubuntu", "command": "ls", "metadata": input_data}
         options = dict(
             data=dumps(data),
             headers={"Content-Type": "application/json"},
             follow_redirects=True,
         )
 
-        rv = client.post(f"/tasks/{task_id}", **options)
-        expect(rv.status_code).to_equal(200)
-        obj = loads(rv.data)
+        response = client.post(f"/tasks/{task_id}", **options)
+        expect(response.status_code).to_equal(200)
+        obj = loads(response.data)
         job_id = obj["jobId"]
         expect(job_id).not_to_be_null()
         expect(obj["queueJobId"]).not_to_be_null()
@@ -321,13 +320,40 @@ def test_enqueue8(client):
 def test_enqueue9(client):
     """Tests that enqueueing with invalid or empty body returns 400"""
 
-    pytest.skip("Not implemented")
+    app = client.application
+    app.redis.flushall()
+
+    task_id = str(uuid4())
+
+    options = dict(
+        data=None, headers={"Content-Type": "application/json"}, follow_redirects=True
+    )
+
+    response = client.post(f"/tasks/{task_id}", **options)
+    expect(response.status_code).to_equal(400)
+    expect(response.data).to_be_like(
+        "Failed to enqueue task because JSON body could not be parsed."
+    )
 
 
 def test_enqueue10(client):
     """Tests that enqueueing without image and command returns 400"""
 
-    pytest.skip("Not implemented")
+    app = client.application
+    app.redis.flushall()
+
+    task_id = str(uuid4())
+
+    data = {}
+    options = dict(
+        data=dumps(data),
+        headers={"Content-Type": "application/json"},
+        follow_redirects=True,
+    )
+
+    response = client.post(f"/tasks/{task_id}", **options)
+    expect(response.status_code).to_equal(400)
+    expect(response.data).to_be_like("image and command must be filled in the request.")
 
 
 def test_enqueue11(client):
@@ -336,4 +362,22 @@ def test_enqueue11(client):
     startAt, startIn or cron returns 400
     """
 
-    pytest.skip("Not implemented")
+    app = client.application
+    app.redis.flushall()
+
+    task_id = str(uuid4())
+
+    time = int(datetime.now(tz=timezone.utc).timestamp())
+
+    data = {"image": "ubuntu", "command": "ls", "startAt": time, "cron": "* * * * *"}
+    options = dict(
+        data=dumps(data),
+        headers={"Content-Type": "application/json"},
+        follow_redirects=True,
+    )
+
+    response = client.post(f"/tasks/{task_id}", **options)
+    expect(response.status_code).to_equal(400)
+    expect(response.data).to_be_like(
+        "Only ONE of 'startAt', 'startIn' and 'cron' should be in the request."
+    )

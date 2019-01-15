@@ -19,7 +19,10 @@ bp = Blueprint("enqueue", __name__)  # pylint: disable=invalid-name
 
 
 def get_details():
-    details = request.get_json()
+    try:
+        details = request.get_json()
+    except Exception:
+        details = None
 
     if details is None and request.get_data():
         details = loads(request.get_data())
