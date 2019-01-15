@@ -1,6 +1,6 @@
 # Executors
 
-Users can implement their own custom container executors. [fastlane](https://github.com/fastlane) comes bundled with the [docker](https://docs.docker.com/) executor.
+Users can implement their own custom container executors. [fastlane](https://github.com/heynemann/fastlane) comes bundled with the [docker](https://docs.docker.com/) executor.
 
 ## Docker Executor
 
@@ -38,7 +38,7 @@ The `maxRunning` parameter indicates how many concurrent jobs can be run in the 
 
 ### [Docker](https://docs.docker.com/) Executor Blacklisting
 
-In order to improve on reliability and at the same time allow for fast and safe upgrades of [docker](https://docs.docker.com/) hosts, [fastlane](https://github.com/fastlane) comes bundled with a route for blacklisting [docker](https://docs.docker.com/) hosts.
+In order to improve on reliability and at the same time allow for fast and safe upgrades of [docker](https://docs.docker.com/) hosts, [fastlane](https://github.com/heynemann/fastlane) comes bundled with a route for blacklisting [docker](https://docs.docker.com/) hosts.
 
 The use case for this blacklist is as follows:
 
@@ -50,7 +50,7 @@ The use case for this blacklist is as follows:
 
 Then do the same for all the other hosts.
 
-**WARNING**: Please ensure that at least one [docker](https://docs.docker.com/) host is available and **NOT** blacklisted in each farm. If all hosts are blacklisted, [fastlane](https://github.com/fastlane) will start dropping jobs on the affected farms.
+**WARNING**: Please ensure that at least one [docker](https://docs.docker.com/) host is available and **NOT** blacklisted in each farm. If all hosts are blacklisted, [fastlane](https://github.com/heynemann/fastlane) will start dropping jobs on the affected farms.
 
 ## Custom Executor
 

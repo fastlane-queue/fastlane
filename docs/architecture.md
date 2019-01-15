@@ -2,7 +2,7 @@
 
 ## An example situation
 
-We'll start with an example situation that we can explore in order to understand more about [fastlane](https://github.com/fastlane).
+We'll start with an example situation that we can explore in order to understand more about [fastlane](https://github.com/heynemann/fastlane).
 
 Let's say I want to run a job that sends an e-mail when something happens and I have a container already configured with templates and all I need to pass is the SMTP as an env variable and a command to execute a python script:
 
@@ -25,29 +25,29 @@ We'll address these now.
 
 ## Design Decisions
 
-[fastlane](https://github.com/fastlane) is by design a system with no authentication and authorization.
+[fastlane](https://github.com/heynemann/fastlane) is by design a system with no authentication and authorization.
 
-Users are responsible for specifying a task id that's globally unique. If two users specify a task with id 'run', their jobs will be grouped together (not an issue for [fastlane](https://github.com/fastlane), since every job has a globally unique id anyways). This might be confusing, though.
+Users are responsible for specifying a task id that's globally unique. If two users specify a task with id 'run', their jobs will be grouped together (not an issue for [fastlane](https://github.com/heynemann/fastlane), since every job has a globally unique id anyways). This might be confusing, though.
 
-The decision here is to sacrifice isolation for simplicity. Usually a queueing system is a backend application, meaning that it's easy enough to construct a front-end for [fastlane](https://github.com/fastlane) that provides authentication and authorization to post jobs in tasks.
+The decision here is to sacrifice isolation for simplicity. Usually a queueing system is a backend application, meaning that it's easy enough to construct a front-end for [fastlane](https://github.com/heynemann/fastlane) that provides authentication and authorization to post jobs in tasks.
 
 ## The Container
 
-As said previously, [fastlane](https://github.com/fastlane) uses containers to enable users to have very flexible workers. 
+As said previously, [fastlane](https://github.com/heynemann/fastlane) uses containers to enable users to have very flexible workers. 
 
 This means that the container must be created and published before creating a new job. And that's the beauty of the system. Never worry about versions of libraries that the worker has to deal with again.
 
 Just pre-install everything you need in the container image, including the application you are running every job cycle, and publish that image to a container repository.
 
-[fastlane](https://github.com/fastlane) supports versioning of containers. You can run the latest version, or just specify a tag to run (`stable` or `0.1.3` for instance).
+[fastlane](https://github.com/heynemann/fastlane) supports versioning of containers. You can run the latest version, or just specify a tag to run (`stable` or `0.1.3` for instance).
 
 And that's where `/app/sendmail.py` comes from. It was pre-installed in the container when it was published to the `my.docker.repo.com` container repository.
 
 That also answers the second and third questions. All the dependencies get pre-installed within the container image.
 
-## Tasks, Jobs and Executions in [fastlane](https://github.com/fastlane)
+## Tasks, Jobs and Executions in [fastlane](https://github.com/heynemann/fastlane)
 
-There are three levels in [fastlane](https://github.com/fastlane) hierarchy: tasks, jobs and executions.
+There are three levels in [fastlane](https://github.com/heynemann/fastlane) hierarchy: tasks, jobs and executions.
 
 Users group their units of work in tasks. Examples of tasks would be "system1-send-mail" or "system2-process-user-registration".
 

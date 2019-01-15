@@ -4,13 +4,13 @@
 
 [![demo](https://asciinema.org/a/219455.svg)](https://asciinema.org/a/219455)
 
-## Why [fastlane](https://github.com/fastlane)?
+## Why [fastlane](https://github.com/heynemann/fastlane)?
 
-[fastlane](https://github.com/fastlane) is a [redis](https://redis.io/)-based queueing service that outsmarts everyone else by using containers.
+[fastlane](https://github.com/heynemann/fastlane) is a [redis](https://redis.io/)-based queueing service that outsmarts everyone else by using containers.
 
-More seriously, though, [fastlane](https://github.com/fastlane) allows you to easily implement new workers in the form of containers.
+More seriously, though, [fastlane](https://github.com/heynemann/fastlane) allows you to easily implement new workers in the form of containers.
 
-Instead of the tedious, repetitive work of yesteryear where you had to implement a worker in language X or Y, you just spin a new container with all the dependencies you require already previously installed, and instruct [fastlane](https://github.com/fastlane) to run a command in that container. Bang! Instant Super-Powered Workers!
+Instead of the tedious, repetitive work of yesteryear where you had to implement a worker in language X or Y, you just spin a new container with all the dependencies you require already previously installed, and instruct [fastlane](https://github.com/heynemann/fastlane) to run a command in that container. Bang! Instant Super-Powered Workers!
 
 ## Features
 

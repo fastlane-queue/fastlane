@@ -4,9 +4,9 @@
 
 The first and most important requirement is that you have a running [docker](https://docs.docker.com/) host that accepts HTTP(s) requests. If you have [docker](https://docs.docker.com/) running locally, you probably are set.
 
-In order to use [fastlane](https://github.com/fastlane), you also need to have both [Mongo DB](https://www.mongodb.com/) and [Redis](https://redis.io/) instances available. 
+In order to use [fastlane](https://github.com/heynemann/fastlane), you also need to have both [Mongo DB](https://www.mongodb.com/) and [Redis](https://redis.io/) instances available. 
 
-**IMPORTANT WARNING**: If you are running fastlane on MacOS, you must expose [docker](https://docs.docker.com/) host port to [fastlane](https://github.com/fastlane). This can be achieved by running the following command:
+**IMPORTANT WARNING**: If you are running fastlane on MacOS, you must expose [docker](https://docs.docker.com/) host port to [fastlane](https://github.com/heynemann/fastlane). This can be achieved by running the following command:
 
     $ docker run -d -v /var/run/docker.sock:/var/run/docker.sock -p 127.0.0.1:1234:1234 bobrik/socat TCP-LISTEN:1234,fork UNIX-CONNECT:/var/run/docker.sock
 
@@ -18,7 +18,7 @@ To install locally, you need python >=3.6.5(preferrably python >=3.7). Just run 
 
 ## Required Services
 
-[fastlane](https://github.com/fastlane) is divided in two different parts: `API` and `Worker`.
+[fastlane](https://github.com/heynemann/fastlane) is divided in two different parts: `API` and `Worker`.
 
 The `API` is responsible for receiving requests for new jobs, as well as providing task and job metadata.
 

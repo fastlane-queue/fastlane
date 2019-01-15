@@ -2,7 +2,7 @@
 
 ## How do I run a new job?
 
-This Http `POST` will run an `ubuntu` container and then run the `ls -lah` command, as soon as there's a free working in [fastlane](https://github.com/fastlane).
+This Http `POST` will run an `ubuntu` container and then run the `ls -lah` command, as soon as there's a free working in [fastlane](https://github.com/heynemann/fastlane).
 
     $ curl -XPOST -d'{"image": "ubuntu:latest", "command": "ls -lah"}' http://fastlane.local:10000/tasks/test-task
 
@@ -58,7 +58,7 @@ In order to find more about the running (or done by now) job, just follow the `j
 
 ## How do I run a job periodically?
 
-[fastlane](https://github.com/fastlane) supports the well-known [cron format](https://en.wikipedia.org/wiki/Cron). In order to use just specify a `cron` parameter.
+[fastlane](https://github.com/heynemann/fastlane) supports the well-known [cron format](https://en.wikipedia.org/wiki/Cron). In order to use just specify a `cron` parameter.
 
 This Http `POST` will run an `ubuntu` container and then run the `ls -lah` command, every each minute of every hour, every day.
 
@@ -112,11 +112,11 @@ You can query both after the job id. The exit code comes as a header called `Fas
 
 ## How do I see what's going on with my job before it finishes?
 
-[fastlane](https://github.com/fastlane) comes equipped with two routes for that purpose: `/task/<task-id>/jobs/<job-id>/stream` and `/task/<task-id>/jobs/<job-id>/ws`.
+[fastlane](https://github.com/heynemann/fastlane) comes equipped with two routes for that purpose: `/task/<task-id>/jobs/<job-id>/stream` and `/task/<task-id>/jobs/<job-id>/ws`.
 
 The former is a simple page that connects to the latter using WebSockets. That means you should open it in your browser. Just navigate to `http://fastlane.local:10000/tasks/test-scheduled-task/jobs/5c094abcedc7d5be820e20da/stream`.
 
-To integrate with [fastlane](https://github.com/fastlane) and stream the results of a job, just connect to it using Websockets like:
+To integrate with [fastlane](https://github.com/heynemann/fastlane) and stream the results of a job, just connect to it using Websockets like:
 
 ```javascript
 // In Javascript

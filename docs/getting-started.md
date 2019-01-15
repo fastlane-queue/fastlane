@@ -1,12 +1,12 @@
 # Your first 5 minutes
 
-The team behind [fastlane](https://github.com/fastlane) firmly believes the first 5 minutes with the tool should allow any developer to feel what this tool is all about. So, without further ado let's get some work done.
+The team behind [fastlane](https://github.com/heynemann/fastlane) firmly believes the first 5 minutes with the tool should allow any developer to feel what this tool is all about. So, without further ado let's get some work done.
 
 We assume you have both [docker](https://docs.docker.com/) and [docker-compose](https://docs.docker.com/compose/) properly installed and available.
 
 ## Requirements
 
-The first thing, we'll do is get [fastlane](https://github.com/fastlane) up and running (ps: this [docker-compose](https://docs.docker.com/compose/) file runs [Docker In Docker](https://hub.docker.com/_/docker/) and requires privileged mode to run):
+The first thing, we'll do is get [fastlane](https://github.com/heynemann/fastlane) up and running (ps: this [docker-compose](https://docs.docker.com/compose/) file runs [Docker In Docker](https://hub.docker.com/_/docker/) and requires privileged mode to run):
 
 ```bash
 $ curl https://raw.githubusercontent.com/heynemann/fastlane/master/docker-compose-sample.yml | docker-compose -f - up -d
@@ -19,7 +19,7 @@ Creating fastlane_fastlane_1    ... done
 fastlane started successfully.
 ```
 
-After this, both [redis](https://redis.io/) (port `10100`), [Mongo DB](https://www.mongodb.com/) (port `10101`), [docker](https://docs.docker.com/) and [fastlane](https://github.com/fastlane) (port `10000`) should be available. We can confirm it with a `docker ps`:
+After this, both [redis](https://redis.io/) (port `10100`), [Mongo DB](https://www.mongodb.com/) (port `10101`), [docker](https://docs.docker.com/) and [fastlane](https://github.com/heynemann/fastlane) (port `10000`) should be available. We can confirm it with a `docker ps`:
 
 ```bash
 $ docker ps
@@ -35,7 +35,7 @@ This means that inside our [docker-compose](https://docs.docker.com/compose/) ne
 
 ## Healthcheck and Status
 
-In order to ensure that [fastlane](https://github.com/fastlane) is actually healthy, we can query its `/healthcheck/` route:
+In order to ensure that [fastlane](https://github.com/heynemann/fastlane) is actually healthy, we can query its `/healthcheck/` route:
 
 ```bash
 $ curl http://localhost:10000/healthcheck/
@@ -49,7 +49,7 @@ $ curl http://localhost:10000/healthcheck/
 }
 ```
 
-This route ensures [fastlane](https://github.com/fastlane) can access both [redis](https://redis.io/) and [Mongo DB](https://www.mongodb.com/). Now let's make sure it can also access our [docker](https://docs.docker.com/) farm:
+This route ensures [fastlane](https://github.com/heynemann/fastlane) can access both [redis](https://redis.io/) and [Mongo DB](https://www.mongodb.com/). Now let's make sure it can also access our [docker](https://docs.docker.com/) farm:
 
 ```bash
 $ curl http://localhost:10000/status/
@@ -93,7 +93,7 @@ The purpose of the `/status/` route is twofold: first, ensure that our farm is a
 
 ## Our first job
 
-Now that our [fastlane](https://github.com/fastlane) server is up, let's get our first job done. We'll start the way almost every single programming assignment starts:
+Now that our [fastlane](https://github.com/heynemann/fastlane) server is up, let's get our first job done. We'll start the way almost every single programming assignment starts:
 
 ```bash
 $ curl -XPOST -d'{"image": "hello-world", "command": "/hello"}' http://localhost:10000/tasks/hello-world
@@ -235,7 +235,7 @@ Now that we have accomplished `hello world`, how about just listing all the file
 
 ## Conclusion
 
-It should be fairly clear by this point that you can send any [docker](https://docs.docker.com/) image and any command and [fastlane](https://github.com/fastlane) will execute it for you.
+It should be fairly clear by this point that you can send any [docker](https://docs.docker.com/) image and any command and [fastlane](https://github.com/heynemann/fastlane) will execute it for you.
 
 Don't be fooled by its simplicity. This is a very powerful concept, to be able to run anything at a later point in time with an API to query about its status.
 
