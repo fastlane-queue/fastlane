@@ -1,6 +1,6 @@
 site_name: fastlane
 repo_url: https://github.com/heynemann/fastlane/
-nav:
+pages:
   - 'Home': index.md
   - 'Getting Started': 
     - 'The First 5 Minutes': getting-started.md
