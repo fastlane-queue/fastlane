@@ -132,7 +132,7 @@ class DockerPool:
                 logger.debug("Refreshing host...", host=host, port=port)
                 circuit = executor.get_circuit(f"{host}:{port}")
                 circuit.call(docker_ps, client)
-            except pybreaker.CircuitBreakerError:
+            except (requests.exceptions.ConnectionError, pybreaker.CircuitBreakerError):
                 error = traceback.format_exc()
                 logger.error("Failed to refresh host.", error=error)
 
@@ -330,9 +330,12 @@ class Executor:
                 if "docker_port" in execution.metadata:
                     del execution.metadata["docker_port"]
 
-                raise HostUnavailableError(host, port, err)
+                raise HostUnavailableError(host, port, err) from err
 
-        run(logger)
+        try:
+            run(logger)
+        except pybreaker.CircuitBreakerError as err:
+            raise HostUnavailableError(host, port, err) from err
 
     def run(self, task, job, execution, image, tag, command, blacklisted_hosts=None):
         logger = self.logger.bind(
@@ -381,7 +384,7 @@ class Executor:
                     "stored as Job Execution metadata.",
                     container_id=container.id,
                 )
-            except requests.exceptions.ConnectionError as err:
+            except (requests.exceptions.ConnectionError,) as err:
                 error = traceback.format_exc()
                 logger.error(
                     "Failed to connect to Docker Host. Will retry job later with a new host.",
@@ -394,9 +397,12 @@ class Executor:
                 if "docker_port" in execution.metadata:
                     del execution.metadata["docker_port"]
 
-                raise HostUnavailableError(host, port, err)
+                raise HostUnavailableError(host, port, err) from err
 
-        run(logger)
+        try:
+            run(logger)
+        except pybreaker.CircuitBreakerError as err:
+            raise HostUnavailableError(host, port, err) from err
 
         return True
 
@@ -440,9 +446,12 @@ class Executor:
                 error = traceback.format_exc()
                 logger.error("Failed to connect to Docker Host.", error=error)
 
-                raise HostUnavailableError(host, port, err)
+                raise HostUnavailableError(host, port, err) from err
 
-        run(logger)
+        try:
+            run(logger)
+        except pybreaker.CircuitBreakerError as err:
+            raise HostUnavailableError(host, port, err) from err
 
         return True
 
@@ -474,9 +483,12 @@ class Executor:
                 return container
 
             except requests.exceptions.ConnectionError as err:
-                raise HostUnavailableError(host, port, err)
+                raise HostUnavailableError(host, port, err) from err
 
-        container = run(logger)
+        try:
+            container = run(logger)
+        except pybreaker.CircuitBreakerError as err:
+            raise HostUnavailableError(host, port, err) from err
 
         # container.attrs['State']
         # {'Status': 'exited', 'Running': False, 'Paused': False, 'Restarting': False,
@@ -508,6 +520,7 @@ class Executor:
             result.status == ExecutionResult.Status.done
             or result.status == ExecutionResult.Status.failed
         ):
+            # TODO: Use circuit in this point
             result.finished_at = convert_date(state["FinishedAt"])
             result.log = container.logs(stdout=True, stderr=False)
 
@@ -644,16 +657,24 @@ class Executor:
             container_id=container_id,
         )
 
+        circuit = self.get_circuit(f"{host}:{port}")
+
+        @circuit
+        def run(logger):
+            try:
+                container = client.containers.get(container_id)
+
+                return container
+            except requests.exceptions.ConnectionError as err:
+                raise HostUnavailableError(host, port, err) from err
+
         try:
-            container = client.containers.get(container_id)
+            container = run(logger)
+        except pybreaker.CircuitBreakerError as err:
+            raise HostUnavailableError(host, port, err) from err
 
-            for log in container.logs(stdout=True, stderr=True, stream=True):
-                yield log.decode("utf-8")
-        except requests.exceptions.ConnectionError as err:
-            error = traceback.format_exc()
-            logger.error("Failed to connect to Docker Host.", error=error)
-
-            raise HostUnavailableError(host, port, err)
+        for log in container.logs(stdout=True, stderr=True, stream=True):
+            yield log.decode("utf-8")
 
     def get_blacklisted_hosts(self):
         redis = self.app.redis
@@ -693,7 +714,7 @@ class Executor:
             error = traceback.format_exc()
             logger.error("Failed to connect to Docker Host.", error=error)
 
-            raise HostUnavailableError(host, port, err)
+            raise HostUnavailableError(host, port, err) from err
 
     def remove_done(self):
         removed_containers = []

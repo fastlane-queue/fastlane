@@ -1,6 +1,7 @@
 # Standard Library
 import re
 from unittest.mock import MagicMock
+from uuid import uuid4
 
 # 3rd Party
 import docker
@@ -8,12 +9,12 @@ import pytest
 import requests
 from dateutil.parser import parse
 from preggy import expect
+from tests.fixtures.docker import ClientFixture, ContainerFixture, PoolFixture
+from tests.fixtures.models import JobExecutionFixture
 
 # Fastlane
 from fastlane.worker.docker_executor import BLACKLIST_KEY, STATUS, DockerPool, Executor
 from fastlane.worker.errors import HostUnavailableError, NoAvailableHostsError
-from tests.fixtures.docker import ClientFixture, ContainerFixture, PoolFixture
-from tests.fixtures.models import JobExecutionFixture
 
 
 def test_pull1(client):
@@ -424,7 +425,20 @@ def test_circuit1(client):
     """
 
     with client.application.app_context():
-        pytest.skip("Not implemented")
+        client.application.config["DOCKER_CIRCUIT_BREAKER_MAX_FAILS"] = 2
+
+        task, job, execution = JobExecutionFixture.new_defaults(
+            docker_host="localhost", docker_port=4567
+        )
+        pool = DockerPool(([None, ["localhost:4567"], 2],))
+        executor = Executor(client.application, pool)
+
+        expect(executor.get_circuit("localhost:4567").current_state).to_equal("closed")
+
+        with expect.error_to_happen(HostUnavailableError):
+            executor.update_image(task, job, execution, "ubuntu", "latest")
+
+        expect(executor.get_circuit("localhost:4567").current_state).to_equal("open")
 
 
 def test_circuit2(client):
@@ -435,7 +449,20 @@ def test_circuit2(client):
     """
 
     with client.application.app_context():
-        pytest.skip("Not implemented")
+        client.application.config["DOCKER_CIRCUIT_BREAKER_MAX_FAILS"] = 1
+
+        task, job, execution = JobExecutionFixture.new_defaults(
+            docker_host="localhost", docker_port=4567
+        )
+        pool = DockerPool(([None, ["localhost:4567"], 2],))
+        executor = Executor(client.application, pool)
+
+        expect(executor.get_circuit("localhost:4567").current_state).to_equal("closed")
+
+        with expect.error_to_happen(HostUnavailableError):
+            executor.run(task, job, execution, "ubuntu", "latest", "ls -la")
+
+        expect(executor.get_circuit("localhost:4567").current_state).to_equal("open")
 
 
 def test_circuit3(client):
@@ -455,7 +482,20 @@ def test_circuit4(client):
     """
 
     with client.application.app_context():
-        pytest.skip("Not implemented")
+        client.application.config["DOCKER_CIRCUIT_BREAKER_MAX_FAILS"] = 1
+
+        task, job, execution = JobExecutionFixture.new_defaults(
+            docker_host="localhost", docker_port=4567, container_id=str(uuid4())
+        )
+        pool = DockerPool(([None, ["localhost:4567"], 2],))
+        executor = Executor(client.application, pool)
+
+        expect(executor.get_circuit("localhost:4567").current_state).to_equal("closed")
+
+        with expect.error_to_happen(HostUnavailableError):
+            executor.stop_job(task, job, execution)
+
+        expect(executor.get_circuit("localhost:4567").current_state).to_equal("open")
 
 
 def test_circuit5(client):
@@ -466,7 +506,20 @@ def test_circuit5(client):
     """
 
     with client.application.app_context():
-        pytest.skip("Not implemented")
+        client.application.config["DOCKER_CIRCUIT_BREAKER_MAX_FAILS"] = 1
+
+        task, job, execution = JobExecutionFixture.new_defaults(
+            docker_host="localhost", docker_port=4567, container_id=str(uuid4())
+        )
+        pool = DockerPool(([None, ["localhost:4567"], 2],))
+        executor = Executor(client.application, pool)
+
+        expect(executor.get_circuit("localhost:4567").current_state).to_equal("closed")
+
+        with expect.error_to_happen(HostUnavailableError):
+            executor.get_result(task, job, execution)
+
+        expect(executor.get_circuit("localhost:4567").current_state).to_equal("open")
 
 
 def test_circuit6(client):
@@ -477,7 +530,21 @@ def test_circuit6(client):
     """
 
     with client.application.app_context():
-        pytest.skip("Not implemented")
+        client.application.config["DOCKER_CIRCUIT_BREAKER_MAX_FAILS"] = 1
+
+        task, job, execution = JobExecutionFixture.new_defaults(
+            docker_host="localhost", docker_port=4567, container_id=str(uuid4())
+        )
+        pool = DockerPool(([None, ["localhost:4567"], 2],))
+        executor = Executor(client.application, pool)
+
+        expect(executor.get_circuit("localhost:4567").current_state).to_equal("closed")
+
+        with expect.error_to_happen(HostUnavailableError):
+            for _ in executor.get_streaming_logs(task, job, execution):
+                expect.not_to_be_here()
+
+        expect(executor.get_circuit("localhost:4567").current_state).to_equal("open")
 
 
 def test_circuit7(client):
