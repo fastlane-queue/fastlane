@@ -5,7 +5,6 @@ from uuid import uuid4
 
 # 3rd Party
 import docker
-import pytest
 import requests
 from dateutil.parser import parse
 from preggy import expect
@@ -467,16 +466,6 @@ def test_circuit2(client):
 
 def test_circuit3(client):
     """
-    Tests that when monitoring a container with a docker host that's not accessible,
-    the circuit is open and a HostUnavailableError is raised
-    """
-
-    with client.application.app_context():
-        pytest.skip("Not implemented")
-
-
-def test_circuit4(client):
-    """
     Tests that when stopping a container with a docker host that's not accessible,
     the circuit is open and a HostUnavailableError is raised
     """
@@ -498,7 +487,7 @@ def test_circuit4(client):
         expect(executor.get_circuit("localhost:4567").current_state).to_equal("open")
 
 
-def test_circuit5(client):
+def test_circuit4(client):
     """
     Tests that when getting the result for a container with a
     docker host that's not accessible, the circuit is open and
@@ -522,7 +511,7 @@ def test_circuit5(client):
         expect(executor.get_circuit("localhost:4567").current_state).to_equal("open")
 
 
-def test_circuit6(client):
+def test_circuit5(client):
     """
     Tests that when getting streaming logs with a
     docker host that's not accessible, the circuit is open and
@@ -547,7 +536,7 @@ def test_circuit6(client):
         expect(executor.get_circuit("localhost:4567").current_state).to_equal("open")
 
 
-def test_circuit7(client):
+def test_circuit6(client):
     """
     Tests that when marking a container as done with a
     docker host that's not accessible, the circuit is open and
@@ -555,7 +544,20 @@ def test_circuit7(client):
     """
 
     with client.application.app_context():
-        pytest.skip("Not implemented")
+        client.application.config["DOCKER_CIRCUIT_BREAKER_MAX_FAILS"] = 1
+
+        task, job, execution = JobExecutionFixture.new_defaults(
+            docker_host="localhost", docker_port=4567, container_id=str(uuid4())
+        )
+        pool = DockerPool(([None, ["localhost:4567"], 2],))
+        executor = Executor(client.application, pool)
+
+        expect(executor.get_circuit("localhost:4567").current_state).to_equal("closed")
+
+        with expect.error_to_happen(HostUnavailableError):
+            executor.mark_as_done(task, job, execution)
+
+        expect(executor.get_circuit("localhost:4567").current_state).to_equal("open")
 
 
 def test_pool1(client):

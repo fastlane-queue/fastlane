@@ -461,7 +461,6 @@ class Executor:
 
         container_id = execution.metadata["container_id"]
         logger = logger.bind(container_id=container_id)
-        logger.debug("Finding container...")
         container = self.get_container_by_id(container_id, host, port, client)
 
         @circuit
