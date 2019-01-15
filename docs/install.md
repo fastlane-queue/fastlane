@@ -12,11 +12,11 @@ In order to use [fastlane](https://github.com/fastlane), you also need to have b
 
 This will bridge the port `1234` in the container to the `1234` port in the host and allow us to use the default `localhost:1234` docker host.
 
-### Installing
+## Installing
 
 To install locally, you need python >=3.6.5(preferrably python >=3.7). Just run `pip install fastlane` and you are good to go.
 
-### Required Services
+## Required Services
 
 [fastlane](https://github.com/fastlane) is divided in two different parts: `API` and `Worker`.
 
@@ -24,7 +24,7 @@ The `API` is responsible for receiving requests for new jobs, as well as providi
 
 The `Worker` is responsible for starting and monitoring jobs in the [docker](https://docs.docker.com/) farm.
 
-### Configuration
+## Configuration
 
 Both the `API` and the `Worker` can use the same configuration file. In order to get a sample configuration file that you can modify, run the following command:
 
@@ -78,7 +78,7 @@ DOCKER_HOSTS = [
 
 This configuration only allows tasks that start with `task-system1-` or `task-system2-`. Any other tasks won't be run. The empty match is a match-all case.
 
-### Running the API
+## Running the API
 
     $ fastlane api -vvv -c my.conf
 
@@ -86,7 +86,7 @@ In order to ensure that the API is working as expected, open in your browser `ht
 
 The `API` log is structured as JSON. For more details type `fastlane worker --help`.
 
-### Running the Workers
+## Running the Workers
 
 Just run the command:
 
