@@ -17,9 +17,14 @@ Instead of the tedious, repetitive work of yesteryear where you had to implement
 -   [x]  Ad-Hoc execution of jobs (run job right now);
 -   [x]  Scheduled execution of jobs (run job next sunday at 6am, or run in 10 minutes from now);
 -   [x]  Crontab execution of jobs (run job at `_/10 _ \* \* \*` - every ten minutes);
+-   [ ]  Allows job details to be updated;
 -   [x]  API to retrieve tasks, `/tasks`;
 -   [x]  API to retrieve task details, `/tasks/my-task` (`<taskUrl>`);
 -   [x]  API to retrieve job details, `<taskUrl>/jobs/<jobId>` (`<jobUrl>`);
+-   [ ]  API to retrieve execution details, `<jobUrl>/executions/<executionId>` (`<executionUrl>`);
+-   [ ]  API to stop execution, `<executionUrl>/stop`;
+-   [ ]  API to get stdout (`<executionUrl>/stdout`) and stderr (`<executionUrl>/stderr`) for execution;
+-   [ ]  API to get execution output, `<executionUrl>/stop`;
 -   [x]  API to stop running job (`<jobUrl>/stop`);
 -   [x]  API to retry job (`<jobUrl>/retry`);
 -   [x]  API to get stdout (`<jobUrl>/stdout`) and stderr (`<jobUrl>/stderr`) for last execution in jobs;
