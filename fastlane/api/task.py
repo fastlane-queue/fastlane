@@ -81,13 +81,15 @@ def get_task(task_id):
 
     logger.debug("Task retrieved successfully...")
 
+    task_jobs = Job.objects(id__in=[str(job_id.id) for job_id in task.jobs])
+
     jobs = []
 
-    for job_id in task.jobs:
+    for job in task_jobs:
         url = url_for(
-            "task.get_job", task_id=task_id, job_id=str(job_id.id), _external=True
+            "task.get_job", task_id=task_id, job_id=str(job.job_id), _external=True
         )
-        job = {"id": str(job_id.id), "url": url}
+        job = {"id": str(job.job_id), "url": url}
         jobs.append(job)
 
     return jsonify({"taskId": task_id, "jobs": jobs})

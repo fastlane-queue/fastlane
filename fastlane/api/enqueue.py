@@ -1,5 +1,6 @@
 # Standard Library
 from datetime import datetime, timezone
+from uuid import UUID
 
 # 3rd Party
 from flask import Blueprint, current_app, g, jsonify, make_response, request, url_for
@@ -30,7 +31,7 @@ def get_details():
     return details
 
 
-def create_job(details, task, logger):
+def create_job(details, task, logger, get_new_job_fn):
     logger.debug("Creating job...")
     retries = details.get("retries", 0)
     expiration = details.get("expiration")
@@ -53,7 +54,7 @@ def create_job(details, task, logger):
         timeout, hard_limit
     )  # ensure  jobs can't specify more than hard limit
 
-    j = task.create_job()
+    j = get_new_job_fn(task)
     j.metadata["retries"] = retries
     j.metadata["notify"] = notify
     j.metadata["webhooks"] = webhooks
@@ -66,7 +67,7 @@ def create_job(details, task, logger):
         j.metadata["custom"] = metadata
 
     j.save()
-    logger.debug("Job created successfully...", job_id=str(j.id))
+    logger.debug("Job created successfully...", job_id=str(j.job_id))
 
     return j
 
@@ -74,7 +75,7 @@ def create_job(details, task, logger):
 def enqueue_job(task, job, image, command, start_at, start_in, cron, logger):
     scheduler = Scheduler("jobs", connection=current_app.redis)
 
-    args = [task.task_id, str(job.id), image, command]
+    args = [task.task_id, str(job.job_id), image, command]
 
     queue_job_id = None
 
@@ -120,21 +121,25 @@ def enqueue_job(task, job, image, command, start_at, start_in, cron, logger):
     return queue_job_id
 
 
-@bp.route("/tasks/<task_id>", methods=("POST",))
-def create_task(task_id):
+def get_task_and_details(task_id):
     details = get_details()
 
     if details is None or details == "":
         msg = "Failed to enqueue task because JSON body could not be parsed."
         g.logger.warn(msg)
 
-        return make_response(msg, 400)
+        return None, None, None, make_response(msg, 400)
 
     image = details.get("image", None)
     command = details.get("command", None)
 
     if image is None or command is None:
-        return make_response("image and command must be filled in the request.", 400)
+        return (
+            None,
+            None,
+            None,
+            make_response("image and command must be filled in the request.", 400),
+        )
 
     logger = g.logger.bind(task_id=task_id, image=image, command=command)
 
@@ -142,23 +147,45 @@ def create_task(task_id):
     task = Task.objects(task_id=task_id).modify(task_id=task_id, upsert=True, new=True)
     logger.info("Task created successfully.")
 
-    j = create_job(details, task, logger)
-    job_id = str(j.id)
+    return task, details, logger, None
 
-    queue_job_id = None
+
+def validate_and_enqueue(details, task, job, logger):
+    image = details.get("image", None)
+    command = details.get("command", None)
 
     start_at = details.get("startAt", None)
     start_in = parse_time(details.get("startIn", None))
     cron = details.get("cron", None)
 
     if len(list(filter(lambda item: item is not None, (start_at, start_in, cron)))) > 1:
-        return make_response(
-            "Only ONE of 'startAt', 'startIn' and 'cron' should be in the request.", 400
+        return (
+            None,
+            make_response(
+                "Only ONE of 'startAt', 'startIn' and 'cron' should be in the request.",
+                400,
+            ),
         )
 
-    queue_job_id = enqueue_job(
-        task, j, image, command, start_at, start_in, cron, logger
-    )
+    result = enqueue_job(task, job, image, command, start_at, start_in, cron, logger)
+
+    return result, None
+
+
+@bp.route("/tasks/<task_id>", methods=("POST",))
+def create_task(task_id):
+    task, details, logger, response = get_task_and_details(task_id)
+
+    if response is not None:
+        return response
+
+    job = create_job(details, task, logger, lambda task: task.create_job())
+    job_id = str(job.job_id)
+
+    enqueued_id, response = validate_and_enqueue(details, task, job, logger)
+
+    if response is not None:
+        return response
 
     job_url = url_for("task.get_job", task_id=task_id, job_id=job_id, _external=True)
 
@@ -166,7 +193,43 @@ def create_task(task_id):
         {
             "taskId": task_id,
             "jobId": job_id,
-            "queueJobId": queue_job_id,
+            "queueJobId": enqueued_id,
+            "jobUrl": job_url,
+            "taskUrl": task.get_url(),
+        }
+    )
+
+
+@bp.route("/tasks/<task_id>/jobs/<job_id>", methods=("PUT",))
+def create_or_update_task(task_id, job_id):
+    try:
+        job_id = str(UUID(job_id))
+    except ValueError:
+        return make_response(
+            f"The job_id {job_id} is not a valid UUID4. All job IDs must be UUID4.", 400
+        )
+
+    task, details, logger, response = get_task_and_details(task_id)
+
+    if response is not None:
+        return response
+
+    job = create_job(
+        details, task, logger, lambda task: task.create_or_update_job(job_id)
+    )
+
+    enqueued_id, response = validate_and_enqueue(details, task, job, logger)
+
+    if response is not None:
+        return response
+
+    job_url = url_for("task.get_job", task_id=task_id, job_id=job_id, _external=True)
+
+    return jsonify(
+        {
+            "taskId": task_id,
+            "jobId": job_id,
+            "queueJobId": enqueued_id,
             "jobUrl": job_url,
             "taskUrl": task.get_url(),
         }

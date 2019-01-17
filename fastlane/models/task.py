@@ -1,9 +1,9 @@
 # Standard Library
 import datetime
+from uuid import uuid4
 
 # 3rd Party
 import mongoengine.errors
-from bson.objectid import ObjectId
 from flask import url_for
 from mongoengine import DateTimeField, ListField, ReferenceField, StringField
 
@@ -73,12 +73,28 @@ class Task(db.Document):
     def create_job(self):
         from fastlane.models.job import Job
 
-        job_id = ObjectId()
-        j = Job(id=job_id, job_id=str(job_id))
+        job_id = uuid4()
+        j = Job(job_id=str(job_id))
         j.task = self
         j.save()
 
         self.jobs.append(j)
         self.save()
+
+        return j
+
+    def create_or_update_job(self, job_id):
+        from fastlane.models.job import Job
+
+        jobs = list(filter(lambda job: str(job.job_id) == job_id, self.jobs))
+
+        if not jobs:
+            j = Job(job_id=str(job_id))
+            j.task = self
+            j.save()
+            self.jobs.append(j)
+            self.save()
+        else:
+            j = jobs[0]
 
         return j

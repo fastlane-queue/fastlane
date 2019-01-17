@@ -1,5 +1,6 @@
 # Standard Library
 from json import loads
+from uuid import uuid4
 
 # 3rd Party
 from preggy import expect
@@ -61,7 +62,7 @@ def test_get_tasks_pagination(client):
     expect(data["nextUrl"]).to_be_null()
 
 
-def test_get_tasks_pagination_404_invalid_pages(client):
+def test_get_tasks_pagination_404(client):
     """
     Test getting tasks pagination should respond 404 when page is invalid
     """
@@ -76,3 +77,25 @@ def test_get_tasks_pagination_404_invalid_pages(client):
 
     resp4 = client.get("/tasks?page=-1")
     expect(resp4.status_code).to_equal(404)
+
+
+def test_get_task_details(client):
+    """Test getting tasks"""
+    task_id = str(uuid4())
+    job_id = str(uuid4())
+    task = Task.create_task(task_id)
+    task.create_or_update_job(job_id)
+
+    resp = client.get(f"/tasks/{task_id}")
+    expect(resp.status_code).to_equal(200)
+
+    data = loads(resp.data)
+    expect(data).to_include("jobs")
+    expect(data["jobs"]).to_length(1)
+
+    job_data = data["jobs"][0]
+    expect(job_data).to_include("id")
+    expect(job_data["id"]).to_equal(job_id)
+    expect(job_data["url"]).to_equal(
+        f"http://localhost:10000/tasks/{task_id}/jobs/{job_id}"
+    )
