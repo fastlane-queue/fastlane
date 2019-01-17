@@ -6,6 +6,10 @@
 
 TBW.
 
+### Update Job Route
+
+TBW.
+
 ### Tasks Route
 
 TBW.
@@ -39,6 +43,30 @@ TBW.
 TBW.
 
 ### Websocket Job Route
+
+TBW.
+
+### Job Execution Route
+
+TBW.
+
+### Job Execution STDOUT Route
+
+TBW.
+
+### Job Execution STDERR Route
+
+TBW.
+
+### Stop Job Execution Route
+
+TBW.
+
+### Stream Job Execution Route
+
+TBW.
+
+### Websocket Job Execution Route
 
 TBW.
 
