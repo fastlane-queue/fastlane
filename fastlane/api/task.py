@@ -140,12 +140,15 @@ def stop_job(task_id, job_id):
         executor.stop_job(job.task, job, execution)
         logger.debug("Current execution stopped.")
 
+    if "retries" in job.metadata:
+        job.metadata["retry_count"] = job.metadata["retries"] + 1
+        job.save()
+
     scheduler = Scheduler("jobs", connection=current_app.redis)
 
     if "enqueued_id" in job.metadata and job.metadata["enqueued_id"] in scheduler:
         scheduler.cancel(job.metadata["enqueued_id"])
         job.scheduled = False
-        job.save()
 
     logger.debug("Job stopped.")
 

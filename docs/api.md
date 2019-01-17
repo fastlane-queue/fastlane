@@ -297,7 +297,7 @@ drwxr-xr-x   1 root root 4.0K Dec  4 17:12 var
 
 ### Description
 
-This route returns the stdout results for the executed container.
+This route returns the stdout results for last execution for the job.
 
 ## API - Job stderr
 
@@ -322,11 +322,37 @@ some error message
 
 ### Description
 
-This route returns the stderr results for the executed container.
+This route returns the stderr results for last execution for the job.
 
 ## API - Stop Job
 
-TBW.
+### Request Details
+
+`Method`: `POST`
+
+`Url`: `/tasks/<task-id>/job/<job-id>/stop`
+
+`task-id` is the ID for the required task.
+`job-id` is the ID for the required job.
+
+`Body`: -
+
+`Query Parameters`: -
+
+### Example Response
+
+```
+{
+  "jobId": "de5fa478-9106-42d6-b142-325941ebf913",
+  "jobUrl": "http://localhost:10000/tasks/test-wrkng/jobs/de5fa478-9106-42d6-b142-325941ebf913",
+  "taskId": "test-wrkng",
+  "taskUrl": "http://localhost:10000/tasks/test-wrkng"
+}
+```
+
+### Description
+
+This route stops the last execution for this job and if it is a scheduled or recurring job, it cancels the remaining executions.
 
 ## API - Retry Job
 
