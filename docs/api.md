@@ -352,7 +352,7 @@ This route returns the stderr results for last execution for the job.
 
 ### Description
 
-This route stops the last execution for this job and if it is a scheduled or recurring job, it cancels the remaining executions.
+This route stops the last execution for this job and if it is a scheduled or recurring job, it cancels the remaining executions (and stops retrying the job).
 
 ## API - Retry Job
 
