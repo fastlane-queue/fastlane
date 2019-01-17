@@ -3,6 +3,7 @@ from json import loads
 from uuid import uuid4
 
 # 3rd Party
+import pytest
 from preggy import expect
 
 # Fastlane
@@ -99,3 +100,18 @@ def test_get_task_details(client):
     expect(job_data["url"]).to_equal(
         f"http://localhost:10000/tasks/{task_id}/jobs/{job_id}"
     )
+
+
+def test_stop_container1(client):
+    """Tests that stopping a running container actually stops the container."""
+    pytest.skip("Not implemented")
+
+
+def test_stop_container2(client):
+    """Tests that stopping a scheduled job kills the scheduling."""
+    pytest.skip("Not implemented")
+
+
+def test_stop_container3(client):
+    """Tests that stopping a CRON job kills the scheduling."""
+    pytest.skip("Not implemented")
