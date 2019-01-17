@@ -21,14 +21,14 @@ Instead of the tedious, repetitive work of yesteryear where you had to implement
 -   [x]  API to retrieve tasks, `/tasks`;
 -   [x]  API to retrieve task details, `/tasks/my-task` (`<taskUrl>`);
 -   [x]  API to retrieve job details, `<taskUrl>/jobs/<jobId>` (`<jobUrl>`);
--   [ ]  API to retrieve execution details, `<jobUrl>/executions/<executionId>` (`<executionUrl>`);
--   [ ]  API to stop execution, `<executionUrl>/stop`;
--   [ ]  API to get stdout (`<executionUrl>/stdout`) and stderr (`<executionUrl>/stderr`) for execution;
--   [ ]  API to get execution output, `<executionUrl>/stop`;
 -   [x]  API to stop running job (`<jobUrl>/stop`);
 -   [x]  API to retry job (`<jobUrl>/retry`);
 -   [x]  API to get stdout (`<jobUrl>/stdout`) and stderr (`<jobUrl>/stderr`) for last execution in jobs;
 -   [x]  Job log output streaming using WebSockets (`ws://<jobUrl>/ws`) and `<jobUrl>/stream`;
+-   [ ]  API to retrieve execution details, `<jobUrl>/executions/<executionId>` (`<executionUrl>`);
+-   [ ]  API to stop execution, `<executionUrl>/stop`;
+-   [ ]  API to get stdout (`<executionUrl>/stdout`) and stderr (`<executionUrl>/stderr`) for execution;
+-   [ ]  Job execution log output streaming using WebSockets (`ws://<executionUrl>/ws`) and `<executionUrl>/stream`;
 -   [x]  Additional Job Metadata (useful for webhooks);
 -   [x]  Configurable retries per job;
 -   [x]  Configurable exponential back-off for retries and failures in monitoring of jobs;
