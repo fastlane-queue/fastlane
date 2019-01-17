@@ -142,7 +142,9 @@ class Job(db.Document):
 
         if include_executions:
             executions = [
-                ex.to_dict(include_log, include_error) for ex in self.executions
+                ex.to_dict(include_log, include_error)
+
+                for ex in sorted(self.executions, lambda ex: ex.createdAt)[-20:]
             ]
             res["executions"] = executions
 

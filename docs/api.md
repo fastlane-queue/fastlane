@@ -142,17 +142,113 @@ For more options to the payload used in this route, please refer to the [Job Pay
 
 ### Description
 
-`PUT`ting to this route creates or updates job and schedules it for execution. The jobs is created if the supplied `job_id` does not exist in the task already. If it does, the existing job is updated with all the provided details and future executions will use the updated details.
+`PUT`ting to this route creates or updates job and schedules it for execution. The jobs is created if the supplied `job-id` does not exist in the task already. If it does, the existing job is updated with all the provided details and future executions will use the updated details.
 
 All the the other details from the [enqueue route](#api-enqueue-job) also apply.
 
 ## API - Task Details
 
-TBW.
+### Request Details
+
+`Method`: `GET`
+
+`Url`: `/tasks/<task-id>`
+
+`task-id` is the ID for the desired task.
+
+`Body`: -
+
+`Query Parameters`: -
+
+### Example Response
+
+```json
+{
+  "jobs": [
+    {
+      "id": "2d3694e2-68eb-418f-82d5-605a801cbd8d", 
+      "url": "http://localhost:10000/tasks/test-wrkng/jobs/2d3694e2-68eb-418f-82d5-605a801cbd8d"
+    }, 
+  ], 
+  "taskId": "test-wrkng"
+}
+```
+
+### Description
+
+This route returns the jobs for this task.
 
 ## API - Job Details
 
-TBW.
+### Request Details
+
+`Method`: `GET`
+
+`Url`: `/tasks/<task-id>/job/<job-id>`
+
+`task-id` is the ID for the required task.
+`job-id` is the ID for the required job.
+
+`Body`: -
+
+`Query Parameters`: -
+
+### Example Response
+
+```json
+{
+  "job": {
+    "createdAt": "2019-01-17T15:13:02.614000", 
+    "executionCount": 1, 
+    "executions": [
+      {
+        "command": "ls -lah", 
+        "createdAt": "2019-01-17T15:13:02.754000", 
+        "error": "", 
+        "exitCode": 0, 
+        "finishedAt": "2019-01-17T15:13:16.298000", 
+        "image": "ubuntu", 
+        "log": "total 72K\ndrwxr-xr-x   1 root root 4.0K Jan 17 15:13 .\ndrwxr-xr-x   1 root root 4.0K Jan 17 15:13 ..\n-rwxr-xr-x   1 root root    0 Jan 17 15:13 .dockerenv\ndrwxr-xr-x   2 root root 4.0K Dec  4 17:12 bin\ndrwxr-xr-x   2 root root 4.0K Apr 24  2018 boot\ndrwxr-xr-x   5 root root  340 Jan 17 15:13 dev\ndrwxr-xr-x   1 root root 4.0K Jan 17 15:13 etc\ndrwxr-xr-x   2 root root 4.0K Apr 24  2018 home\ndrwxr-xr-x   8 root root 4.0K Dec  4 17:11 lib\ndrwxr-xr-x   2 root root 4.0K Dec  4 17:11 lib64\ndrwxr-xr-x   2 root root 4.0K Dec  4 17:11 media\ndrwxr-xr-x   2 root root 4.0K Dec  4 17:11 mnt\ndrwxr-xr-x   2 root root 4.0K Dec  4 17:11 opt\ndr-xr-xr-x 200 root root    0 Jan 17 15:13 proc\ndrwx------   2 root root 4.0K Dec  4 17:12 root\ndrwxr-xr-x   1 root root 4.0K Dec 28 23:22 run\ndrwxr-xr-x   1 root root 4.0K Dec 28 23:22 sbin\ndrwxr-xr-x   2 root root 4.0K Dec  4 17:11 srv\ndr-xr-xr-x  13 root root    0 Dec 20 12:50 sys\ndrwxrwxrwt   2 root root 4.0K Dec  4 17:12 tmp\ndrwxr-xr-x   1 root root 4.0K Dec  4 17:11 usr\ndrwxr-xr-x   1 root root 4.0K Dec  4 17:12 var\n", 
+        "metadata": {
+          "container_id": "cbab7fd2125a30acd91813dd5b91476ab2c8c1e93d84c1b791231097f16fc87c", 
+          "docker_host": "localhost", 
+          "docker_port": 1234
+        }, 
+        "startedAt": "2019-01-17T15:13:10.999000", 
+        "status": "done"
+      }
+    ], 
+    "lastModifiedAt": "2019-01-17T15:13:16.298000", 
+    "metadata": {
+      "enqueued_id": "ba17fb94-9d5b-463b-9e1e-0a572c8f8380", 
+      "envs": {}, 
+      "notify": {
+        "fails": [], 
+        "finishes": [], 
+        "succeeds": []
+      }, 
+      "retries": 0, 
+      "retry_count": 0, 
+      "timeout": 1800, 
+      "webhooks": {
+        "fails": [], 
+        "finishes": [], 
+        "succeeds": []
+      }
+    }, 
+    "scheduled": false, 
+    "taskId": "test-wrkng"
+  }, 
+  "task": {
+    "id": "test-wrkng", 
+    "url": "http://localhost:10000/tasks/test-wrkng"
+  }
+}
+```
+
+### Description
+
+This route returns the details for this job and all its last 20 executions.
 
 ## API - Job stdout
 
