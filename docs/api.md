@@ -254,11 +254,75 @@ This route returns the details for this job and all its last 20 executions, with
 
 ## API - Job stdout
 
-TBW.
+### Request Details
+
+`Method`: `GET`
+
+`Url`: `/tasks/<task-id>/job/<job-id>/stdout`
+
+`task-id` is the ID for the required task.
+`job-id` is the ID for the required job.
+
+`Body`: -
+
+`Query Parameters`: -
+
+### Example Response
+
+```
+total 72K
+drwxr-xr-x   1 root root 4.0K Jan 17 15:13 .
+drwxr-xr-x   1 root root 4.0K Jan 17 15:13 ..
+-rwxr-xr-x   1 root root    0 Jan 17 15:13 .dockerenv
+drwxr-xr-x   2 root root 4.0K Dec  4 17:12 bin
+drwxr-xr-x   2 root root 4.0K Apr 24  2018 boot
+drwxr-xr-x   5 root root  340 Jan 17 15:13 dev
+drwxr-xr-x   1 root root 4.0K Jan 17 15:13 etc
+drwxr-xr-x   2 root root 4.0K Apr 24  2018 home
+drwxr-xr-x   8 root root 4.0K Dec  4 17:11 lib
+drwxr-xr-x   2 root root 4.0K Dec  4 17:11 lib64
+drwxr-xr-x   2 root root 4.0K Dec  4 17:11 media
+drwxr-xr-x   2 root root 4.0K Dec  4 17:11 mnt
+drwxr-xr-x   2 root root 4.0K Dec  4 17:11 opt
+dr-xr-xr-x 200 root root    0 Jan 17 15:13 proc
+drwx------   2 root root 4.0K Dec  4 17:12 root
+drwxr-xr-x   1 root root 4.0K Dec 28 23:22 run
+drwxr-xr-x   1 root root 4.0K Dec 28 23:22 sbin
+drwxr-xr-x   2 root root 4.0K Dec  4 17:11 srv
+dr-xr-xr-x  13 root root    0 Dec 20 12:50 sys
+drwxrwxrwt   2 root root 4.0K Dec  4 17:12 tmp
+drwxr-xr-x   1 root root 4.0K Dec  4 17:11 usr
+drwxr-xr-x   1 root root 4.0K Dec  4 17:12 var
+```
+
+### Description
+
+This route returns the stdout results for the executed container.
 
 ## API - Job stderr
 
-TBW.
+### Request Details
+
+`Method`: `GET`
+
+`Url`: `/tasks/<task-id>/job/<job-id>/stderr`
+
+`task-id` is the ID for the required task.
+`job-id` is the ID for the required job.
+
+`Body`: -
+
+`Query Parameters`: -
+
+### Example Response
+
+```
+some error message
+```
+
+### Description
+
+This route returns the stderr results for the executed container.
 
 ## API - Stop Job
 
