@@ -191,7 +191,9 @@ This route returns the jobs for this task.
 
 `Body`: -
 
-`Query Parameters`: -
+`Query Parameters`:
+
+* `page`: current page in the executions pagination. Defaults to `1`. The first page are the last 20 executions, page 2 starts in the 40th from the last execution and ends in the 21st execution from the last, and so on (TODO: Not implemented yet).
 
 ### Example Response
 
