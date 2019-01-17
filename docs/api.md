@@ -250,7 +250,7 @@ This route returns the jobs for this task.
 
 ### Description
 
-This route returns the details for this job and all its last 20 executions.
+This route returns the details for this job and all its last 20 executions, with their details.
 
 ## API - Job stdout
 
