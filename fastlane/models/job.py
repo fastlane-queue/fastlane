@@ -47,6 +47,7 @@ class JobExecution(db.EmbeddedDocument):  # pylint: disable=no-member
         s_at = self.started_at.isoformat() if self.started_at is not None else None
         f_at = self.finished_at.isoformat() if self.finished_at is not None else None
         res = {
+            "executionId": str(self.execution_id),
             "createdAt": self.created_at.isoformat(),
             "startedAt": s_at,
             "finishedAt": f_at,

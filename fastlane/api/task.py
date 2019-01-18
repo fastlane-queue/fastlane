@@ -21,7 +21,7 @@ from fastlane.worker.job import run_job
 bp = Blueprint("task", __name__)  # pylint: disable=invalid-name
 
 
-@bp.route("/tasks", methods=("GET",))
+@bp.route("/tasks/", methods=("GET",))
 def get_tasks():
     logger = g.logger.bind(operation="get_tasks")
 
@@ -114,6 +114,16 @@ def get_job(task_id, job_id):
         include_error=True,
         blacklist=current_app.config["ENV_BLACKLISTED_WORDS"].lower().split(","),
     )
+
+    for execution in details["executions"]:
+        exec_url = url_for(
+            "execution.get_job_execution",
+            task_id=task_id,
+            job_id=job_id,
+            execution_id=execution["executionId"],
+            _external=True,
+        )
+        execution["url"] = exec_url
 
     task_url = url_for("task.get_task", task_id=task_id, _external=True)
 

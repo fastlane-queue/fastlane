@@ -25,6 +25,7 @@ import fastlane.api.gzipped as gzipped
 import fastlane.api.metrics as metrics
 import fastlane.api.rqb as rqb
 from fastlane.api.enqueue import bp as enqueue
+from fastlane.api.execution import bp as execution_api
 from fastlane.api.healthcheck import bp as healthcheck
 from fastlane.api.status import bp as status
 from fastlane.api.stream import bp as stream
@@ -66,6 +67,7 @@ class Application:
         self.app.register_blueprint(healthcheck)
         self.app.register_blueprint(enqueue)
         self.app.register_blueprint(task_api)
+        self.app.register_blueprint(execution_api)
         self.app.register_blueprint(status)
 
         self.app.register_blueprint(gzipped.bp)

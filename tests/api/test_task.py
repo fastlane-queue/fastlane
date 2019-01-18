@@ -16,7 +16,7 @@ def test_get_tasks(client):
     Task.create_task("my-task-2")
     Task.create_task("my-task-3")
 
-    resp = client.get("/tasks")
+    resp = client.get("/tasks/")
     expect(resp.status_code).to_equal(200)
 
     data = loads(resp.data)
@@ -33,7 +33,7 @@ def test_get_tasks_data(client):
     """Test getting tasks resource data"""
     task = Task.create_task("my-task")
 
-    resp = client.get("/tasks")
+    resp = client.get("/tasks/")
 
     data = loads(resp.data)
     task_data = data["items"][0]
@@ -52,14 +52,14 @@ def test_get_tasks_pagination(client):
     app = client.application
     server_name = app.config["SERVER_NAME"]
 
-    resp = client.get("/tasks?page=2")
+    resp = client.get("/tasks/?page=2")
 
     data = loads(resp.data)
     expect(data["total"]).to_equal(4)
     expect(data["page"]).to_equal(2)
     expect(data["hasNext"]).to_be_false()
     expect(data["hasPrev"]).to_be_true()
-    expect(data["prevUrl"]).to_equal(f"http://{server_name}/tasks?page=1")
+    expect(data["prevUrl"]).to_equal(f"http://{server_name}/tasks/?page=1")
     expect(data["nextUrl"]).to_be_null()
 
 
@@ -67,16 +67,16 @@ def test_get_tasks_pagination_404(client):
     """
     Test getting tasks pagination should respond 404 when page is invalid
     """
-    resp1 = client.get("/tasks?page=asdasdas")
+    resp1 = client.get("/tasks/?page=asdasdas")
     expect(resp1.status_code).to_equal(404)
 
-    resp2 = client.get("/tasks?page=1019021")
+    resp2 = client.get("/tasks/?page=1019021")
     expect(resp2.status_code).to_equal(404)
 
-    resp3 = client.get("/tasks?page=0")
+    resp3 = client.get("/tasks/?page=0")
     expect(resp3.status_code).to_equal(404)
 
-    resp4 = client.get("/tasks?page=-1")
+    resp4 = client.get("/tasks/?page=-1")
     expect(resp4.status_code).to_equal(404)
 
 
@@ -100,6 +100,11 @@ def test_get_task_details(client):
     expect(job_data["url"]).to_equal(
         f"http://localhost:10000/tasks/{task_id}/jobs/{job_id}"
     )
+
+
+def test_job_details1(client):
+    """Tests get job details returns proper details and last 20 execs."""
+    pytest.skip("Not implemented")
 
 
 def test_stop_container1(client):
