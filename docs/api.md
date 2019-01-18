@@ -52,7 +52,7 @@ Using the included details for pagination is advised. The `hasNext` and `hasPrev
 
 `Url`: `/tasks/<task-id>`
 
-`task-id` should be an arbitrary unique name that groups all jobs subsequently added to this same task.
+* `task-id` should be an arbitrary unique name that groups all jobs subsequently added to this same task.
 
 `Body`:
 
@@ -105,8 +105,8 @@ The `queueJobId` key is the ID in the [RQ](http://python-rq.org/) queue and shou
 
 `Url`: `/tasks/<task-id>/jobs/<job-id>`
 
-`task-id` should be an arbitrary unique name that groups all jobs subsequently added to this same task.
-`job-id` should be a valid UUID4.
+* `task-id` should be an arbitrary unique name that groups all jobs subsequently added to this same task.
+* `job-id` should be a valid UUID4.
 
 `Body`:
 
@@ -154,7 +154,7 @@ All the the other details from the [enqueue route](#api-enqueue-job) also apply.
 
 `Url`: `/tasks/<task-id>`
 
-`task-id` is the ID for the desired task.
+* `task-id` is the ID for the desired task.
 
 `Body`: -
 
@@ -186,8 +186,8 @@ This route returns the jobs for this task.
 
 `Url`: `/tasks/<task-id>/job/<job-id>`
 
-`task-id` is the ID for the required task.
-`job-id` is the ID for the required job.
+* `task-id` is the ID for the required task.
+* `job-id` is the ID for the required job.
 
 `Body`: -
 
@@ -260,8 +260,8 @@ This route returns the details for this job and all its last 20 executions, with
 
 `Url`: `/tasks/<task-id>/job/<job-id>/stdout`
 
-`task-id` is the ID for the required task.
-`job-id` is the ID for the required job.
+* `task-id` is the ID for the required task.
+* `job-id` is the ID for the required job.
 
 `Body`: -
 
@@ -307,8 +307,8 @@ This route returns the stdout results for last execution for the job.
 
 `Url`: `/tasks/<task-id>/job/<job-id>/stderr`
 
-`task-id` is the ID for the required task.
-`job-id` is the ID for the required job.
+* `task-id` is the ID for the required task.
+* `job-id` is the ID for the required job.
 
 `Body`: -
 
@@ -332,8 +332,8 @@ This route returns the stderr results for last execution for the job.
 
 `Url`: `/tasks/<task-id>/job/<job-id>/stop`
 
-`task-id` is the ID for the required task.
-`job-id` is the ID for the required job.
+* `task-id` is the ID for the required task.
+* `job-id` is the ID for the required job.
 
 `Body`: -
 
@@ -368,7 +368,55 @@ TBW.
 
 ## API - Job Execution Details
 
-TBW.
+### Request Details
+
+`Method`: `GET`
+
+`Url`: `/tasks/<task-id>/job/<job-id>/executions/<execution-id>/`
+
+* `task-id` is the ID for the required task;
+* `job-id` is the ID for the required job;
+* `execution-id` is the ID for the required job execution.
+
+`Body`: -
+
+`Query Parameters`: -
+
+### Example Response
+
+```json
+{
+  "execution": {
+    "command": "sleep 100", 
+    "createdAt": "2019-01-17T17:13:30.924000", 
+    "error": "", 
+    "executionId": "00735b1e-25c3-467d-a106-05701a786957", 
+    "exitCode": 137, 
+    "finishedAt": "2019-01-17T17:13:50.136000", 
+    "image": "ubuntu", 
+    "log": "", 
+    "metadata": {
+      "container_id": "d432bad154646423369e6fb7a8d46985a1dc0a2612d5b06100357b756781ac6b", 
+      "docker_host": "localhost", 
+      "docker_port": 1234
+    }, 
+    "startedAt": "2019-01-17T17:13:34.411000", 
+    "status": "failed"
+  }, 
+  "job": {
+    "id": "76903cb5-e7e7-4293-8901-3a7d3344da7c", 
+    "url": "http://localhost:10000/tasks/test-wrkng/jobs/76903cb5-e7e7-4293-8901-3a7d3344da7c"
+  }, 
+  "task": {
+    "id": "test-wrkng", 
+    "url": "http://localhost:10000/tasks/test-wrkng"
+  }
+}
+```
+
+### Description
+
+This route returns the details for the specified job execution.
 
 ## API - Job Execution stdout
 
