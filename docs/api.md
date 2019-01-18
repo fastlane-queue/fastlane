@@ -6,7 +6,7 @@
 
 `Method`: `GET`
 
-`URL`: `/tasks`
+`URL`: `/tasks/`
 
 `Body`: -
 
@@ -50,7 +50,7 @@ Using the included details for pagination is advised. The `hasNext` and `hasPrev
 
 `Method`: `POST`
 
-`Url`: `/tasks/<task-id>`
+`URL`: `/tasks/<task-id>/`
 
 * `task-id` should be an arbitrary unique name that groups all jobs subsequently added to this same task.
 
@@ -103,7 +103,7 @@ The `queueJobId` key is the ID in the [RQ](http://python-rq.org/) queue and shou
 
 `Method`: `PUT`
 
-`Url`: `/tasks/<task-id>/jobs/<job-id>`
+`URL`: `/tasks/<task-id>/jobs/<job-id>/`
 
 * `task-id` should be an arbitrary unique name that groups all jobs subsequently added to this same task.
 * `job-id` should be a valid UUID4.
@@ -152,7 +152,7 @@ All the the other details from the [enqueue route](#api-enqueue-job) also apply.
 
 `Method`: `GET`
 
-`Url`: `/tasks/<task-id>`
+`URL`: `/tasks/<task-id>/`
 
 * `task-id` is the ID for the desired task.
 
@@ -184,7 +184,7 @@ This route returns the jobs for this task.
 
 `Method`: `GET`
 
-`Url`: `/tasks/<task-id>/job/<job-id>`
+`URL`: `/tasks/<task-id>/job/<job-id>/`
 
 * `task-id` is the ID for the required task.
 * `job-id` is the ID for the required job.
@@ -252,13 +252,62 @@ This route returns the jobs for this task.
 
 This route returns the details for this job and all its last 20 executions, with their details.
 
+## API - Job logs
+
+### Request Details
+
+`Method`: `GET`
+
+`URL`: `/tasks/<task-id>/job/<job-id>/logs/`
+
+* `task-id` is the ID for the required task.
+* `job-id` is the ID for the required job.
+
+`Body`: -
+
+`Query Parameters`: -
+
+### Example Response
+
+```
+total 72K
+drwxr-xr-x   1 root root 4.0K Jan 17 15:13 .
+drwxr-xr-x   1 root root 4.0K Jan 17 15:13 ..
+-rwxr-xr-x   1 root root    0 Jan 17 15:13 .dockerenv
+drwxr-xr-x   2 root root 4.0K Dec  4 17:12 bin
+drwxr-xr-x   2 root root 4.0K Apr 24  2018 boot
+drwxr-xr-x   5 root root  340 Jan 17 15:13 dev
+drwxr-xr-x   1 root root 4.0K Jan 17 15:13 etc
+drwxr-xr-x   2 root root 4.0K Apr 24  2018 home
+drwxr-xr-x   8 root root 4.0K Dec  4 17:11 lib
+drwxr-xr-x   2 root root 4.0K Dec  4 17:11 lib64
+drwxr-xr-x   2 root root 4.0K Dec  4 17:11 media
+drwxr-xr-x   2 root root 4.0K Dec  4 17:11 mnt
+drwxr-xr-x   2 root root 4.0K Dec  4 17:11 opt
+dr-xr-xr-x 200 root root    0 Jan 17 15:13 proc
+drwx------   2 root root 4.0K Dec  4 17:12 root
+drwxr-xr-x   1 root root 4.0K Dec 28 23:22 run
+drwxr-xr-x   1 root root 4.0K Dec 28 23:22 sbin
+drwxr-xr-x   2 root root 4.0K Dec  4 17:11 srv
+dr-xr-xr-x  13 root root    0 Dec 20 12:50 sys
+drwxrwxrwt   2 root root 4.0K Dec  4 17:12 tmp
+drwxr-xr-x   1 root root 4.0K Dec  4 17:11 usr
+drwxr-xr-x   1 root root 4.0K Dec  4 17:12 var
+-=-
+some error message
+```
+
+### Description
+
+This route returns the logs for the last execution for the job.
+
 ## API - Job stdout
 
 ### Request Details
 
 `Method`: `GET`
 
-`Url`: `/tasks/<task-id>/job/<job-id>/stdout`
+`URL`: `/tasks/<task-id>/job/<job-id>/stdout/`
 
 * `task-id` is the ID for the required task.
 * `job-id` is the ID for the required job.
@@ -305,7 +354,7 @@ This route returns the stdout results for last execution for the job.
 
 `Method`: `GET`
 
-`Url`: `/tasks/<task-id>/job/<job-id>/stderr`
+`URL`: `/tasks/<task-id>/job/<job-id>/stderr/`
 
 * `task-id` is the ID for the required task.
 * `job-id` is the ID for the required job.
@@ -330,7 +379,7 @@ This route returns the stderr results for last execution for the job.
 
 `Method`: `POST`
 
-`Url`: `/tasks/<task-id>/job/<job-id>/stop`
+`URL`: `/tasks/<task-id>/job/<job-id>/stop/`
 
 * `task-id` is the ID for the required task.
 * `job-id` is the ID for the required job.
@@ -372,7 +421,7 @@ TBW.
 
 `Method`: `GET`
 
-`Url`: `/tasks/<task-id>/job/<job-id>/executions/<execution-id>/`
+`URL`: `/tasks/<task-id>/job/<job-id>/executions/<execution-id>/`
 
 * `task-id` is the ID for the required task;
 * `job-id` is the ID for the required job;
@@ -418,13 +467,127 @@ TBW.
 
 This route returns the details for the specified job execution.
 
+## API - Job Execution Logs
+
+### Request Details
+
+`Method`: `GET`
+
+`URL`: `/tasks/<task-id>/job/<job-id>/executions/<execution-id>/logs/`
+
+* `task-id` is the ID for the required task;
+* `job-id` is the ID for the required job;
+* `execution-id` is the ID for the required job execution.
+
+`Body`: -
+
+`Query Parameters`: -
+
+### Example Response
+
+```
+total 72K
+drwxr-xr-x   1 root root 4.0K Jan 17 15:13 .
+drwxr-xr-x   1 root root 4.0K Jan 17 15:13 ..
+-rwxr-xr-x   1 root root    0 Jan 17 15:13 .dockerenv
+drwxr-xr-x   2 root root 4.0K Dec  4 17:12 bin
+drwxr-xr-x   2 root root 4.0K Apr 24  2018 boot
+drwxr-xr-x   5 root root  340 Jan 17 15:13 dev
+drwxr-xr-x   1 root root 4.0K Jan 17 15:13 etc
+drwxr-xr-x   2 root root 4.0K Apr 24  2018 home
+drwxr-xr-x   8 root root 4.0K Dec  4 17:11 lib
+drwxr-xr-x   2 root root 4.0K Dec  4 17:11 lib64
+drwxr-xr-x   2 root root 4.0K Dec  4 17:11 media
+drwxr-xr-x   2 root root 4.0K Dec  4 17:11 mnt
+drwxr-xr-x   2 root root 4.0K Dec  4 17:11 opt
+dr-xr-xr-x 200 root root    0 Jan 17 15:13 proc
+drwx------   2 root root 4.0K Dec  4 17:12 root
+drwxr-xr-x   1 root root 4.0K Dec 28 23:22 run
+drwxr-xr-x   1 root root 4.0K Dec 28 23:22 sbin
+drwxr-xr-x   2 root root 4.0K Dec  4 17:11 srv
+dr-xr-xr-x  13 root root    0 Dec 20 12:50 sys
+drwxrwxrwt   2 root root 4.0K Dec  4 17:12 tmp
+drwxr-xr-x   1 root root 4.0K Dec  4 17:11 usr
+drwxr-xr-x   1 root root 4.0K Dec  4 17:12 var
+-=-
+some error
+```
+
+### Description
+
+This route returns the stdout and stderr results for the specified job execution, separated by "\n-=-\n".
+
 ## API - Job Execution stdout
 
-TBW.
+### Request Details
+
+`Method`: `GET`
+
+`URL`: `/tasks/<task-id>/job/<job-id>/executions/<execution-id>/stdout/`
+
+* `task-id` is the ID for the required task;
+* `job-id` is the ID for the required job;
+* `execution-id` is the ID for the required job execution.
+
+`Body`: -
+
+`Query Parameters`: -
+
+### Example Response
+
+```
+total 72K
+drwxr-xr-x   1 root root 4.0K Jan 17 15:13 .
+drwxr-xr-x   1 root root 4.0K Jan 17 15:13 ..
+-rwxr-xr-x   1 root root    0 Jan 17 15:13 .dockerenv
+drwxr-xr-x   2 root root 4.0K Dec  4 17:12 bin
+drwxr-xr-x   2 root root 4.0K Apr 24  2018 boot
+drwxr-xr-x   5 root root  340 Jan 17 15:13 dev
+drwxr-xr-x   1 root root 4.0K Jan 17 15:13 etc
+drwxr-xr-x   2 root root 4.0K Apr 24  2018 home
+drwxr-xr-x   8 root root 4.0K Dec  4 17:11 lib
+drwxr-xr-x   2 root root 4.0K Dec  4 17:11 lib64
+drwxr-xr-x   2 root root 4.0K Dec  4 17:11 media
+drwxr-xr-x   2 root root 4.0K Dec  4 17:11 mnt
+drwxr-xr-x   2 root root 4.0K Dec  4 17:11 opt
+dr-xr-xr-x 200 root root    0 Jan 17 15:13 proc
+drwx------   2 root root 4.0K Dec  4 17:12 root
+drwxr-xr-x   1 root root 4.0K Dec 28 23:22 run
+drwxr-xr-x   1 root root 4.0K Dec 28 23:22 sbin
+drwxr-xr-x   2 root root 4.0K Dec  4 17:11 srv
+dr-xr-xr-x  13 root root    0 Dec 20 12:50 sys
+drwxrwxrwt   2 root root 4.0K Dec  4 17:12 tmp
+drwxr-xr-x   1 root root 4.0K Dec  4 17:11 usr
+drwxr-xr-x   1 root root 4.0K Dec  4 17:12 var
+```
+
+### Description
+
+This route returns the stdout result for the specified job execution.
 
 ## API - Job Execution stderr
 
-TBW.
+`Method`: `GET`
+
+`URL`: `/tasks/<task-id>/job/<job-id>/executions/<execution-id>/stderr/`
+
+* `task-id` is the ID for the required task;
+* `job-id` is the ID for the required job;
+* `execution-id` is the ID for the required job execution.
+
+`Body`: -
+
+`Query Parameters`: -
+
+### Example Response
+
+```
+some error
+```
+
+### Description
+
+This route returns the stderr result for the specified job execution.
 
 ## API - Stop Job Execution Details
 

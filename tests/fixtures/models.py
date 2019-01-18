@@ -91,6 +91,9 @@ class JobExecutionFixture:
         container_id=None,
         docker_host=None,
         docker_port=None,
+        log=None,
+        error=None,
+        exit_code=None,
     ):
         if task_id is None:
             task_id = f"test-{uuid4()}"
@@ -114,6 +117,9 @@ class JobExecutionFixture:
             image,
             command,
             task_id=task_id,
+            log=log,
+            error=error,
+            exit_code=exit_code,
             metadata={
                 "docker_host": docker_host,
                 "docker_port": docker_port,

@@ -4,6 +4,7 @@ from json import loads
 # 3rd Party
 from flask import url_for
 from preggy import expect
+from tests.fixtures.models import JobExecutionFixture
 
 # Fastlane
 from fastlane.models.task import Task
@@ -85,4 +86,130 @@ def test_get_execution2(client):
                 "startedAt": None,
                 "status": "enqueued",
             }
+        )
+
+
+def test_get_execution_stdout1(client):
+    """Test getting job execution stdout"""
+    with client.application.app_context():
+        task, job, execution = JobExecutionFixture.new_defaults(
+            exit_code=0, log="test log", error="some error"
+        )
+
+        resp = client.get(
+            f"/tasks/{task.task_id}/jobs/{job.job_id}/executions/{execution.execution_id}/stdout/"
+        )
+        expect(resp.status_code).to_equal(200)
+        expect(resp.data).to_equal("test log")
+
+
+def test_get_execution_stdout2(client):
+    """Test getting job execution stdout with invalid data"""
+    with client.application.app_context():
+        task, job, execution = JobExecutionFixture.new_defaults(
+            exit_code=0, log="test log", error="some error"
+        )
+
+        resp = client.get(
+            f"/tasks/invalid/jobs/{job.job_id}/executions/{execution.execution_id}/stdout/"
+        )
+        expect(resp.status_code).to_equal(404)
+        expect(resp.data).to_equal(f"Task (invalid) or Job ({job.job_id}) not found.")
+
+        resp = client.get(
+            f"/tasks/{task.task_id}/jobs/invalid/executions/{execution.execution_id}/stdout/"
+        )
+        expect(resp.status_code).to_equal(404)
+        expect(resp.data).to_equal(f"Task ({task.task_id}) or Job (invalid) not found.")
+
+        resp = client.get(
+            f"/tasks/{task.task_id}/jobs/{job.job_id}/executions/invalid/stdout/"
+        )
+        expect(resp.status_code).to_equal(404)
+        expect(resp.data).to_equal(
+            "No executions found in job with specified arguments."
+        )
+
+
+def test_get_execution_stderr1(client):
+    """Test getting job execution stderr"""
+    with client.application.app_context():
+        task, job, execution = JobExecutionFixture.new_defaults(
+            exit_code=0, log="test log", error="some error"
+        )
+
+        resp = client.get(
+            f"/tasks/{task.task_id}/jobs/{job.job_id}/executions/{execution.execution_id}/stderr/"
+        )
+        expect(resp.status_code).to_equal(200)
+        expect(resp.data).to_equal("some error")
+
+
+def test_get_execution_stderr2(client):
+    """Test getting job execution stderr with invalid data"""
+    with client.application.app_context():
+        task, job, execution = JobExecutionFixture.new_defaults(
+            exit_code=0, log="test log"
+        )
+
+        resp = client.get(
+            f"/tasks/invalid/jobs/{job.job_id}/executions/{execution.execution_id}/stderr/"
+        )
+        expect(resp.status_code).to_equal(404)
+        expect(resp.data).to_equal(f"Task (invalid) or Job ({job.job_id}) not found.")
+
+        resp = client.get(
+            f"/tasks/{task.task_id}/jobs/invalid/executions/{execution.execution_id}/stderr/"
+        )
+        expect(resp.status_code).to_equal(404)
+        expect(resp.data).to_equal(f"Task ({task.task_id}) or Job (invalid) not found.")
+
+        resp = client.get(
+            f"/tasks/{task.task_id}/jobs/{job.job_id}/executions/invalid/stderr/"
+        )
+        expect(resp.status_code).to_equal(404)
+        expect(resp.data).to_equal(
+            "No executions found in job with specified arguments."
+        )
+
+
+def test_get_execution_logs1(client):
+    """Test getting job execution logs"""
+    with client.application.app_context():
+        task, job, execution = JobExecutionFixture.new_defaults(
+            exit_code=0, log="test log", error="some error"
+        )
+
+        resp = client.get(
+            f"/tasks/{task.task_id}/jobs/{job.job_id}/executions/{execution.execution_id}/logs/"
+        )
+        expect(resp.status_code).to_equal(200)
+        expect(resp.data).to_equal("test log\n-=-\nsome error")
+
+
+def test_get_execution_logs2(client):
+    """Test getting job execution logs with invalid data"""
+    with client.application.app_context():
+        task, job, execution = JobExecutionFixture.new_defaults(
+            exit_code=0, log="test log"
+        )
+
+        resp = client.get(
+            f"/tasks/invalid/jobs/{job.job_id}/executions/{execution.execution_id}/logs/"
+        )
+        expect(resp.status_code).to_equal(404)
+        expect(resp.data).to_equal(f"Task (invalid) or Job ({job.job_id}) not found.")
+
+        resp = client.get(
+            f"/tasks/{task.task_id}/jobs/invalid/executions/{execution.execution_id}/logs/"
+        )
+        expect(resp.status_code).to_equal(404)
+        expect(resp.data).to_equal(f"Task ({task.task_id}) or Job (invalid) not found.")
+
+        resp = client.get(
+            f"/tasks/{task.task_id}/jobs/{job.job_id}/executions/invalid/logs/"
+        )
+        expect(resp.status_code).to_equal(404)
+        expect(resp.data).to_equal(
+            "No executions found in job with specified arguments."
         )

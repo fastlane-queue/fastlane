@@ -14,6 +14,7 @@ from flask import (
 from rq_scheduler import Scheduler
 
 # Fastlane
+from fastlane.api.execution import retrieve_execution_details
 from fastlane.models.job import Job, JobExecution
 from fastlane.models.task import Task
 from fastlane.worker.job import run_job
@@ -67,7 +68,7 @@ def get_tasks():
     return jsonify(data)
 
 
-@bp.route("/tasks/<task_id>", methods=("GET",))
+@bp.route("/tasks/<task_id>/", methods=("GET",))
 def get_task(task_id):
     logger = g.logger.bind(operation="get_task", task_id=task_id)
 
@@ -95,7 +96,7 @@ def get_task(task_id):
     return jsonify({"taskId": task_id, "jobs": jobs})
 
 
-@bp.route("/tasks/<task_id>/jobs/<job_id>", methods=("GET",))
+@bp.route("/tasks/<task_id>/jobs/<job_id>/", methods=("GET",))
 def get_job(task_id, job_id):
     logger = g.logger.bind(operation="get_job", task_id=task_id, job_id=job_id)
 
@@ -130,7 +131,7 @@ def get_job(task_id, job_id):
     return jsonify({"task": {"id": task_id, "url": task_url}, "job": details})
 
 
-@bp.route("/tasks/<task_id>/jobs/<job_id>/stop", methods=("POST",))
+@bp.route("/tasks/<task_id>/jobs/<job_id>/stop/", methods=("POST",))
 def stop_job(task_id, job_id):
     logger = g.logger.bind(operation="stop", task_id=task_id, job_id=job_id)
 
@@ -165,7 +166,7 @@ def stop_job(task_id, job_id):
     return get_job_summary(task_id, job_id)
 
 
-@bp.route("/tasks/<task_id>/jobs/<job_id>/retry", methods=("POST",))
+@bp.route("/tasks/<task_id>/jobs/<job_id>/retry/", methods=("POST",))
 def retry_job(task_id, job_id):
     logger = g.logger.bind(operation="retry", task_id=task_id, job_id=job_id)
 
@@ -220,7 +221,7 @@ def get_job_summary(task_id, job_id):
     )
 
 
-@bp.route("/tasks/<task_id>/jobs/<job_id>/stream")
+@bp.route("/tasks/<task_id>/jobs/<job_id>/stream/")
 def stream_job(task_id, job_id):
     if request.url.startswith("https"):
         protocol = "wss"
@@ -234,34 +235,22 @@ def stream_job(task_id, job_id):
     return render_template("stream.html", task_id=task_id, job_id=job_id, ws_url=ws_url)
 
 
-def get_response(task_id, job_id, get_data_fn):
-    logger = g.logger.bind(operation="get_response", task_id=task_id, job_id=job_id)
-
-    logger.debug("Getting job...")
-    job = Job.get_by_id(task_id=task_id, job_id=job_id)
-
-    if job is None:
-        logger.error("Job not found in task.")
-
-        return make_response("Job not found in task.", 404)
-
-    if not job.executions:
-        logger.error("No executions found in job.")
-
-        return make_response("No executions found in job.", 400)
-
-    execution = job.get_last_execution()
-
-    headers = {"Fastlane-Exit-Code": str(execution.exit_code)}
-
-    return Response(headers=headers, response=get_data_fn(execution), status=200)
-
-
-@bp.route("/tasks/<task_id>/jobs/<job_id>/stdout")
+@bp.route("/tasks/<task_id>/jobs/<job_id>/stdout/")
 def stdout(task_id, job_id):
-    return get_response(task_id, job_id, lambda execution: execution.log)
+    return retrieve_execution_details(
+        task_id, job_id, get_data_fn=lambda execution: execution.log
+    )
 
 
-@bp.route("/tasks/<task_id>/jobs/<job_id>/stderr")
+@bp.route("/tasks/<task_id>/jobs/<job_id>/stderr/")
 def stderr(task_id, job_id):
-    return get_response(task_id, job_id, lambda execution: execution.error)
+    return retrieve_execution_details(
+        task_id, job_id, get_data_fn=lambda execution: execution.error
+    )
+
+
+@bp.route("/tasks/<task_id>/jobs/<job_id>/logs/")
+def logs(task_id, job_id):
+    func = lambda execution: f"{execution.logs}\n{execution.error}"  # NOQA: 731
+
+    return retrieve_execution_details(task_id, job_id, get_data_fn=func)

@@ -87,7 +87,7 @@ def test_get_task_details(client):
     task = Task.create_task(task_id)
     task.create_or_update_job(job_id)
 
-    resp = client.get(f"/tasks/{task_id}")
+    resp = client.get(f"/tasks/{task_id}/")
     expect(resp.status_code).to_equal(200)
 
     data = loads(resp.data)
@@ -98,12 +98,42 @@ def test_get_task_details(client):
     expect(job_data).to_include("id")
     expect(job_data["id"]).to_equal(job_id)
     expect(job_data["url"]).to_equal(
-        f"http://localhost:10000/tasks/{task_id}/jobs/{job_id}"
+        f"http://localhost:10000/tasks/{task_id}/jobs/{job_id}/"
     )
 
 
 def test_job_details1(client):
     """Tests get job details returns proper details and last 20 execs."""
+    pytest.skip("Not implemented")
+
+
+def test_job_stdout1(client):
+    """Tests get job stdout returns log for last execution."""
+    pytest.skip("Not implemented")
+
+
+def test_job_stdout2(client):
+    """Tests get job stdout fails if invalid input."""
+    pytest.skip("Not implemented")
+
+
+def test_job_stderr1(client):
+    """Tests get job stderr returns log for last execution."""
+    pytest.skip("Not implemented")
+
+
+def test_job_stderr2(client):
+    """Tests get job stderr fails if invalid input."""
+    pytest.skip("Not implemented")
+
+
+def test_job_logs1(client):
+    """Tests get job logs returns log for last execution."""
+    pytest.skip("Not implemented")
+
+
+def test_job_logs2(client):
+    """Tests get job logs fails if invalid input."""
     pytest.skip("Not implemented")
 
 

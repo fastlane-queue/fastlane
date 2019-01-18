@@ -25,7 +25,7 @@ Instead of the tedious, repetitive work of yesteryear where you had to implement
 -   [x]  API to retry job (`<jobUrl>/retry`);
 -   [x]  API to get stdout (`<jobUrl>/stdout`) and stderr (`<jobUrl>/stderr`) for last execution in jobs;
 -   [x]  Job log output streaming using WebSockets (`ws://<jobUrl>/ws`) and `<jobUrl>/stream`;
--   [ ]  API to retrieve execution details, `<jobUrl>/executions/<executionId>` (`<executionUrl>`);
+-   [x]  API to retrieve execution details, `<jobUrl>/executions/<executionId>` (`<executionUrl>`);
 -   [ ]  API to stop execution, `<executionUrl>/stop`;
 -   [ ]  API to get stdout (`<executionUrl>/stdout`) and stderr (`<executionUrl>/stderr`) for execution;
 -   [ ]  Job execution log output streaming using WebSockets (`ws://<executionUrl>/ws`) and `<executionUrl>/stream`;
