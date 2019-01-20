@@ -1,12 +1,10 @@
 # 3rd Party
 from flask import (
     Blueprint,
-    Response,
     abort,
     current_app,
     g,
     jsonify,
-    make_response,
     render_template,
     request,
     url_for,
@@ -14,7 +12,11 @@ from flask import (
 from rq_scheduler import Scheduler
 
 # Fastlane
-from fastlane.api.execution import retrieve_execution_details
+from fastlane.api.execution import (
+    perform_stop_job_execution,
+    retrieve_execution_details,
+)
+from fastlane.api.helpers import return_error
 from fastlane.models.job import Job, JobExecution
 from fastlane.models.task import Task
 from fastlane.worker.job import run_job
@@ -76,9 +78,7 @@ def get_task(task_id):
     task = Task.get_by_task_id(task_id)
 
     if task is None:
-        logger.error("Task not found.")
-
-        return make_response("Task not found", 404)
+        return return_error("Task not found.", "get_task", status=404, logger=logger)
 
     logger.debug("Task retrieved successfully...")
 
@@ -104,9 +104,9 @@ def get_job(task_id, job_id):
     job = Job.get_by_id(task_id=task_id, job_id=job_id)
 
     if job is None:
-        logger.error("Job not found in task.")
-
-        return make_response("Job not found in task", 404)
+        return return_error(
+            "Job not found in task.", "get_task", status=404, logger=logger
+        )
 
     logger.debug("Job retrieved successfully...")
 
@@ -133,35 +133,24 @@ def get_job(task_id, job_id):
 
 @bp.route("/tasks/<task_id>/jobs/<job_id>/stop/", methods=("POST",))
 def stop_job(task_id, job_id):
-    logger = g.logger.bind(operation="stop", task_id=task_id, job_id=job_id)
+    logger = g.logger.bind(operation="stop_job", task_id=task_id, job_id=job_id)
 
     logger.debug("Getting job...")
     job = Job.get_by_id(task_id=task_id, job_id=job_id)
 
     if job is None:
-        logger.error("Job not found in task.")
-
-        return make_response("Job not found in task", 404)
+        return return_error(
+            "Job not found in task.", "stop_job", status=404, logger=logger
+        )
 
     execution = job.get_last_execution()
 
-    if execution is not None and execution.status == JobExecution.Status.running:
-        logger.debug("Stopping current execution...")
-        executor = current_app.executor
-        executor.stop_job(job.task, job, execution)
-        logger.debug("Current execution stopped.")
+    _, response = perform_stop_job_execution(
+        job.task, job, execution=execution, logger=logger
+    )
 
-    if "retries" in job.metadata:
-        job.metadata["retry_count"] = job.metadata["retries"] + 1
-        job.save()
-
-    scheduler = Scheduler("jobs", connection=current_app.redis)
-
-    if "enqueued_id" in job.metadata and job.metadata["enqueued_id"] in scheduler:
-        scheduler.cancel(job.metadata["enqueued_id"])
-        job.scheduled = False
-
-    logger.debug("Job stopped.")
+    if response is not None:
+        return response
 
     return get_job_summary(task_id, job_id)
 
@@ -174,24 +163,23 @@ def retry_job(task_id, job_id):
     job = Job.get_by_id(task_id=task_id, job_id=job_id)
 
     if job is None:
-        logger.error("Job not found in task.")
-
-        return make_response("Job not found in task", 404)
+        return return_error(
+            "Job not found in task.", "retry_job", status=404, logger=logger
+        )
 
     execution = job.get_last_execution()
 
     if execution is None:
-        logger.error("No execution yet to retry.")
-
-        return make_response("No execution yet to retry.", 400)
+        return return_error(
+            "No execution yet to retry.", "retry_job", status=400, logger=logger
+        )
 
     scheduler = Scheduler("jobs", connection=current_app.redis)
 
     if "enqueued_id" in job.metadata and job.metadata["enqueued_id"] in scheduler:
         msg = "Can't retry a scheduled job."
-        logger.error(msg)
 
-        return make_response(msg, 400)
+        return return_error(msg, "retry_job", status=400, logger=logger)
 
     if execution.status == JobExecution.Status.running:
         logger.debug("Stopping current execution...")
