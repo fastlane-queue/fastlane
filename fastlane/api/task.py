@@ -145,9 +145,7 @@ def stop_job(task_id, job_id):
 
     execution = job.get_last_execution()
 
-    _, response = perform_stop_job_execution(
-        job.task, job, execution=execution, logger=logger
-    )
+    _, response = perform_stop_job_execution(job, execution=execution, logger=logger)
 
     if response is not None:
         return response

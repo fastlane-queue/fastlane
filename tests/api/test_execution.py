@@ -1,4 +1,5 @@
 # Standard Library
+from datetime import datetime
 from json import loads
 from unittest.mock import MagicMock
 from uuid import uuid4
@@ -6,11 +7,11 @@ from uuid import uuid4
 # 3rd Party
 from flask import url_for
 from preggy import expect
+from rq_scheduler import Scheduler
 from tests.fixtures.models import JobExecutionFixture
 
 # Fastlane
 from fastlane.models.job import JobExecution
-from fastlane.models.task import Task
 
 import tests.api.helpers  # NOQA isort:skip pylint:disable=unused-import
 
@@ -18,9 +19,7 @@ import tests.api.helpers  # NOQA isort:skip pylint:disable=unused-import
 def test_get_execution1(client):
     """Test getting tasks with invalid task returns 404"""
     with client.application.app_context():
-        task = Task.create_task("my-task-1")
-        job = task.create_job()
-        execution = job.create_execution("image", "command")
+        task, job, execution = JobExecutionFixture.new_defaults()
 
         resp = client.get(
             f"/tasks/invalid/jobs/{job.job_id}/executions/{execution.execution_id}"
@@ -46,12 +45,9 @@ def test_get_execution1(client):
 
 
 def test_get_execution2(client):
-    """Test getting tasks"""
+    """Test get execution details"""
     with client.application.app_context():
-        task = Task.create_task("my-task-1")
-        job = task.create_job()
-        execution = job.create_execution("image", "command")
-
+        task, job, execution = JobExecutionFixture.new_defaults()
         resp = client.get(
             f"/tasks/{task.task_id}/jobs/{job.job_id}/executions/{execution.execution_id}"
         )
@@ -91,7 +87,7 @@ def test_get_execution2(client):
                 "finishedAt": None,
                 "image": "image",
                 "log": None,
-                "metadata": {},
+                "metadata": execution.metadata,
                 "startedAt": None,
                 "status": "enqueued",
             }
@@ -239,10 +235,24 @@ def test_get_execution_logs2(client):
 
 def test_stop_execution1(client):
     with client.application.app_context():
+
+        def test_method():
+            pass
+
+        scheduler = Scheduler("jobs", connection=client.application.redis)
+        scheduler.enqueue_at(datetime(2020, 1, 1), test_method)
+
+        enqueued_jobs = client.application.redis.zrange(
+            b"rq:scheduler:scheduled_jobs", 0, -1
+        )
+
+        expect(enqueued_jobs).to_length(1)
+        enqueued_job_id = enqueued_jobs[0].decode("utf-8")
+
         task, job, execution = JobExecutionFixture.new_defaults(
             status=JobExecution.Status.running
         )
-        job.enqueued_id = uuid4()
+        job.metadata["enqueued_id"] = enqueued_job_id
         job.metadata["retries"] = 3
         job.metadata["retry_count"] = 0
         job.save()
@@ -288,3 +298,41 @@ def test_stop_execution1(client):
         executor_mock.stop_job.assert_called()
         job.reload()
         expect(job.metadata["retry_count"]).to_equal(4)
+
+        enqueued_jobs = client.application.redis.zrange(
+            b"rq:scheduler:scheduled_jobs", 0, -1
+        )
+        expect(enqueued_jobs).to_length(0)
+
+
+def test_stop_execution2(client):
+    """Test stopping job execution with invalid data"""
+    with client.application.app_context():
+        task, job, execution = JobExecutionFixture.new_defaults(
+            exit_code=0, log="test log"
+        )
+
+        resp = client.post(
+            f"/tasks/invalid/jobs/{job.job_id}/executions/{execution.execution_id}/stop/"
+        )
+
+        msg = f"Task (invalid) or Job ({job.job_id}) not found."
+        expect(resp).to_be_an_error_with(
+            status=404, msg=msg, operation="stop_job_execution"
+        )
+
+        resp = client.post(
+            f"/tasks/{task.task_id}/jobs/invalid/executions/{execution.execution_id}/stop/"
+        )
+        msg = f"Task ({task.task_id}) or Job (invalid) not found."
+        expect(resp).to_be_an_error_with(
+            status=404, msg=msg, operation="stop_job_execution"
+        )
+
+        resp = client.post(
+            f"/tasks/{task.task_id}/jobs/{job.job_id}/executions/invalid/stop/"
+        )
+        msg = f"Job Execution (invalid) not found in Job ({job.job_id})."
+        expect(resp).to_be_an_error_with(
+            status=404, msg=msg, operation="stop_job_execution"
+        )

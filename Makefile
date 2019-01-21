@@ -1,6 +1,7 @@
 COMPOSE := $(shell command -v docker-compose 2> /dev/null)
 POETRY := $(shell command -v poetry 2> /dev/null)
 LAST_TAG := $(shell git for-each-ref --format='%(*committerdate:raw)%(committerdate:raw) %(refname) %(*objectname) %(objectname)' refs/tags 2>/dev/null | sort -n | awk '{ print $$3 }' | tail -n1 | sed s@refs/tags/@@g)
+OS_NAME := $(shell uname -s)
 
 .PHONY: docs
 
@@ -71,7 +72,11 @@ publish: docker-push
 
 coverage:
 	@coverage html
+ifeq ($(OS_NAME),Linux)
+	@firefox `pwd`/htmlcov/index.html
+else
 	@open htmlcov/index.html
+endif
 
 sample:
 	@rm -rf /tmp/fastlane

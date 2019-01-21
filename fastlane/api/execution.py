@@ -121,12 +121,7 @@ def get_job_execution_logs(task_id, job_id, execution_id):
     return retrieve_execution_details(task_id, job_id, execution_id, func)
 
 
-def perform_stop_job_execution(task, job, execution=None, logger=None):
-    if logger is None:
-        logger = g.logger.bind(
-            operation="stop", task_id=str(task.task_id), job_id=str(job.job_id)
-        )
-
+def perform_stop_job_execution(job, execution, logger):
     if execution is None:
         if not job.executions:
             msg = "No executions found in job."
@@ -185,9 +180,7 @@ def stop_job_execution(task_id, job_id, execution_id):
 
         return return_error(msg, "stop_job_execution", status=404, logger=logger)
 
-    _, response = perform_stop_job_execution(
-        job.task, job, execution=execution, logger=logger
-    )
+    _, response = perform_stop_job_execution(job, execution=execution, logger=logger)
 
     if response is not None:
         return response
