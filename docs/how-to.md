@@ -9,10 +9,12 @@ This Http `POST` will run an `ubuntu` container and then run the `ls -lah` comma
 ```json
     {
       "taskId": "test-task",
-      "jobId": "5c094abcedc7d5be820e20da",
+      "executionId": "96812ec5-4574-46da-9474-f901b51d49ec",
+      "executionUrl": "http://fastlane.local:10000/tasks/test-task/jobs/19603668-7241-4c50-802f-7c39dac831e6/executions/96812ec5-4574-46da-9474-f901b51d49ec/",
       "queueJobId": "db72db9b-cb49-44bd-b2fa-b3afc8e3a041",
-      "jobUrl": "http://fastlane.local:10000/tasks/test-task/jobs/5c094abcedc7d5be820e20da",
-      "taskUrl": "http://fastlane.local:10000/tasks/test-task"
+      "jobId": "19603668-7241-4c50-802f-7c39dac831e6",
+      "jobUrl": "http://fastlane.local:10000/tasks/test-task/jobs/19603668-7241-4c50-802f-7c39dac831e6/",
+      "taskUrl": "http://fastlane.local:10000/tasks/test-task/"
     }
 ```
 
@@ -26,11 +28,13 @@ This Http `POST` will run an `ubuntu` container and then run the `ls -lah` comma
 
 ```json
     {
+      "executionId": null,
+      "executionUrl": null,
       "taskId": "test-scheduled-task",
-      "jobId": "5c094abcedc7d5be820e20da",
+      "jobId": "19603668-7241-4c50-802f-7c39dac831e6",
+      "jobUrl": "http://fastlane.local:10000/tasks/test-scheduled-task/jobs/19603668-7241-4c50-802f-7c39dac831e6/",
       "queueJobId": "db72db9b-cb49-44bd-b2fa-b3afc8e3a041",
-      "jobUrl": "http://fastlane.local:10000/tasks/test-scheduled-task/jobs/5c094abcedc7d5be820e20da",
-      "taskUrl": "http://fastlane.local:10000/tasks/test-scheduled-task"
+      "taskUrl": "http://fastlane.local:10000/tasks/test-scheduled-task/"
     }
 ```
 
@@ -44,10 +48,12 @@ This Http `POST` will run an `ubuntu` container and then run the `ls -lah` comma
 
 ```json
     {
+      "executionId": null,
+      "executionUrl": null,
       "taskId": "test-scheduled-task",
-      "jobId": "5c094abcedc7d5be820e20da",
+      "jobId": "19603668-7241-4c50-802f-7c39dac831e6",
       "queueJobId": "db72db9b-cb49-44bd-b2fa-b3afc8e3a041",
-      "jobUrl": "http://fastlane.local:10000/tasks/test-scheduled-task/jobs/5c094abcedc7d5be820e20da",
+      "jobUrl": "http://fastlane.local:10000/tasks/test-scheduled-task/jobs/19603668-7241-4c50-802f-7c39dac831e6",
       "taskUrl": "http://fastlane.local:10000/tasks/test-scheduled-task"
     }
 ```
@@ -66,10 +72,12 @@ This Http `POST` will run an `ubuntu` container and then run the `ls -lah` comma
 
 ```json
     {
+      "executionId": null,
+      "executionUrl": null,
       "taskId": "test-scheduled-task",
-      "jobId": "5c094abcedc7d5be820e20da",
+      "jobId": "19603668-7241-4c50-802f-7c39dac831e6",
       "queueJobId": "db72db9b-cb49-44bd-b2fa-b3afc8e3a041",
-      "jobUrl": "http://fastlane.local:10000/tasks/test-scheduled-task/jobs/5c094abcedc7d5be820e20da",
+      "jobUrl": "http://fastlane.local:10000/tasks/test-scheduled-task/jobs/19603668-7241-4c50-802f-7c39dac831e6",
       "taskUrl": "http://fastlane.local:10000/tasks/test-scheduled-task"
     }
 ```
@@ -92,7 +100,7 @@ In order to find more about the running (or done by now) job, just follow the `j
 
 Just `POST` to the job URL with a `/stop` suffix in the job's URL.
 
-    $ curl -XPOST http://fastlane.local:10000/tasks/test-scheduled-task/jobs/5c094abcedc7d5be820e20da/stop
+    $ curl -XPOST http://fastlane.local:10000/tasks/test-scheduled-task/jobs/19603668-7241-4c50-802f-7c39dac831e6/stop
 
 ## How do I find all the jobs in my task?
 
@@ -104,24 +112,24 @@ Just do a `GET` on the task URL, like:
 
 You can query both after the job id. The exit code comes as a header called `Fastlane-Exit-Code`.
 
-    $ curl http://fastlane.local:10000/tasks/test-my-task/jobs/5c094abcedc7d5be820e20da/stdout
+    $ curl http://fastlane.local:10000/tasks/test-my-task/jobs/19603668-7241-4c50-802f-7c39dac831e6/stdout
 
     # and
 
-    $ curl http://fastlane.local:10000/tasks/test-my-task/jobs/5c094abcedc7d5be820e20da/stderr
+    $ curl http://fastlane.local:10000/tasks/test-my-task/jobs/19603668-7241-4c50-802f-7c39dac831e6/stderr
 
 ## How do I see what's going on with my job before it finishes?
 
 [fastlane](https://github.com/heynemann/fastlane) comes equipped with two routes for that purpose: `/task/<task-id>/jobs/<job-id>/stream` and `/task/<task-id>/jobs/<job-id>/ws`.
 
-The former is a simple page that connects to the latter using WebSockets. That means you should open it in your browser. Just navigate to `http://fastlane.local:10000/tasks/test-scheduled-task/jobs/5c094abcedc7d5be820e20da/stream`.
+The former is a simple page that connects to the latter using WebSockets. That means you should open it in your browser. Just navigate to `http://fastlane.local:10000/tasks/test-scheduled-task/jobs/19603668-7241-4c50-802f-7c39dac831e6/stream`.
 
 To integrate with [fastlane](https://github.com/heynemann/fastlane) and stream the results of a job, just connect to it using Websockets like:
 
 ```javascript
 // In Javascript
 const connect = function() {
-  const socket = new WebSocket("ws://fastlane.local:10000/tasks/test-scheduled-task/jobs/5c094abcedc7d5be820e20da/ws");
+  const socket = new WebSocket("ws://fastlane.local:10000/tasks/test-scheduled-task/jobs/19603668-7241-4c50-802f-7c39dac831e6/ws");
 
   socket.onopen = function (event) {
     console.log('socket open, waiting for logs')
