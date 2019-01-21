@@ -4,6 +4,7 @@ from os.path import abspath, dirname, join
 
 # 3rd Party
 import click
+import pkg_resources
 
 # Fastlane
 from fastlane.cli.api import APIHandler
@@ -18,6 +19,13 @@ LEVELS = {0: "ERROR", 1: "WARN", 2: "INFO", 3: "DEBUG"}
 @click.group()
 def main():
     pass
+
+
+@click.command()
+def version():
+    """Returns fastlane version."""
+
+    click.echo(pkg_resources.get_distribution("fastlane").version)
 
 
 @click.command()
@@ -116,6 +124,7 @@ def prune(verbose, config_file):
     handler()
 
 
+main.add_command(version)
 main.add_command(api)
 main.add_command(worker)
 main.add_command(config)
