@@ -114,7 +114,12 @@ def retrieve_execution_details(task_id, job_id, execution_id=None, get_data_fn=N
 
     headers = {"Fastlane-Exit-Code": str(execution.exit_code)}
 
-    return Response(headers=headers, response=get_data_fn(execution), status=200)
+    if execution.status in [JobExecution.Status.running, JobExecution.Status.enqueued]:
+        logs = ""
+    else:
+        logs = get_data_fn(execution)
+
+    return Response(headers=headers, response=logs, status=200)
 
 
 @bp.route(
@@ -137,7 +142,13 @@ def get_job_execution_stderr(task_id, job_id, execution_id):
     "/tasks/<task_id>/jobs/<job_id>/executions/<execution_id>/logs/", methods=("GET",)
 )
 def get_job_execution_logs(task_id, job_id, execution_id):
-    func = lambda execution: f"{execution.log}\n-=-\n{execution.error}"  # NOQA: 731
+    func = lambda execution: (  # NOQA: 731
+        f"{execution.log}\n-=-\n{execution.error}"
+
+        if execution.status
+        not in [JobExecution.Status.running, JobExecution.Status.enqueued]
+        else ""
+    )
 
     return retrieve_execution_details(task_id, job_id, execution_id, func)
 
