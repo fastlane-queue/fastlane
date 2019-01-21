@@ -63,6 +63,7 @@ Instead of the tedious, repetitive work of yesteryear where you had to implement
 -   [ ]  Support [Redis](https://redis.io/) Cluster;
 -   [ ]  Comprehensive test coverage;
 -   [x]  gzip all JSON responses for the API (for requests that accept gzip);
+-   [x]  Store IP address of enqueued job for auditing (`X-Real-IP`, then `X-Forwarded-For`, then `request.addr`);
 -   [ ]  Admin to inspect tasks and jobs.
 
 ## Documentation

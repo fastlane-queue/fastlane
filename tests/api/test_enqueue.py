@@ -4,6 +4,7 @@ from json import dumps, loads
 from uuid import uuid4
 
 # 3rd Party
+import pytest
 from croniter import croniter
 from preggy import expect
 
@@ -447,3 +448,18 @@ def test_enqueue12(client):
 
         count = Task.objects.count()
         expect(count).to_equal(1)
+
+
+def test_enqueue13(client):
+    """Tests enqueue stores IP Address for request using X-Real-IP."""
+    pytest.skip("Not implemented")
+
+
+def test_enqueue14(client):
+    """Tests enqueue stores IP Address for request using X-Forwarded-For first value as fallback."""
+    pytest.skip("Not implemented")
+
+
+def test_enqueue15(client):
+    """Tests enqueue stores IP Address for request using request address as fallback."""
+    pytest.skip("Not implemented")

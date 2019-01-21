@@ -14,36 +14,6 @@ import tests.api.helpers  # NOQA isort:skip pylint:disable=unused-import
 
 
 def test_get_execution1(client):
-    """Test getting tasks with invalid task returns 404"""
-    with client.application.app_context():
-        task, job, execution = JobExecutionFixture.new_defaults()
-
-        resp = client.get(
-            f"/tasks/invalid/jobs/{job.job_id}/executions/{execution.execution_id}/"
-        )
-        msg = f"Task (invalid) or Job ({job.job_id}) not found."
-        expect(resp).to_be_an_error_with(
-            status=404, msg=msg, operation="get_job_execution"
-        )
-
-        resp = client.get(
-            f"/tasks/{task.task_id}/jobs/invalid/executions/{execution.execution_id}/"
-        )
-        msg = f"Task ({task.task_id}) or Job (invalid) not found."
-        expect(resp).to_be_an_error_with(
-            status=404, msg=msg, operation="get_job_execution"
-        )
-
-        resp = client.get(
-            f"/tasks/{task.task_id}/jobs/{job.job_id}/executions/invalid/"
-        )
-        msg = f"Job Execution (invalid) not found in job ({job.job_id})."
-        expect(resp).to_be_an_error_with(
-            status=404, msg=msg, operation="get_job_execution"
-        )
-
-
-def test_get_execution2(client):
     """Test get execution details"""
     with client.application.app_context():
         task, job, execution = JobExecutionFixture.new_defaults()
@@ -87,9 +57,40 @@ def test_get_execution2(client):
                 "image": "image",
                 "log": None,
                 "metadata": execution.metadata,
+                "requestIPAddress": None,
                 "startedAt": None,
                 "status": "enqueued",
             }
+        )
+
+
+def test_get_execution2(client):
+    """Test getting tasks with invalid task returns 404"""
+    with client.application.app_context():
+        task, job, execution = JobExecutionFixture.new_defaults()
+
+        resp = client.get(
+            f"/tasks/invalid/jobs/{job.job_id}/executions/{execution.execution_id}/"
+        )
+        msg = f"Task (invalid) or Job ({job.job_id}) not found."
+        expect(resp).to_be_an_error_with(
+            status=404, msg=msg, operation="get_job_execution"
+        )
+
+        resp = client.get(
+            f"/tasks/{task.task_id}/jobs/invalid/executions/{execution.execution_id}/"
+        )
+        msg = f"Task ({task.task_id}) or Job (invalid) not found."
+        expect(resp).to_be_an_error_with(
+            status=404, msg=msg, operation="get_job_execution"
+        )
+
+        resp = client.get(
+            f"/tasks/{task.task_id}/jobs/{job.job_id}/executions/invalid/"
+        )
+        msg = f"Job Execution (invalid) not found in job ({job.job_id})."
+        expect(resp).to_be_an_error_with(
+            status=404, msg=msg, operation="get_job_execution"
         )
 
 

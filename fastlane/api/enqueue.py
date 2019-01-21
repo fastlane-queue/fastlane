@@ -27,6 +27,19 @@ def get_details():
     return details
 
 
+def get_ip_addr():
+    if "X-Real-Ip" in request.headers:
+        return request.headers["X-Real-Ip"]
+
+    if "X-Forwarded-For" in request.headers:
+        addresses = request.headers["X-Real-Ip"].split(",")
+
+        if addresses:
+            return addresses[0]
+
+    return request.remote_addr
+
+
 def create_job(details, task, logger, get_new_job_fn):
     logger.debug("Creating job...")
     retries = details.get("retries", 0)
@@ -58,6 +71,7 @@ def create_job(details, task, logger, get_new_job_fn):
     j.metadata["expiration"] = expiration
     j.metadata["timeout"] = timeout
     j.metadata["envs"] = details.get("envs", {})
+    j.request_ip = get_ip_addr()
 
     if metadata:
         j.metadata["custom"] = metadata
@@ -110,6 +124,7 @@ def enqueue_job(task, job, image, command, start_at, start_in, cron, logger):
     else:
         logger.debug("Enqueuing job execution...")
         execution = job.create_execution(image, command)
+        execution.request_ip = get_ip_addr()
         execution.status = JobExecution.Status.enqueued
         job.save()
 

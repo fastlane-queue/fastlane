@@ -36,6 +36,7 @@ class JobExecution(db.EmbeddedDocument):  # pylint: disable=no-member
     execution_id = StringField(required=True)
     image = StringField(required=True)
     command = StringField(required=True)
+    request_ip = StringField(required=False)
     status = StringField(required=True, default=Status.enqueued)
 
     log = StringField(required=False)
@@ -49,6 +50,7 @@ class JobExecution(db.EmbeddedDocument):  # pylint: disable=no-member
         res = {
             "executionId": str(self.execution_id),
             "createdAt": self.created_at.isoformat(),
+            "requestIPAddress": self.request_ip,
             "startedAt": s_at,
             "finishedAt": f_at,
             "image": self.image,
@@ -78,6 +80,7 @@ class Job(db.Document):
     task = ReferenceField(
         "Task", required=True, reverse_delete_rule=mongoengine.CASCADE
     )
+    request_ip = StringField(required=False)
     metadata = DictField(required=False)
     scheduled = BooleanField(required=True, default=False)
 
@@ -138,6 +141,7 @@ class Job(db.Document):
             "taskId": self.task.task_id,
             "scheduled": self.scheduled,
             "executionCount": len(self.executions),
+            "requestIPAddress": self.request_ip,
             "metadata": meta,
         }
 
