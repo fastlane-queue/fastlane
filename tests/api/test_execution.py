@@ -16,7 +16,9 @@ import tests.api.helpers  # NOQA isort:skip pylint:disable=unused-import
 def test_get_execution1(client):
     """Test get execution details"""
     with client.application.app_context():
-        task, job, execution = JobExecutionFixture.new_defaults()
+        task, job, execution = JobExecutionFixture.new_defaults(
+            status=JobExecution.Status.done
+        )
         resp = client.get(
             f"/tasks/{task.task_id}/jobs/{job.job_id}/executions/{execution.execution_id}/"
         )
@@ -59,7 +61,7 @@ def test_get_execution1(client):
                 "metadata": execution.metadata,
                 "requestIPAddress": None,
                 "startedAt": None,
-                "status": "enqueued",
+                "status": "done",
             }
         )
 
@@ -98,7 +100,10 @@ def test_get_execution_stdout1(client):
     """Test getting job execution stdout"""
     with client.application.app_context():
         task, job, execution = JobExecutionFixture.new_defaults(
-            exit_code=0, log="test log", error="some error"
+            exit_code=0,
+            log="test log",
+            error="some error",
+            status=JobExecution.Status.done,
         )
 
         resp = client.get(
@@ -109,6 +114,23 @@ def test_get_execution_stdout1(client):
 
 
 def test_get_execution_stdout2(client):
+    """Test getting job execution stdout"""
+    with client.application.app_context():
+        task, job, execution = JobExecutionFixture.new_defaults(
+            exit_code=0,
+            log="test log",
+            error="some error",
+            status=JobExecution.Status.running,
+        )
+
+        resp = client.get(
+            f"/tasks/{task.task_id}/jobs/{job.job_id}/executions/{execution.execution_id}/stdout/"
+        )
+        expect(resp.status_code).to_equal(200)
+        expect(resp.data).to_be_empty()
+
+
+def test_get_execution_stdout3(client):
     """Test getting job execution stdout with invalid data"""
     with client.application.app_context():
         task, job, execution = JobExecutionFixture.new_defaults(
@@ -144,7 +166,10 @@ def test_get_execution_stderr1(client):
     """Test getting job execution stderr"""
     with client.application.app_context():
         task, job, execution = JobExecutionFixture.new_defaults(
-            exit_code=0, log="test log", error="some error"
+            exit_code=0,
+            log="test log",
+            error="some error",
+            status=JobExecution.Status.done,
         )
 
         resp = client.get(
@@ -155,6 +180,23 @@ def test_get_execution_stderr1(client):
 
 
 def test_get_execution_stderr2(client):
+    """Test getting job execution stderr returns empty if job running"""
+    with client.application.app_context():
+        task, job, execution = JobExecutionFixture.new_defaults(
+            exit_code=0,
+            log="test log",
+            error="some error",
+            status=JobExecution.Status.running,
+        )
+
+        resp = client.get(
+            f"/tasks/{task.task_id}/jobs/{job.job_id}/executions/{execution.execution_id}/stderr/"
+        )
+        expect(resp.status_code).to_equal(200)
+        expect(resp.data).to_be_empty()
+
+
+def test_get_execution_stderr3(client):
     """Test getting job execution stderr with invalid data"""
     with client.application.app_context():
         task, job, execution = JobExecutionFixture.new_defaults(
@@ -190,7 +232,10 @@ def test_get_execution_logs1(client):
     """Test getting job execution logs"""
     with client.application.app_context():
         task, job, execution = JobExecutionFixture.new_defaults(
-            exit_code=0, log="test log", error="some error"
+            exit_code=0,
+            log="test log",
+            error="some error",
+            status=JobExecution.Status.done,
         )
 
         resp = client.get(
@@ -201,6 +246,23 @@ def test_get_execution_logs1(client):
 
 
 def test_get_execution_logs2(client):
+    """Test getting job execution logs returns empty if job is running"""
+    with client.application.app_context():
+        task, job, execution = JobExecutionFixture.new_defaults(
+            exit_code=0,
+            log="test log",
+            error="some error",
+            status=JobExecution.Status.running,
+        )
+
+        resp = client.get(
+            f"/tasks/{task.task_id}/jobs/{job.job_id}/executions/{execution.execution_id}/logs/"
+        )
+        expect(resp.status_code).to_equal(200)
+        expect(resp.data).to_be_empty()
+
+
+def test_get_execution_logs3(client):
     """Test getting job execution logs with invalid data"""
     with client.application.app_context():
         task, job, execution = JobExecutionFixture.new_defaults(
