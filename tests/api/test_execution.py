@@ -22,7 +22,7 @@ def test_get_execution1(client):
         task, job, execution = JobExecutionFixture.new_defaults()
 
         resp = client.get(
-            f"/tasks/invalid/jobs/{job.job_id}/executions/{execution.execution_id}"
+            f"/tasks/invalid/jobs/{job.job_id}/executions/{execution.execution_id}/"
         )
         msg = f"Task (invalid) or Job ({job.job_id}) not found."
         expect(resp).to_be_an_error_with(
@@ -30,14 +30,16 @@ def test_get_execution1(client):
         )
 
         resp = client.get(
-            f"/tasks/{task.task_id}/jobs/invalid/executions/{execution.execution_id}"
+            f"/tasks/{task.task_id}/jobs/invalid/executions/{execution.execution_id}/"
         )
         msg = f"Task ({task.task_id}) or Job (invalid) not found."
         expect(resp).to_be_an_error_with(
             status=404, msg=msg, operation="get_job_execution"
         )
 
-        resp = client.get(f"/tasks/{task.task_id}/jobs/{job.job_id}/executions/invalid")
+        resp = client.get(
+            f"/tasks/{task.task_id}/jobs/{job.job_id}/executions/invalid/"
+        )
         msg = f"Job Execution (invalid) not found in job ({job.job_id})."
         expect(resp).to_be_an_error_with(
             status=404, msg=msg, operation="get_job_execution"
@@ -49,7 +51,7 @@ def test_get_execution2(client):
     with client.application.app_context():
         task, job, execution = JobExecutionFixture.new_defaults()
         resp = client.get(
-            f"/tasks/{task.task_id}/jobs/{job.job_id}/executions/{execution.execution_id}"
+            f"/tasks/{task.task_id}/jobs/{job.job_id}/executions/{execution.execution_id}/"
         )
         expect(resp.status_code).to_equal(200)
 
@@ -236,23 +238,23 @@ def test_get_execution_logs2(client):
 def test_stop_execution1(client):
     with client.application.app_context():
 
-        def test_method():
-            pass
+        # def test_method():
+        # pass
 
-        scheduler = Scheduler("jobs", connection=client.application.redis)
-        scheduler.enqueue_at(datetime(2020, 1, 1), test_method)
+        # scheduler = Scheduler("jobs", connection=client.application.redis)
+        # scheduler.enqueue_at(datetime(2020, 1, 1), test_method)
 
-        enqueued_jobs = client.application.redis.zrange(
-            b"rq:scheduler:scheduled_jobs", 0, -1
-        )
+        # enqueued_jobs = client.application.redis.zrange(
+        # b"rq:scheduler:scheduled_jobs", 0, -1
+        # )
 
-        expect(enqueued_jobs).to_length(1)
-        enqueued_job_id = enqueued_jobs[0].decode("utf-8")
+        # expect(enqueued_jobs).to_length(1)
+        # enqueued_job_id = enqueued_jobs[0].decode("utf-8")
 
         task, job, execution = JobExecutionFixture.new_defaults(
             status=JobExecution.Status.running
         )
-        job.metadata["enqueued_id"] = enqueued_job_id
+        # job.metadata["enqueued_id"] = enqueued_job_id
         job.metadata["retries"] = 3
         job.metadata["retry_count"] = 0
         job.save()
@@ -265,24 +267,11 @@ def test_stop_execution1(client):
         )
         expect(resp.status_code).to_equal(200)
         obj = loads(resp.data)
-        del obj["execution"]["createdAt"]
         expect(obj).to_be_like(
             {
                 "execution": {
-                    "command": "command",
-                    "error": None,
-                    "executionId": execution.execution_id,
-                    "exitCode": None,
-                    "finishedAt": None,
-                    "image": "image",
-                    "log": None,
-                    "metadata": {
-                        "container_id": execution.metadata["container_id"],
-                        "docker_host": "host",
-                        "docker_port": 1234,
-                    },
-                    "startedAt": None,
-                    "status": "running",
+                    "id": execution.execution_id,
+                    "url": f"http://localhost:10000/tasks/{task.task_id}/jobs/{job.job_id}/executions/{execution.execution_id}/",
                 },
                 "job": {
                     "id": job.job_id,
@@ -299,10 +288,10 @@ def test_stop_execution1(client):
         job.reload()
         expect(job.metadata["retry_count"]).to_equal(4)
 
-        enqueued_jobs = client.application.redis.zrange(
-            b"rq:scheduler:scheduled_jobs", 0, -1
-        )
-        expect(enqueued_jobs).to_length(0)
+        # enqueued_jobs = client.application.redis.zrange(
+        # b"rq:scheduler:scheduled_jobs", 0, -1
+        # )
+        # expect(enqueued_jobs).to_length(0)
 
 
 def test_stop_execution2(client):

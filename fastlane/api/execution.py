@@ -9,7 +9,7 @@ from fastlane.models.job import Job, JobExecution
 bp = Blueprint("execution", __name__)  # pylint: disable=invalid-name
 
 
-@bp.route("/tasks/<task_id>/jobs/<job_id>/executions/<execution_id>", methods=("GET",))
+@bp.route("/tasks/<task_id>/jobs/<job_id>/executions/<execution_id>/", methods=("GET",))
 def get_job_execution(task_id, job_id, execution_id):
     logger = g.logger.bind(
         operation="get_job_execution",
@@ -38,9 +38,21 @@ def get_job_execution(task_id, job_id, execution_id):
     return format_execution_details(job.task, job, execution)
 
 
-def format_execution_details(task, job, execution):
-    details = execution.to_dict(include_log=True, include_error=True)
+def format_execution_details(task, job, execution, shallow=False):
     task_id = str(task.task_id)
+
+    if shallow:
+        execution_url = url_for(
+            "execution.get_job_execution",
+            task_id=task_id,
+            job_id=str(job.job_id),
+            execution_id=str(execution.execution_id),
+            _external=True,
+        )
+
+        details = {"id": str(execution.execution_id), "url": execution_url}
+    else:
+        details = execution.to_dict(include_log=True, include_error=True)
 
     job_url = url_for(
         "task.get_job", task_id=task_id, job_id=str(job.job_id), _external=True
@@ -121,7 +133,7 @@ def get_job_execution_logs(task_id, job_id, execution_id):
     return retrieve_execution_details(task_id, job_id, execution_id, func)
 
 
-def perform_stop_job_execution(job, execution, logger):
+def perform_stop_job_execution(job, execution, logger, stop_schedule=True):
     if execution is None:
         if not job.executions:
             msg = "No executions found in job."
@@ -145,7 +157,11 @@ def perform_stop_job_execution(job, execution, logger):
 
     scheduler = Scheduler("jobs", connection=current_app.redis)
 
-    if "enqueued_id" in job.metadata and job.metadata["enqueued_id"] in scheduler:
+    if (
+        stop_schedule
+        and "enqueued_id" in job.metadata
+        and job.metadata["enqueued_id"] in scheduler
+    ):
         scheduler.cancel(job.metadata["enqueued_id"])
         job.scheduled = False
 
@@ -180,9 +196,11 @@ def stop_job_execution(task_id, job_id, execution_id):
 
         return return_error(msg, "stop_job_execution", status=404, logger=logger)
 
-    _, response = perform_stop_job_execution(job, execution=execution, logger=logger)
+    _, response = perform_stop_job_execution(
+        job, execution=execution, logger=logger, stop_schedule=False
+    )
 
     if response is not None:
         return response
 
-    return format_execution_details(job.task, job, execution)
+    return format_execution_details(job.task, job, execution, shallow=True)

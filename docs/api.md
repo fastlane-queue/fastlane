@@ -58,7 +58,7 @@ Using the included details for pagination is advised. The `hasNext` and `hasPrev
 
 ```json
 {
-  "image": "ubuntu:latest",
+  "image": "task1:latest",
   "command": "ls -lah",
   "envs": {
     "SMTP_SERVER":"my-smtp-server"
@@ -112,7 +112,7 @@ The `queueJobId` key is the ID in the [RQ](http://python-rq.org/) queue and shou
 
 ```json
 {
-  "image": "ubuntu:latest",
+  "image": "task1:latest",
   "command": "ls -lah",
   "envs": {
     "SMTP_SERVER":"my-smtp-server"
@@ -209,7 +209,7 @@ This route returns the jobs for this task.
         "error": "", 
         "exitCode": 0, 
         "finishedAt": "2019-01-17T15:13:16.298000", 
-        "image": "ubuntu", 
+        "image": "task1", 
         "log": "total 72K\ndrwxr-xr-x   1 root root 4.0K Jan 17 15:13 .\ndrwxr-xr-x   1 root root 4.0K Jan 17 15:13 ..\n-rwxr-xr-x   1 root root    0 Jan 17 15:13 .dockerenv\ndrwxr-xr-x   2 root root 4.0K Dec  4 17:12 bin\ndrwxr-xr-x   2 root root 4.0K Apr 24  2018 boot\ndrwxr-xr-x   5 root root  340 Jan 17 15:13 dev\ndrwxr-xr-x   1 root root 4.0K Jan 17 15:13 etc\ndrwxr-xr-x   2 root root 4.0K Apr 24  2018 home\ndrwxr-xr-x   8 root root 4.0K Dec  4 17:11 lib\ndrwxr-xr-x   2 root root 4.0K Dec  4 17:11 lib64\ndrwxr-xr-x   2 root root 4.0K Dec  4 17:11 media\ndrwxr-xr-x   2 root root 4.0K Dec  4 17:11 mnt\ndrwxr-xr-x   2 root root 4.0K Dec  4 17:11 opt\ndr-xr-xr-x 200 root root    0 Jan 17 15:13 proc\ndrwx------   2 root root 4.0K Dec  4 17:12 root\ndrwxr-xr-x   1 root root 4.0K Dec 28 23:22 run\ndrwxr-xr-x   1 root root 4.0K Dec 28 23:22 sbin\ndrwxr-xr-x   2 root root 4.0K Dec  4 17:11 srv\ndr-xr-xr-x  13 root root    0 Dec 20 12:50 sys\ndrwxrwxrwt   2 root root 4.0K Dec  4 17:12 tmp\ndrwxr-xr-x   1 root root 4.0K Dec  4 17:11 usr\ndrwxr-xr-x   1 root root 4.0K Dec  4 17:12 var\n", 
         "metadata": {
           "container_id": "cbab7fd2125a30acd91813dd5b91476ab2c8c1e93d84c1b791231097f16fc87c", 
@@ -442,7 +442,7 @@ TBW.
     "executionId": "00735b1e-25c3-467d-a106-05701a786957", 
     "exitCode": 137, 
     "finishedAt": "2019-01-17T17:13:50.136000", 
-    "image": "ubuntu", 
+    "image": "task1", 
     "log": "", 
     "metadata": {
       "container_id": "d432bad154646423369e6fb7a8d46985a1dc0a2612d5b06100357b756781ac6b", 
@@ -589,9 +589,44 @@ some error
 
 This route returns the stderr result for the specified job execution.
 
-## API - Stop Job Execution Details
+## API - Stop Job Execution
 
-TBW.
+`Method`: `POST`
+
+`URL`: `/tasks/<task-id>/job/<job-id>/executions/<execution-id>/stop/`
+
+* `task-id` is the ID for the required task;
+* `job-id` is the ID for the required job;
+* `execution-id` is the ID for the required job execution.
+
+`Body`: -
+
+`Query Parameters`: -
+
+### Example Response
+
+```
+{
+  "execution": {
+    "id": "d4e20d72-9991-405a-9eb9-d72553204d21", 
+    "url": "http://localhost:10000/tasks/task1/jobs/6f4e8b53-95ce-451f-86fb-cd37b8040c42/executions/d4e20d72-9991-405a-9eb9-d72553204d21/"
+  }, 
+  "job": {
+    "id": "6f4e8b53-95ce-451f-86fb-cd37b8040c42", 
+    "url": "http://localhost:10000/tasks/task1/jobs/6f4e8b53-95ce-451f-86fb-cd37b8040c42/"
+  }, 
+  "task": {
+    "id": "task1", 
+    "url": "http://localhost:10000/tasks/task1/"
+  }
+}
+some error
+```
+
+### Description
+
+This route stops a running job execution. If the job is a scheduled (or a CRON) job, this route **WILL NOT** deschedule it. In order to cancel the job scheduling/CRON, you must use the [API - Stop Job](#api-stop-job) route instead.
+
 
 ## API - Stream Job Execution Logs
 
