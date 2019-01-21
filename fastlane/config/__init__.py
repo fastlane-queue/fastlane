@@ -3,16 +3,28 @@ from derpconf.config import Config
 
 Config.allow_environment_variables()
 
-Config.define("ENV", "development", "Environment application is running in", "General")
+Config.define(
+    "ENV",
+    "production",
+    "This configuration details the environment fastlane is running in.",
+    "General",
+)
 Config.define(
     "SECRET_KEY",
     "OTNDN0VCRDAtRTMyMS00NUM0LUFFQUYtNEI4QUE4RkFCRjUzCg==",
-    "Secret key to use in flask.",
+    """This configuration specifies the `SECRET_KEY` for Fastlane API.
+This should be unique per environment.""",
     "General",
 )
 
 Config.define(
-    "REDIS_URL", "redis://localhost:10100/0", "Redis connection string", "Redis"
+    "REDIS_URL",
+    "redis://localhost:10100/0",
+    """Redis connection string in the form of 'redis://' protocol.
+
+If `redis+sentinel` is used as protocol, instead, fastlane will
+connect to sentinel to get redis host.""",
+    "Redis",
 )
 
 Config.define(
@@ -68,7 +80,16 @@ Config.define(
 Config.define(
     "DOCKER_HOSTS",
     [{"match": "", "hosts": ["localhost:2375"], "maxRunning": 2}],
-    "Docker Hosts to add to pool",
+    """Docker cluster definitions.
+The `match` portion of each host definition specifies
+a regular expression that must be match in order for the
+job to execute in one of the docker hosts in the `hosts` key.
+The `maxRunning` portion, specifies the maximum number of
+concurrent jobs in this cluster.
+If the regex is empty ("") it means that it matches anything.
+The empty regex cluster definition should be the last one, otherwise
+it will work all jobs.
+""",
     "Docker Executor",
 )
 
@@ -94,7 +115,7 @@ Config.define(
         "serverSelectionTimeoutMS": 100,
         "connect": False,
     },
-    "MongoDB configuration",
+    "MongoDB connection details.",
     "Models",
 )
 
@@ -111,7 +132,7 @@ Config.define(
     "ENV_BLACKLISTED_WORDS",
     "password,key,secret,client_id",
     "Words that if present in environment variables are redacted",
-    "Errors",
+    "API",
 )
 
 Config.define(

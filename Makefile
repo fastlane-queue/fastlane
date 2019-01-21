@@ -98,3 +98,12 @@ lint:
 
 docs:
 	@mkdocs build && open site/index.html
+
+update-config-doc:
+	@echo '# Configuration Options' > docs/configuration.md
+	@echo '' >> docs/configuration.md
+	@echo 'To generate a sample configuration file like this one: \`fastlane config\`.' >> docs/configuration.md
+	@echo '' >> docs/configuration.md
+	@echo "\`\`\`python" >> docs/configuration.md
+	@poetry run fastlane config >> docs/configuration.md
+	@echo "\`\`\`" >> docs/configuration.md
