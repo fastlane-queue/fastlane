@@ -1,17 +1,16 @@
 # Standard Library
 from datetime import datetime, timedelta
 from unittest.mock import MagicMock
-from uuid import uuid4
 
 # 3rd Party
 import pytest
 from preggy import expect
 from rq import Queue, SimpleWorker
+from tests.fixtures.models import JobExecutionFixture
 
 # Fastlane
 import fastlane.worker.job as job_mod
-from fastlane.models.job import JobExecution
-from fastlane.models.task import Task
+from fastlane.models import JobExecution, Task
 
 
 def test_run_job1(client):
@@ -20,26 +19,29 @@ def test_run_job1(client):
         app = client.application
         app.redis.flushall()
 
-        task_id = str(uuid4())
-        t = Task.create_task(task_id)
-        j = t.create_job()
-        job_id = j.job_id
-        t.save()
+        task, job, execution = JobExecutionFixture.new_defaults()
 
         exec_mock = MagicMock()
         exec_mock.validate_max_running_executions.return_value = True
         client.application.executor = exec_mock
 
         queue = Queue("jobs", is_async=False, connection=client.application.redis)
-        result = queue.enqueue(job_mod.run_job, t.task_id, job_id, "image", "command")
+        result = queue.enqueue(
+            job_mod.run_job,
+            task.task_id,
+            job.job_id,
+            execution.execution_id,
+            "image",
+            "command",
+        )
 
         worker = SimpleWorker([queue], connection=queue.connection)
         worker.work(burst=True)
 
-        t.reload()
-        expect(t.jobs).to_length(1)
+        task.reload()
+        expect(task.jobs).to_length(1)
 
-        job = t.jobs[0]
+        job = task.jobs[0]
         expect(job.executions).to_length(1)
 
         execution = job.executions[0]
@@ -83,14 +85,14 @@ def test_run_job1(client):
 
         res = app.redis.hget(next_job_id, "description")
         expect(res).to_equal(
-            f"fastlane.worker.job.monitor_job('{task_id}', '{job_id}', '{execution.execution_id}')"
+            f"fastlane.worker.job.monitor_job('{task.task_id}', '{job.job_id}', '{execution.execution_id}')"
         )
 
         res = app.redis.hget(next_job_id, "timeout")
         expect(res).to_equal("-1")
 
-        t.reload()
-        expect(t.jobs[0].executions[0].status).to_equal(JobExecution.Status.running)
+        task.reload()
+        expect(task.jobs[0].executions[0].status).to_equal(JobExecution.Status.running)
 
 
 def test_validate_max1(client):
@@ -203,20 +205,16 @@ def test_run_container3(client):
 
 def test_monitor_job_with_retry(client):
     """Test monitoring a job for a task that fails"""
+
     with client.application.app_context():
         app = client.application
         app.redis.flushall()
 
-        task_id = str(uuid4())
-        t = Task.create_task(task_id)
-        j = t.create_job()
-        job_id = j.job_id
-        j.metadata["retries"] = 3
-        j.metadata["retry_count"] = 0
-
-        ex = j.create_execution("image", "command")
-
-        j.save()
+        task, job, execution = JobExecutionFixture.new_defaults()
+        job.metadata["retries"] = 3
+        job.metadata["retry_count"] = 0
+        job.save()
+        job_id = str(job.job_id)
 
         exec_mock = MagicMock()
         exec_mock.get_result.return_value = MagicMock(
@@ -225,16 +223,18 @@ def test_monitor_job_with_retry(client):
         client.application.executor = exec_mock
 
         queue = Queue("monitor", is_async=False, connection=client.application.redis)
-        result = queue.enqueue(job_mod.monitor_job, t.task_id, job_id, ex.execution_id)
+        result = queue.enqueue(
+            job_mod.monitor_job, task.task_id, job_id, execution.execution_id
+        )
 
         worker = SimpleWorker([queue], connection=queue.connection)
         worker.work(burst=True)
 
-        t.reload()
-        expect(t.jobs).to_length(1)
+        task.reload()
+        expect(task.jobs).to_length(1)
 
-        job = t.jobs[0]
-        expect(job.executions).to_length(1)
+        job = task.jobs[0]
+        expect(job.executions).to_length(2)
 
         execution = job.executions[0]
         expect(execution.image).to_equal("image")
@@ -259,8 +259,10 @@ def test_monitor_job_with_retry(client):
         expect(int(res)).to_be_greater_than(int(time.timestamp()) - 2)
         expect(int(res)).to_be_lesser_than(int(time.timestamp()) + 2)
 
-        nj = app.redis.zrange("rq:scheduler:scheduled_jobs", 0, 0)[0].decode("utf-8")
-        next_job_id = f"rq:job:{nj}"
+        new_job = app.redis.zrange("rq:scheduler:scheduled_jobs", 0, 0)[0].decode(
+            "utf-8"
+        )
+        next_job_id = f"rq:job:{new_job}"
         res = app.redis.exists(next_job_id)
         expect(res).to_be_true()
 
@@ -271,12 +273,16 @@ def test_monitor_job_with_retry(client):
         expect(res).to_equal("jobs")
 
         res = app.redis.hget(next_job_id, "description")
+        job.reload()
         expect(res).to_equal(
-            f"fastlane.worker.job.run_job('{task_id}', '{job_id}', 'image', 'command')"
+            (
+                f"fastlane.worker.job.run_job('{task.task_id}', '{job_id}', "
+                f"'{job.executions[-1].execution_id}', 'image', 'command')"
+            )
         )
 
-        t.reload()
-        expect(t.jobs[0].executions[0].status).to_equal(JobExecution.Status.failed)
+        task.reload()
+        expect(task.jobs[0].executions[0].status).to_equal(JobExecution.Status.failed)
 
 
 def test_monitor_job_with_retry2(client):
@@ -285,16 +291,11 @@ def test_monitor_job_with_retry2(client):
         app = client.application
         app.redis.flushall()
 
-        task_id = str(uuid4())
-        t = Task.create_task(task_id)
-        j = t.create_job()
-        job_id = j.job_id
-        j.metadata["retries"] = 3
-        j.metadata["retry_count"] = 3
-
-        ex = j.create_execution("image", "command")
-
-        j.save()
+        task, job, execution = JobExecutionFixture.new_defaults()
+        job.metadata["retries"] = 3
+        job.metadata["retry_count"] = 3
+        job.save()
+        job_id = job.job_id
 
         exec_mock = MagicMock()
         exec_mock.get_result.return_value = MagicMock(
@@ -303,15 +304,17 @@ def test_monitor_job_with_retry2(client):
         client.application.executor = exec_mock
 
         queue = Queue("monitor", is_async=False, connection=client.application.redis)
-        result = queue.enqueue(job_mod.monitor_job, t.task_id, job_id, ex.execution_id)
+        result = queue.enqueue(
+            job_mod.monitor_job, task.task_id, job_id, execution.execution_id
+        )
 
         worker = SimpleWorker([queue], connection=queue.connection)
         worker.work(burst=True)
 
-        t.reload()
-        expect(t.jobs).to_length(1)
+        task.reload()
+        expect(task.jobs).to_length(1)
 
-        job = t.jobs[0]
+        job = task.jobs[0]
         expect(job.executions).to_length(1)
 
         execution = job.executions[0]

@@ -1,6 +1,5 @@
 # Standard Library
 import calendar
-import json
 import math
 import smtplib
 import time
@@ -14,18 +13,21 @@ from flask import current_app, url_for
 from rq_scheduler import Scheduler
 
 # Fastlane
-from fastlane.models.job import Job, JobExecution
+from fastlane.helpers import dumps, loads
+from fastlane.models import Job, JobExecution
 from fastlane.worker import ExecutionResult
 from fastlane.worker.errors import HostUnavailableError
 from fastlane.worker.webhooks import WebhooksDispatcher, WebhooksDispatchError
 
 
-def validate_max_concurrent(executor, task_id, job, image, command, logger):
+def validate_max_concurrent(
+    executor, task_id, job, execution_id, image, command, logger
+):
     if not executor.validate_max_running_executions(task_id):
         logger.debug(
             "Maximum number of global container executions reached. Enqueuing job execution..."
         )
-        args = [task_id, job.id, image, command]
+        args = [task_id, job.id, execution_id, image, command]
         result = current_app.job_queue.enqueue(run_job, *args, timeout=-1)
         job.metadata["enqueued_id"] = result.id
         job.save()
@@ -65,8 +67,8 @@ def validate_expiration(job, ex, logger):
     return True
 
 
-def reenqueue_job_due_to_break(task_id, job_id, image, command):
-    args = [task_id, job_id, image, command]
+def reenqueue_job_due_to_break(task_id, job_id, execution_id, image, command):
+    args = [task_id, job_id, execution_id, image, command]
     delta = timedelta(seconds=1.0)
 
     scheduler = Scheduler("jobs", connection=current_app.redis)
@@ -175,7 +177,7 @@ def run_container(executor, job, ex, image, tag, command, logger):
     return True
 
 
-def run_job(task_id, job_id, image, command):
+def run_job(task_id, job_id, execution_id, image, command):
     app = current_app
     logger = app.logger.bind(
         operation="run_job",
@@ -195,7 +197,9 @@ def run_job(task_id, job_id, image, command):
 
             return False
 
-        if not validate_max_concurrent(executor, task_id, job, image, command, logger):
+        if not validate_max_concurrent(
+            executor, task_id, job, execution_id, image, command, logger
+        ):
             return False
 
         tag = "latest"
@@ -206,9 +210,13 @@ def run_job(task_id, job_id, image, command):
         logger = logger.bind(image=image, tag=tag)
 
         logger.debug("Changing job status...", status=JobExecution.Status.pulling)
-        ex = job.create_execution(image=image, command=command)
-        ex.status = JobExecution.Status.enqueued
-        job.save()
+
+        if execution_id is None:
+            ex = job.create_execution(image=image, command=command)
+            ex.status = JobExecution.Status.enqueued
+            job.save()
+        else:
+            ex = job.get_execution_by_id(execution_id)
 
         logger.debug(
             "Job status changed successfully.", status=JobExecution.Status.pulling
@@ -465,7 +473,16 @@ def monitor_job(task_id, job_id, execution_id):
 
             scheduler = Scheduler("jobs", connection=current_app.redis)
 
-            args = [task_id, job_id, execution.image, execution.command]
+            new_exec = job.create_execution(execution.image, execution.command)
+            new_exec.status = JobExecution.Status.enqueued
+
+            args = [
+                task_id,
+                job_id,
+                new_exec.execution_id,
+                execution.image,
+                execution.command,
+            ]
             factor = app.config["EXPONENTIAL_BACKOFF_FACTOR"]
             min_backoff = app.config["EXPONENTIAL_BACKOFF_MIN_MS"] / 1000.0
             delta = timedelta(seconds=min_backoff)
@@ -595,7 +612,7 @@ def send_email(task_id, job_id, execution_id, subject, to_email):
             "task.get_job", task_id=task_id, job_id=job_id, _external=True
         )
 
-        job_data = json.dumps(
+        job_data = dumps(
             execution.to_dict(include_log=True, include_error=True),
             indent=4,
             sort_keys=True,
@@ -677,11 +694,11 @@ def send_webhook(
     logger.info("Execution loaded successfully")
 
     data = execution.to_dict(include_log=True, include_error=True)
-    data = json.loads(json.dumps(data))
+    data = loads(dumps(data))
     if "webhookDispatch" in data["metadata"]:
         del data["metadata"]["webhookDispatch"]
     data["metadata"]["custom"] = job.metadata.get("custom", {})
-    data = json.dumps(data)
+    data = dumps(data)
     try:
         dispatcher = WebhooksDispatcher()
         response = dispatcher.dispatch(method, url, data, headers)

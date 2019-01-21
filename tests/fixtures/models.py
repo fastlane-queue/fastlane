@@ -5,7 +5,7 @@ from uuid import uuid4
 class TaskFixture:
     @staticmethod
     def new(task_id):
-        from fastlane.models.task import Task
+        from fastlane.models import Task
 
         return Task.create_task(task_id)
 

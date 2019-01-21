@@ -6,8 +6,7 @@ import croniter
 from flask import Blueprint, current_app, jsonify, url_for
 
 # Fastlane
-from fastlane.models.job import Job
-from fastlane.models.task import Task
+from fastlane.models import Job, Task
 
 bp = Blueprint("status", __name__, url_prefix="/status")  # pylint: disable=invalid-name
 

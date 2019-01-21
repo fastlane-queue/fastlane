@@ -1,8 +1,8 @@
-# Standard Library
-from json import dumps
-
 # 3rd Party
 from flask import current_app, make_response
+
+# Fastlane
+from fastlane.helpers import dumps
 
 
 def return_error(msg, operation, status=500, logger=None):

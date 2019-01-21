@@ -17,8 +17,7 @@ from fastlane.api.execution import (
     retrieve_execution_details,
 )
 from fastlane.api.helpers import return_error
-from fastlane.models.job import Job, JobExecution
-from fastlane.models.task import Task
+from fastlane.models import Job, JobExecution, Task
 from fastlane.worker.job import run_job
 
 bp = Blueprint("task", __name__)  # pylint: disable=invalid-name
@@ -190,8 +189,11 @@ def retry_job(task_id, job_id):
     execution.status = JobExecution.Status.failed
     job.save()
 
+    new_exec = job.create_execution(execution.image, execution.command)
+    new_exec.status = JobExecution.Status.enqueued
+
     logger.debug("Enqueuing job execution...")
-    args = [task_id, job_id, execution.image, execution.command]
+    args = [task_id, job_id, new_exec.execution_id, execution.image, execution.command]
     result = current_app.job_queue.enqueue(run_job, *args, timeout=-1)
     job.metadata["enqueued_id"] = result.id
     job.save()

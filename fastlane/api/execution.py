@@ -4,7 +4,7 @@ from rq_scheduler import Scheduler
 
 # Fastlane
 from fastlane.api.helpers import return_error
-from fastlane.models.job import Job, JobExecution
+from fastlane.models import Job, JobExecution
 
 bp = Blueprint("execution", __name__)  # pylint: disable=invalid-name
 

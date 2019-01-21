@@ -6,7 +6,7 @@ from multiprocessing import Process
 from flask import Blueprint, current_app
 
 # Fastlane
-from fastlane.models.job import Job, JobExecution
+from fastlane.models import Job, JobExecution
 
 bp = Blueprint("stream", __name__)  # pylint: disable=invalid-name
 

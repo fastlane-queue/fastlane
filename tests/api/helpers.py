@@ -1,9 +1,9 @@
-# Standard Library
-from json import loads
-
 # 3rd Party
 from flask import Response, current_app
 from preggy import assertion, utils
+
+# Fastlane
+from fastlane.helpers import loads
 
 
 @assertion

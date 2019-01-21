@@ -5,8 +5,7 @@ from uuid import uuid4
 from preggy import expect
 
 # Fastlane
-from fastlane.models.job import Job
-from fastlane.models.task import Task
+from fastlane.models import Job, Task
 
 
 # Must inject client to connect to redis and DB

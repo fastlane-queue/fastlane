@@ -1,17 +1,14 @@
 # Standard Library
-from datetime import datetime
 from json import loads
 from unittest.mock import MagicMock
-from uuid import uuid4
 
 # 3rd Party
 from flask import url_for
 from preggy import expect
-from rq_scheduler import Scheduler
 from tests.fixtures.models import JobExecutionFixture
 
 # Fastlane
-from fastlane.models.job import JobExecution
+from fastlane.models import JobExecution
 
 import tests.api.helpers  # NOQA isort:skip pylint:disable=unused-import
 
@@ -271,7 +268,10 @@ def test_stop_execution1(client):
             {
                 "execution": {
                     "id": execution.execution_id,
-                    "url": f"http://localhost:10000/tasks/{task.task_id}/jobs/{job.job_id}/executions/{execution.execution_id}/",
+                    "url": (
+                        f"http://localhost:10000/tasks/{task.task_id}/jobs/"
+                        f"{job.job_id}/executions/{execution.execution_id}/"
+                    ),
                 },
                 "job": {
                     "id": job.job_id,

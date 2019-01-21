@@ -1,5 +1,59 @@
 # API/Workers
 
+## API - Enqueue Job
+
+### Request Details
+
+`Method`: `POST`
+
+`URL`: `/tasks/<task-id>/`
+
+* `task-id` should be an arbitrary unique name that groups all jobs subsequently added to this same task.
+
+`Body`:
+
+```json
+{
+  "image": "task1:latest",
+  "command": "ls -lah",
+  "envs": {
+    "SMTP_SERVER":"my-smtp-server"
+  },
+  "metadata": {
+    "username": "heynemann"
+  },
+  "retries": 3
+}
+```
+
+For more options to the payload used in this route, please refer to the [Job Payload](job-payload.md) page.
+
+`Query Parameters`: -
+
+### Example Response
+
+```json
+{
+  "executionId": "36e1b166-7c7a-4a41-a69e-8f78a9ec8128",
+  "executionUrl": "http://localhost:10000/tasks/test-wrkng/jobs/5a023792-1445-44e9-8a8b-cfe5ad05d1c6/executions/36e1b166-7c7a-4a41-a69e-8f78a9ec8128/",
+  "jobId": "5a023792-1445-44e9-8a8b-cfe5ad05d1c6",
+  "jobUrl": "http://localhost:10000/tasks/test-wrkng/jobs/5a023792-1445-44e9-8a8b-cfe5ad05d1c6",
+  "queueJobId": "f1b526fa-acbf-4bb0-bd39-67621dee540a",
+  "taskId": "test-wrkng",
+  "taskUrl": "http://localhost:10000/tasks/test-wrkng"
+}
+```
+
+### Description
+
+`POST`ing to this route creates a new job and schedules it for execution.
+
+If the database contains a task with the provided `task_id`, it will be used. Otherwise, a new task with the provided `task_id` will be created.
+
+The response includes `IDs` that can be used to track the Job execution, as well as the task and job URLs to get further details.
+
+The `queueJobId` key is the ID in the [RQ](http://python-rq.org/) queue and should not be very relevant for users of [fastlane](https://github.com/heynemann/fastlane).
+
 ## API - Get all tasks
 
 ### Request Details
@@ -43,59 +97,6 @@
 This route returns all the registered tasks in [fastlane](https://github.com/heynemann/fastlane).
 
 Using the included details for pagination is advised. The `hasNext` and `hasPrev` flags can be used to determine the available directions for pagination. The `nextUrl` and `prevUrl` keys can be used to navigate in that direction. The number of pages can be determined by the `pages` key. The number of items per page can be obtained using the `perPage` key.
-
-## API - Enqueue Job
-
-### Request Details
-
-`Method`: `POST`
-
-`URL`: `/tasks/<task-id>/`
-
-* `task-id` should be an arbitrary unique name that groups all jobs subsequently added to this same task.
-
-`Body`:
-
-```json
-{
-  "image": "task1:latest",
-  "command": "ls -lah",
-  "envs": {
-    "SMTP_SERVER":"my-smtp-server"
-  },
-  "metadata": {
-    "username": "heynemann"
-  },
-  "retries": 3
-}
-```
-
-For more options to the payload used in this route, please refer to the [Job Payload](job-payload.md) page.
-
-`Query Parameters`: -
-
-### Example Response
-
-```json
-{
-  "jobId": "5a023792-1445-44e9-8a8b-cfe5ad05d1c6",
-  "jobUrl": "http://localhost:10000/tasks/test-wrkng/jobs/5a023792-1445-44e9-8a8b-cfe5ad05d1c6",
-  "queueJobId": "f1b526fa-acbf-4bb0-bd39-67621dee540a",
-  "taskId": "test-wrkng",
-  "taskUrl": "http://localhost:10000/tasks/test-wrkng"
-}
-```
-
-### Description
-
-`POST`ing to this route creates a new job and schedules it for execution.
-
-If the database contains a task with the provided `task_id`, it will be used. Otherwise, a new task with the provided `task_id` will be created.
-
-The response includes `IDs` that can be used to track the Job execution, as well as the task and job URLs to get further details.
-
-The `queueJobId` key is the ID in the [RQ](http://python-rq.org/) queue and should not be very relevant for users of [fastlane](https://github.com/heynemann/fastlane).
-
 
 ## API - Enqueue/Update Job
 

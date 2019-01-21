@@ -8,8 +8,7 @@ from croniter import croniter
 from preggy import expect
 
 # Fastlane
-from fastlane.models.job import Job
-from fastlane.models.task import Task
+from fastlane.models import Job, Task
 
 import tests.api.helpers  # NOQA isort:skip pylint:disable=unused-import
 
@@ -25,11 +24,25 @@ def test_enqueue1(client):
         )
 
         expect(response.status_code).to_equal(200)
-
         obj = loads(response.data)
+
+        expect(obj["taskUrl"]).to_equal(f"http://localhost:10000/tasks/{task_id}/")
+
         job_id = obj["jobId"]
         expect(job_id).not_to_be_null()
+
+        expect(obj["jobUrl"]).to_equal(
+            f"http://localhost:10000/tasks/{task_id}/jobs/{job_id}/"
+        )
+
         expect(obj["queueJobId"]).not_to_be_null()
+
+        expect(obj["executionId"]).not_to_be_null()
+        execution_id = obj["executionId"]
+
+        expect(obj["executionUrl"]).to_equal(
+            f"http://localhost:10000/tasks/{task_id}/jobs/{job_id}/executions/{execution_id}/"
+        )
 
         task = Task.get_by_task_id(obj["taskId"])
         expect(task).not_to_be_null()
@@ -49,7 +62,7 @@ def test_enqueue1(client):
         expect(obj).to_be_enqueued_with_value("origin", "jobs")
         expect(obj).to_be_enqueued_with_value(
             "description",
-            f"fastlane.worker.job.run_job('{obj['taskId']}', '{job_id}', 'ubuntu', 'ls')",
+            f"fastlane.worker.job.run_job('{obj['taskId']}', '{job_id}', '{execution_id}', 'ubuntu', 'ls')",
         )
         expect(obj).to_be_enqueued_with_value("timeout", "-1")
 
@@ -99,46 +112,48 @@ def test_enqueue2(client):
 def test_enqueue3(client):
     """Test enqueue a job at a future specific time"""
 
-    app = client.application
-    app.redis.flushall()
+    with client.application.app_context():
+        app = client.application
+        app.redis.flushall()
 
-    task_id = str(uuid4())
+        task_id = str(uuid4())
 
-    time = int(datetime.now(tz=timezone.utc).timestamp())
+        time = int(datetime.now(tz=timezone.utc).timestamp())
 
-    data = {"image": "ubuntu", "command": "ls", "startAt": time}
-    options = dict(
-        data=dumps(data),
-        headers={"Content-Type": "application/json"},
-        follow_redirects=True,
-    )
+        data = {"image": "ubuntu", "command": "ls", "startAt": time}
+        options = dict(
+            data=dumps(data),
+            headers={"Content-Type": "application/json"},
+            follow_redirects=True,
+        )
 
-    response = client.post(f"/tasks/{task_id}", **options)
-    expect(response.status_code).to_equal(200)
-    obj = loads(response.data)
-    job_id = obj["jobId"]
-    expect(job_id).not_to_be_null()
-    expect(obj["queueJobId"]).not_to_be_null()
+        response = client.post(f"/tasks/{task_id}", **options)
+        expect(response.status_code).to_equal(200)
+        obj = loads(response.data)
+        job_id = obj["jobId"]
+        expect(job_id).not_to_be_null()
+        expect(obj["queueJobId"]).not_to_be_null()
 
-    res = app.redis.zrange(b"rq:scheduler:scheduled_jobs", 0, -1)
-    expect(res).to_length(1)
+        res = app.redis.zrange(b"rq:scheduler:scheduled_jobs", 0, -1)
+        expect(res).to_length(1)
 
-    res = app.redis.zscore("rq:scheduler:scheduled_jobs", res[0])
-    expect(res).to_equal(time)
+        res = app.redis.zscore("rq:scheduler:scheduled_jobs", res[0])
+        expect(res).to_equal(time)
 
 
 def test_enqueue4(client):
     """Test enqueue a job in an hour"""
 
-    cases = (
-        ("48h", timedelta(hours=48)),
-        ("1h", timedelta(hours=1)),
-        ("5m", timedelta(minutes=5)),
-        ("30s", timedelta(seconds=30)),
-    )
+    with client.application.app_context():
+        cases = (
+            ("48h", timedelta(hours=48)),
+            ("1h", timedelta(hours=1)),
+            ("5m", timedelta(minutes=5)),
+            ("30s", timedelta(seconds=30)),
+        )
 
-    for (start_in, delta) in cases:
-        enqueue_in(client, start_in, delta)
+        for (start_in, delta) in cases:
+            enqueue_in(client, start_in, delta)
 
 
 def enqueue_in(client, start_in, delta):
@@ -174,110 +189,53 @@ def enqueue_in(client, start_in, delta):
 def test_enqueue5(client):
     """Test enqueue a job using cron"""
 
-    app = client.application
-    app.redis.flushall()
-
-    task_id = str(uuid4())
-
-    data = {"image": "ubuntu", "command": "ls", "cron": "*/10 * * * *"}
-    options = dict(
-        data=dumps(data),
-        headers={"Content-Type": "application/json"},
-        follow_redirects=True,
-    )
-
-    response = client.post(f"/tasks/{task_id}", **options)
-    expect(response.status_code).to_equal(200)
-    obj = loads(response.data)
-    job_id = obj["jobId"]
-    expect(job_id).not_to_be_null()
-    expect(obj["queueJobId"]).not_to_be_null()
-
-    res = app.redis.zrange(b"rq:scheduler:scheduled_jobs", 0, -1)
-    expect(res).to_length(1)
-
-    cron = croniter("*/10 * * * *", datetime.now())
-    res = app.redis.zscore("rq:scheduler:scheduled_jobs", res[0])
-    expected = cron.get_next(datetime)
-    expect(res).to_equal(expected.timestamp())
-
-
-def test_enqueue6(client):
-    """Test enqueue with webhooks"""
-    app = client.application
-    app.redis.flushall()
-
-    task_id = str(uuid4())
-
-    data = {
-        "image": "ubuntu",
-        "command": "ls",
-        "webhooks": {
-            "succeeds": [{"method": "GET", "url": "http://some.test.url"}],
-            "fails": [{"method": "GET", "url": "http://some.test.url"}],
-            "finishes": [{"method": "POST", "url": "http://some.test.url"}],
-        },
-    }
-    options = dict(
-        data=dumps(data),
-        headers={"Content-Type": "application/json"},
-        follow_redirects=True,
-    )
-
-    response = client.post(f"/tasks/{task_id}", **options)
-    expect(response.status_code).to_equal(200)
-    obj = loads(response.data)
-    job_id = obj["jobId"]
-    expect(job_id).not_to_be_null()
-    expect(obj["queueJobId"]).not_to_be_null()
-
-    j = Job.get_by_id(task_id, job_id)
-    expect(j).not_to_be_null()
-    expect(j.metadata).to_include("webhooks")
-
-    webhooks = j.metadata["webhooks"]
-    expect(webhooks).to_be_like(data["webhooks"])
-
-
-def test_enqueue7(client):
-    """Test enqueue with metadata"""
-    app = client.application
-    app.redis.flushall()
-
-    task_id = str(uuid4())
-
-    data = {"image": "ubuntu", "command": "ls", "metadata": {"a": 123, "b": 456}}
-    options = dict(
-        data=dumps(data),
-        headers={"Content-Type": "application/json"},
-        follow_redirects=True,
-    )
-
-    response = client.post(f"/tasks/{task_id}", **options)
-    expect(response.status_code).to_equal(200)
-    obj = loads(response.data)
-    job_id = obj["jobId"]
-    expect(job_id).not_to_be_null()
-    expect(obj["queueJobId"]).not_to_be_null()
-
-    j = Job.get_by_id(task_id, job_id)
-    expect(j.metadata).to_include("custom")
-
-    metadata = j.metadata["custom"]
-    expect(metadata).to_be_like(data["metadata"])
-
-
-def test_enqueue8(client):
-    """Test enqueue ignore metadata if not dict"""
-    cases = ("qwe", 123, ["as"], [{"a": 123}])
-
-    def enqueue(client, input_data):
+    with client.application.app_context():
         app = client.application
         app.redis.flushall()
 
         task_id = str(uuid4())
 
-        data = {"image": "ubuntu", "command": "ls", "metadata": input_data}
+        data = {"image": "ubuntu", "command": "ls", "cron": "*/10 * * * *"}
+        options = dict(
+            data=dumps(data),
+            headers={"Content-Type": "application/json"},
+            follow_redirects=True,
+        )
+
+        response = client.post(f"/tasks/{task_id}", **options)
+        expect(response.status_code).to_equal(200)
+        obj = loads(response.data)
+        job_id = obj["jobId"]
+        expect(job_id).not_to_be_null()
+        expect(obj["queueJobId"]).not_to_be_null()
+
+        res = app.redis.zrange(b"rq:scheduler:scheduled_jobs", 0, -1)
+        expect(res).to_length(1)
+
+        cron = croniter("*/10 * * * *", datetime.now())
+        res = app.redis.zscore("rq:scheduler:scheduled_jobs", res[0])
+        expected = cron.get_next(datetime)
+        expect(res).to_equal(expected.timestamp())
+
+
+def test_enqueue6(client):
+    """Test enqueue with webhooks"""
+
+    with client.application.app_context():
+        app = client.application
+        app.redis.flushall()
+
+        task_id = str(uuid4())
+
+        data = {
+            "image": "ubuntu",
+            "command": "ls",
+            "webhooks": {
+                "succeeds": [{"method": "GET", "url": "http://some.test.url"}],
+                "fails": [{"method": "GET", "url": "http://some.test.url"}],
+                "finishes": [{"method": "POST", "url": "http://some.test.url"}],
+            },
+        }
         options = dict(
             data=dumps(data),
             headers={"Content-Type": "application/json"},
@@ -292,49 +250,119 @@ def test_enqueue8(client):
         expect(obj["queueJobId"]).not_to_be_null()
 
         j = Job.get_by_id(task_id, job_id)
-        expect(j.metadata).not_to_include("custom")
+        expect(j).not_to_be_null()
+        expect(j.metadata).to_include("webhooks")
 
-    for input_data in cases:
-        enqueue(client, input_data)
+        webhooks = j.metadata["webhooks"]
+        expect(webhooks).to_be_like(data["webhooks"])
+
+
+def test_enqueue7(client):
+    """Test enqueue with metadata"""
+
+    with client.application.app_context():
+        app = client.application
+        app.redis.flushall()
+
+        task_id = str(uuid4())
+
+        data = {"image": "ubuntu", "command": "ls", "metadata": {"a": 123, "b": 456}}
+        options = dict(
+            data=dumps(data),
+            headers={"Content-Type": "application/json"},
+            follow_redirects=True,
+        )
+
+        response = client.post(f"/tasks/{task_id}", **options)
+        expect(response.status_code).to_equal(200)
+        obj = loads(response.data)
+        job_id = obj["jobId"]
+        expect(job_id).not_to_be_null()
+        expect(obj["queueJobId"]).not_to_be_null()
+
+        j = Job.get_by_id(task_id, job_id)
+        expect(j.metadata).to_include("custom")
+
+        metadata = j.metadata["custom"]
+        expect(metadata).to_be_like(data["metadata"])
+
+
+def test_enqueue8(client):
+    """Test enqueue ignore metadata if not dict"""
+
+    with client.application.app_context():
+        cases = ("qwe", 123, ["as"], [{"a": 123}])
+
+        def enqueue(client, input_data):
+            app = client.application
+            app.redis.flushall()
+
+            task_id = str(uuid4())
+
+            data = {"image": "ubuntu", "command": "ls", "metadata": input_data}
+            options = dict(
+                data=dumps(data),
+                headers={"Content-Type": "application/json"},
+                follow_redirects=True,
+            )
+
+            response = client.post(f"/tasks/{task_id}", **options)
+            expect(response.status_code).to_equal(200)
+            obj = loads(response.data)
+            job_id = obj["jobId"]
+            expect(job_id).not_to_be_null()
+            expect(obj["queueJobId"]).not_to_be_null()
+
+            j = Job.get_by_id(task_id, job_id)
+            expect(j.metadata).not_to_include("custom")
+
+        for input_data in cases:
+            enqueue(client, input_data)
 
 
 def test_enqueue9(client):
     """Tests that enqueueing with invalid or empty body returns 400"""
 
-    app = client.application
-    app.redis.flushall()
+    with client.application.app_context():
+        app = client.application
+        app.redis.flushall()
 
-    task_id = str(uuid4())
+        task_id = str(uuid4())
 
-    options = dict(
-        data=None, headers={"Content-Type": "application/json"}, follow_redirects=True
-    )
+        options = dict(
+            data=None,
+            headers={"Content-Type": "application/json"},
+            follow_redirects=True,
+        )
 
-    response = client.post(f"/tasks/{task_id}", **options)
-    expect(response.status_code).to_equal(400)
-    expect(response.data).to_be_like(
-        "Failed to enqueue task because JSON body could not be parsed."
-    )
+        response = client.post(f"/tasks/{task_id}", **options)
+        expect(response.status_code).to_equal(400)
+        expect(response.data).to_be_like(
+            "Failed to enqueue task because JSON body could not be parsed."
+        )
 
 
 def test_enqueue10(client):
     """Tests that enqueueing without image and command returns 400"""
 
-    app = client.application
-    app.redis.flushall()
+    with client.application.app_context():
+        app = client.application
+        app.redis.flushall()
 
-    task_id = str(uuid4())
+        task_id = str(uuid4())
 
-    data = {}
-    options = dict(
-        data=dumps(data),
-        headers={"Content-Type": "application/json"},
-        follow_redirects=True,
-    )
+        data = {}
+        options = dict(
+            data=dumps(data),
+            headers={"Content-Type": "application/json"},
+            follow_redirects=True,
+        )
 
-    response = client.post(f"/tasks/{task_id}", **options)
-    expect(response.status_code).to_equal(400)
-    expect(response.data).to_be_like("image and command must be filled in the request.")
+        response = client.post(f"/tasks/{task_id}", **options)
+        expect(response.status_code).to_equal(400)
+        expect(response.data).to_be_like(
+            "image and command must be filled in the request."
+        )
 
 
 def test_enqueue11(client):
@@ -343,92 +371,79 @@ def test_enqueue11(client):
     startAt, startIn or cron returns 400
     """
 
-    app = client.application
-    app.redis.flushall()
+    with client.application.app_context():
+        app = client.application
+        app.redis.flushall()
 
-    task_id = str(uuid4())
+        task_id = str(uuid4())
 
-    time = int(datetime.now(tz=timezone.utc).timestamp())
+        time = int(datetime.now(tz=timezone.utc).timestamp())
 
-    data = {"image": "ubuntu", "command": "ls", "startAt": time, "cron": "* * * * *"}
-    options = dict(
-        data=dumps(data),
-        headers={"Content-Type": "application/json"},
-        follow_redirects=True,
-    )
+        data = {
+            "image": "ubuntu",
+            "command": "ls",
+            "startAt": time,
+            "cron": "* * * * *",
+        }
+        options = dict(
+            data=dumps(data),
+            headers={"Content-Type": "application/json"},
+            follow_redirects=True,
+        )
 
-    response = client.post(f"/tasks/{task_id}", **options)
-    expect(response.status_code).to_equal(400)
-    expect(response.data).to_be_like(
-        "Only ONE of 'startAt', 'startIn' and 'cron' should be in the request."
-    )
+        response = client.post(f"/tasks/{task_id}", **options)
+        expect(response.status_code).to_equal(400)
+        expect(response.data).to_be_like(
+            "Only ONE of 'startAt', 'startIn' and 'cron' should be in the request."
+        )
 
 
 def test_enqueue12(client):
     """Test enqueue a job works with PUT"""
-    task_id = str(uuid4())
-    job_id = str(uuid4())
-    data = {"image": "ubuntu", "command": "ls"}
-    response = client.put(
-        f"/tasks/{task_id}/jobs/{job_id}", data=dumps(data), follow_redirects=True
-    )
 
-    expect(response.status_code).to_equal(200)
+    with client.application.app_context():
+        task_id = str(uuid4())
+        job_id = str(uuid4())
+        data = {"image": "ubuntu", "command": "ls"}
+        response = client.put(
+            f"/tasks/{task_id}/jobs/{job_id}", data=dumps(data), follow_redirects=True
+        )
 
-    obj = loads(response.data)
-    expect(obj).not_to_be_null()
-    new_job_id = obj["jobId"]
-    expect(new_job_id).to_equal(job_id)
-    expect(obj["queueJobId"]).not_to_be_null()
+        expect(response.status_code).to_equal(200)
 
-    # app = client.application
-    # task = Task.get_by_task_id(obj["taskId"])
+        obj = loads(response.data)
+        expect(obj).not_to_be_null()
+        new_job_id = obj["jobId"]
+        expect(new_job_id).to_equal(job_id)
+        expect(obj["queueJobId"]).not_to_be_null()
 
-    # with app.app_context():
-    # expect(obj["taskUrl"]).to_equal(task.get_url())
+        expect(obj["executionId"]).not_to_be_null()
+        execution_id = obj["executionId"]
 
-    # queue_job_id = obj["queueJobId"]
-    # hash_key = f"rq:job:{queue_job_id}"
+        task = Task.get_by_task_id(obj["taskId"])
+        expect(task).not_to_be_null()
+        expect(task.jobs).not_to_be_empty()
 
-    # res = app.redis.exists(hash_key)
-    # expect(res).to_be_true()
+        j = task.jobs[0]
+        job = Job.objects(id=j.id).first()
+        expect(str(job.job_id)).to_equal(job_id)
 
-    # res = app.redis.hget(hash_key, "status")
-    # expect(res).to_equal("queued")
+        expect(obj["taskUrl"]).to_equal(task.get_url())
+        expect(obj).to_be_enqueued()
+        expect(obj).to_be_enqueued_with_value("status", "queued")
 
-    # res = app.redis.hexists(hash_key, "created_at")
-    # expect(res).to_be_true()
+        expect(obj).to_be_enqueued_with_value("created_at")
+        expect(obj).to_be_enqueued_with_value("enqueued_at")
+        expect(obj).to_be_enqueued_with_value("data")
+        expect(obj).to_be_enqueued_with_value("origin", "jobs")
+        expect(obj).to_be_enqueued_with_value(
+            "description",
+            (
+                f"fastlane.worker.job.run_job('{obj['taskId']}', '{job_id}', "
+                f"'{execution_id}', 'ubuntu', 'ls')"
+            ),
+        )
+        expect(obj).to_be_enqueued_with_value("timeout", "-1")
 
-    # res = app.redis.hexists(hash_key, "enqueued_at")
-    # expect(res).to_be_true()
-
-    # res = app.redis.hexists(hash_key, "data")
-    # expect(res).to_be_true()
-
-    # res = app.redis.hget(hash_key, "origin")
-    # expect(res).to_equal("jobs")
-
-    # res = app.redis.hget(hash_key, "description")
-    # expect(res).to_equal(
-    # f"fastlane.worker.job.run_job('{obj['taskId']}', '{job_id}', 'ubuntu', 'ls')"
-    # )
-
-    # res = app.redis.hget(hash_key, "timeout")
-    # expect(res).to_equal("-1")
-
-    # expect(task).not_to_be_null()
-    # expect(task.jobs).not_to_be_empty()
-
-    # j = task.jobs[0]
-    # expect(str(j.id)).to_equal(job_id)
-
-    # queue_name = "rq:queue:jobs"
-    # res = app.redis.llen(queue_name)
-    # expect(res).to_equal(1)
-
-    # res = app.redis.lpop(queue_name)
-    # expect(res).to_equal(queue_job_id)
-
-    # with app.app_context():
-    # count = Task.objects.count()
-    # expect(count).to_equal(1)
+        count = Task.objects.count()
+        expect(count).to_equal(1)

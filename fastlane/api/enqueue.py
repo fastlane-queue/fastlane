@@ -7,14 +7,10 @@ from flask import Blueprint, current_app, g, jsonify, make_response, request, ur
 from rq_scheduler import Scheduler
 
 # Fastlane
-from fastlane.models.task import Task
+from fastlane.helpers import loads
+from fastlane.models import JobExecution, Task
 from fastlane.utils import parse_time
 from fastlane.worker.job import run_job
-
-try:
-    from ujson import loads
-except ImportError:
-    from json import loads
 
 bp = Blueprint("enqueue", __name__)  # pylint: disable=invalid-name
 
@@ -73,9 +69,10 @@ def create_job(details, task, logger, get_new_job_fn):
 
 
 def enqueue_job(task, job, image, command, start_at, start_in, cron, logger):
+    execution = None
     scheduler = Scheduler("jobs", connection=current_app.redis)
 
-    args = [task.task_id, str(job.job_id), image, command]
+    args = [task.task_id, str(job.job_id), None, image, command]
 
     queue_job_id = None
 
@@ -112,13 +109,25 @@ def enqueue_job(task, job, image, command, start_at, start_in, cron, logger):
         logger.info("Job execution enqueued successfully.", cron=cron)
     else:
         logger.debug("Enqueuing job execution...")
+        execution = job.create_execution(image, command)
+        execution.status = JobExecution.Status.enqueued
+        job.save()
+
+        args = [
+            task.task_id,
+            str(job.job_id),
+            str(execution.execution_id),
+            image,
+            command,
+        ]
+
         result = current_app.job_queue.enqueue(run_job, *args, timeout=-1)
         queue_job_id = result.id
         job.metadata["enqueued_id"] = result.id
         job.save()
         logger.info("Job execution enqueued successfully.")
 
-    return queue_job_id
+    return queue_job_id, execution
 
 
 def get_task_and_details(task_id):
@@ -161,15 +170,18 @@ def validate_and_enqueue(details, task, job, logger):
     if len(list(filter(lambda item: item is not None, (start_at, start_in, cron)))) > 1:
         return (
             None,
+            None,
             make_response(
                 "Only ONE of 'startAt', 'startIn' and 'cron' should be in the request.",
                 400,
             ),
         )
 
-    result = enqueue_job(task, job, image, command, start_at, start_in, cron, logger)
+    result, execution = enqueue_job(
+        task, job, image, command, start_at, start_in, cron, logger
+    )
 
-    return result, None
+    return result, execution, None
 
 
 @bp.route("/tasks/<task_id>", methods=("POST",))
@@ -180,24 +192,13 @@ def create_task(task_id):
         return response
 
     job = create_job(details, task, logger, lambda task: task.create_job())
-    job_id = str(job.job_id)
 
-    enqueued_id, response = validate_and_enqueue(details, task, job, logger)
+    enqueued_id, execution, response = validate_and_enqueue(details, task, job, logger)
 
     if response is not None:
         return response
 
-    job_url = url_for("task.get_job", task_id=task_id, job_id=job_id, _external=True)
-
-    return jsonify(
-        {
-            "taskId": task_id,
-            "jobId": job_id,
-            "queueJobId": enqueued_id,
-            "jobUrl": job_url,
-            "taskUrl": task.get_url(),
-        }
-    )
+    return get_enqueue_response(task, job, execution, enqueued_id)
 
 
 @bp.route("/tasks/<task_id>/jobs/<job_id>", methods=("PUT",))
@@ -218,19 +219,42 @@ def create_or_update_task(task_id, job_id):
         details, task, logger, lambda task: task.create_or_update_job(job_id)
     )
 
-    enqueued_id, response = validate_and_enqueue(details, task, job, logger)
+    enqueued_id, execution, response = validate_and_enqueue(details, task, job, logger)
 
     if response is not None:
         return response
 
+    return get_enqueue_response(task, job, execution, enqueued_id)
+
+
+def get_enqueue_response(task, job, execution, enqueued_id):
+    task_id = str(task.task_id)
+    job_id = str(job.job_id)
+
+    task_url = task.get_url()
     job_url = url_for("task.get_job", task_id=task_id, job_id=job_id, _external=True)
+
+    if execution is None:
+        execution_url = None
+        execution_id = None
+    else:
+        execution_url = url_for(
+            "execution.get_job_execution",
+            task_id=task_id,
+            job_id=job_id,
+            execution_id=str(execution.execution_id),
+            _external=True,
+        )
+        execution_id = str(execution.execution_id)
 
     return jsonify(
         {
             "taskId": task_id,
             "jobId": job_id,
+            "executionId": execution_id,
+            "executionUrl": execution_url,
             "queueJobId": enqueued_id,
             "jobUrl": job_url,
-            "taskUrl": task.get_url(),
+            "taskUrl": task_url,
         }
     )
