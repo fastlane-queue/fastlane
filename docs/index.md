@@ -34,6 +34,7 @@ Instead of the tedious, repetitive work of yesteryear where you had to implement
 -   [x]  Configurable exponential back-off for retries and failures in monitoring of jobs;
 -   [x]  Configurable hard timeout for each execution;
 -   [x]  E-mail subscription to tasks;
+-   [ ]  Web hooks on job start;
 -   [x]  Web hooks on job completion;
 -   [x]  Redact any env that contains blacklisted keywords;
 -   [ ]  Exponential back-off parameters per job;
