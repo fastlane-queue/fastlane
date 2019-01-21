@@ -28,7 +28,7 @@ Instead of the tedious, repetitive work of yesteryear where you had to implement
 -   [x]  API to retrieve execution details, `<jobUrl>/executions/<executionId>` (`<executionUrl>`);
 -   [x]  API to stop execution, `<executionUrl>/stop`;
 -   [x]  API to get logs(`<executionUrl>/stdout`), stdout (`<executionUrl>/stdout`) and stderr (`<executionUrl>/stderr`) for execution;
--   [ ]  Job execution log output streaming using WebSockets (`ws://<executionUrl>/ws`) and `<executionUrl>/stream`;
+-   [x]  Job execution log output streaming using WebSockets (`ws://<executionUrl>/ws`) and `<executionUrl>/stream`;
 -   [x]  Additional Job Metadata (useful for webhooks);
 -   [x]  Configurable retries per job;
 -   [x]  Configurable exponential back-off for retries and failures in monitoring of jobs;
@@ -63,7 +63,6 @@ Instead of the tedious, repetitive work of yesteryear where you had to implement
 -   [ ]  Support [Redis](https://redis.io/) Cluster;
 -   [ ]  Comprehensive test coverage;
 -   [x]  gzip all JSON responses for the API (for requests that accept gzip);
--   [ ]  Extensible authentication and authorization;
 -   [ ]  Admin to inspect tasks and jobs.
 
 ## Getting started

@@ -412,11 +412,80 @@ TBW.
 
 ## API - Stream Job Logs
 
-TBW.
+### Request Details
+
+`Method`: `GET`
+
+`URL`: `/tasks/<task-id>/job/<job-id>/stream/`
+
+* `task-id` is the ID for the required task;
+* `job-id` is the ID for the required job.
+
+`Body`: -
+
+`Query Parameters`: -
+
+### Example Response
+
+-
+
+### Description
+
+This route renders a web page that streams the job's last execution's logs to the browser.
 
 ## API - Websocket for Job Logs
 
-TBW.
+### Request Details
+
+`Method`: `GET`
+
+`URL`: `ws://fastlane-server/tasks/<task-id>/job/<job-id>/ws/`
+
+* `task-id` is the ID for the required task;
+* `job-id` is the ID for the required job.
+
+`Body`: -
+
+`Query Parameters`: -
+
+### Example Response
+
+Websocket connection.
+
+### Description
+
+Connecting to this route using [web sockets](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API) allows users to stream logs for the last execution of the specified job.
+
+A sample script that connects to the websocket route looks like this:
+
+```javascript
+// In Javascript
+const connect = function() {
+  const socket = new WebSocket("ws://fastlane.local:10000/tasks/test-scheduled-task/jobs/19603668-7241-4c50-802f-7c39dac831e6/ws");
+
+  socket.onopen = function (event) {
+    console.log('socket open, waiting for logs')
+  };
+
+  socket.onmessage = function (event) {
+    console.log('Received log', event.data);
+  };
+
+  socket.onclose = function (event) {
+    console.log('Socket closed');
+    if (event.reason != 'done') {
+      console.log('Trying again in 5s...');
+      if (timeout !== null) {
+        clearTimeout(timeout);
+        timeout = null;
+      }
+      timeout = setTimeout(connect, 5000);
+    }
+  }
+}
+
+connect()
+```
 
 ## API - Job Execution Details
 
@@ -633,19 +702,164 @@ This route stops a running job execution. If the job is a scheduled (or a CRON) 
 
 ## API - Stream Job Execution Logs
 
-TBW.
+### Request Details
+
+`Method`: `GET`
+
+`URL`: `/tasks/<task-id>/job/<job-id>/stream/executions/<execution-id>/`
+
+* `task-id` is the ID for the required task;
+* `job-id` is the ID for the required job;
+* `execution-id` is the ID for the required job execution.
+
+`Body`: -
+
+`Query Parameters`: -
+
+### Example Response
+
+-
+
+### Description
+
+This route renders a web page that streams the job execution's logs to the browser.
 
 ## API - Websocket for Job Execution Logs
 
-TBW.
+### Request Details
+
+`Method`: `GET`
+
+`URL`: `ws://fastlane-server/tasks/<task-id>/job/<job-id>/executions/<execution-id>/ws/`
+
+* `task-id` is the ID for the required task;
+* `job-id` is the ID for the required job;
+* `execution-id` is the ID for the required job execution.
+
+`Body`: -
+
+`Query Parameters`: -
+
+### Example Response
+
+Websocket connection.
+
+### Description
+
+Connecting to this route using [web sockets](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API) allows users to stream logs for the specified job execution.
+
+A sample script that connects to the websocket route looks like this:
+
+```javascript
+// In Javascript
+const connect = function() {
+  const socket = new WebSocket("ws://fastlane.local:10000/tasks/test-scheduled-task/jobs/19603668-7241-4c50-802f-7c39dac831e6/executions/96e9d16a-fefc-4764-bb5d-4c1caa6f266c/ws");
+
+
+  socket.onopen = function (event) {
+    console.log('socket open, waiting for logs')
+  };
+
+  socket.onmessage = function (event) {
+    console.log('Received log', event.data);
+  };
+
+  socket.onclose = function (event) {
+    console.log('Socket closed');
+    if (event.reason != 'done') {
+      console.log('Trying again in 5s...');
+      if (timeout !== null) {
+        clearTimeout(timeout);
+        timeout = null;
+      }
+      timeout = setTimeout(connect, 5000);
+    }
+  }
+}
+
+connect()
+```
 
 ## API - Healthcheck
 
-TBW.
+### Request Details
+
+`Method`: `GET`
+
+`URL`: `/healthcheck/`
+
+`Body`: -
+
+`Query Parameters`: -
+
+### Example Response
+
+```json
+{
+  "errors": [],
+  "mongo": true,
+  "redis": true
+}
+```
+
+### Description
+
+This route returns `200 OK` if fastlane can connect to MongoDB and Redis.
 
 ## API - Farm Status
 
-TBW.
+
+### Request Details
+
+`Method`: `GET`
+
+`URL`: `/status/`
+
+`Body`: -
+
+`Query Parameters`: -
+
+### Example Response
+
+```json
+{
+  "containers": {
+    "running": []
+  }, 
+  "hosts": [
+    {
+      "available": true, 
+      "blacklisted": false, 
+      "circuit": "closed", 
+      "error": null, 
+      "host": "localhost", 
+      "port": 1234
+    }
+  ], 
+  "jobs": {
+    "count": 11, 
+    "scheduled": []
+  }, 
+  "queues": {
+    "error": {
+      "length": 0
+    }, 
+    "jobs": {
+      "length": 0
+    }, 
+    "monitor": {
+      "length": 0
+    }
+  }, 
+  "tasks": {
+    "count": 1
+  }
+}
+```
+
+### Description
+
+This route returns information on the clusters and tasks.
 
 ## Workers
 

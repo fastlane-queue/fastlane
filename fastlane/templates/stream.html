@@ -1,6 +1,10 @@
 <html>
   <head>
+    {% if execution_id %}
+    <title>{{ task_id }} - {{ job_id }} - {{ execution_id }} - Fastlane</title>
+    {% else %}
     <title>{{ task_id }} - {{ job_id }} - Fastlane</title>
+    {% endif %}
   </head>
 
   <body>

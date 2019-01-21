@@ -129,7 +129,7 @@ To integrate with [fastlane](https://github.com/heynemann/fastlane) and stream t
 ```javascript
 // In Javascript
 const connect = function() {
-  const socket = new WebSocket("ws://fastlane.local:10000/tasks/test-scheduled-task/jobs/19603668-7241-4c50-802f-7c39dac831e6/ws");
+  const socket = new WebSocket("ws://fastlane.local:10000/tasks/test-scheduled-task/jobs/19603668-7241-4c50-802f-7c39dac831e6/ws/");
 
   socket.onopen = function (event) {
     console.log('socket open, waiting for logs')

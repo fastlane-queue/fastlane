@@ -219,8 +219,8 @@ def stream_job(task_id, job_id):
         protocol = "ws"
 
     url = url_for("task.stream_job", task_id=task_id, job_id=job_id, external=True)
-    url = "/".join(url.split("/")[:-1])
-    ws_url = "%s://%s/%s/ws" % (protocol, request.host.rstrip("/"), url.lstrip("/"))
+    url = "/".join(url.split("/")[:-2])
+    ws_url = "%s://%s/%s/ws/" % (protocol, request.host.rstrip("/"), url.lstrip("/"))
 
     return render_template("stream.html", task_id=task_id, job_id=job_id, ws_url=ws_url)
 

@@ -12,55 +12,75 @@ bp = Blueprint("stream", __name__)  # pylint: disable=invalid-name
 
 
 def stream_log(executor, task_id, job, ex, websocket):
-    if not websocket.closed and ex.status == JobExecution.Status.done:
-        websocket.send("EXIT CODE: %s\n" % ex.exit_code)
-        websocket.send(ex.log)
-        websocket.close(message="wsdone")
+    try:
+        if (
+            not websocket.closed
+            and ex.status == JobExecution.Status.done
+            or ex.status == JobExecution.Status.failed
+        ):
+            websocket.send("EXIT CODE: %s\n" % ex.exit_code)
+            websocket.send(ex.log)
+            websocket.send("\n-=-\n")
+            websocket.send(ex.error)
+            websocket.close(message="wsdone")
 
+            return
+
+        if not websocket.closed and ex.status != JobExecution.Status.running:
+            websocket.close(message="wsretry")
+
+            return
+
+        for log in executor.get_streaming_logs(task_id, job, ex):
+            if websocket.closed:
+                return
+            websocket.send(log)
+    except BrokenPipeError:
         return
-
-    if not websocket.closed and ex.status == JobExecution.Status.failed:
-        websocket.send("EXIT CODE: %s\n" % ex.exit_code)
-        websocket.send(ex.error)
-        websocket.close(message="wsdone")
-
-        return
-
-    if not websocket.closed and ex.status != JobExecution.Status.running:
-        websocket.close(message="wsretry")
-
-        return
-
-    for log in executor.get_streaming_logs(task_id, job, ex):
-        websocket.send(log)
 
     websocket.close(message="wsdone")
 
 
-@bp.route("/tasks/<task_id>/jobs/<job_id>/ws")
-def websocket_listen(websocket, task_id, job_id):
-    executor = current_app.executor
-    logger = current_app.logger.bind(task_id=task_id, job_id=job_id)
+def process_job_execution_logs(websocket, task_id, job_id, execution_id, logger):
     job = Job.get_by_id(task_id=task_id, job_id=job_id)
 
     if job is None:
-        logger.error("Job not found in task.")
+        logger.error(f"Job ({job_id}) not found in task ({task_id}).")
         websocket.close()
 
         return
 
-    ex = job.get_last_execution()
+    if execution_id is None:
+        execution = job.get_last_execution()
+    else:
+        execution = job.get_execution_by_id(execution_id)
 
-    if ex is None:
-        logger.error("No executions found in job.")
+    if execution is None:
+        logger.error("No executions found in job ({execution_id}).")
         websocket.close(message="wsretry")
 
         return
 
-    process = Process(target=stream_log, args=(executor, task_id, job, ex, websocket))
+    executor = current_app.executor
+
+    process = Process(
+        target=stream_log, args=(executor, task_id, job, execution, websocket)
+    )
     process.start()
 
     while not websocket.closed:
         time.sleep(10)
 
     process.terminate()
+
+
+@bp.route("/tasks/<task_id>/jobs/<job_id>/ws/")
+def websocket_listen(websocket, task_id, job_id):
+    logger = current_app.logger.bind(task_id=task_id, job_id=job_id)
+    process_job_execution_logs(websocket, task_id, job_id, None, logger)
+
+
+@bp.route("/tasks/<task_id>/jobs/<job_id>/executions/<execution_id>/ws/")
+def websocket_execution_listen(websocket, task_id, job_id, execution_id):
+    logger = current_app.logger.bind(task_id=task_id, job_id=job_id)
+    process_job_execution_logs(websocket, task_id, job_id, execution_id, logger)

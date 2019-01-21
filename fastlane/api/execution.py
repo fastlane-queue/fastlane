@@ -1,5 +1,14 @@
 # 3rd Party
-from flask import Blueprint, Response, current_app, g, jsonify, url_for
+from flask import (
+    Blueprint,
+    Response,
+    current_app,
+    g,
+    jsonify,
+    render_template,
+    request,
+    url_for,
+)
 from rq_scheduler import Scheduler
 
 # Fastlane
@@ -204,3 +213,29 @@ def stop_job_execution(task_id, job_id, execution_id):
         return response
 
     return format_execution_details(job.task, job, execution, shallow=True)
+
+
+@bp.route("/tasks/<task_id>/jobs/<job_id>/executions/<execution_id>/stream/")
+def stream_job(task_id, job_id, execution_id):
+    if request.url.startswith("https"):
+        protocol = "wss"
+    else:
+        protocol = "ws"
+
+    url = url_for(
+        "execution.stream_job",
+        task_id=task_id,
+        job_id=job_id,
+        execution_id=execution_id,
+        external=True,
+    )
+    url = "/".join(url.split("/")[:-2])
+    ws_url = "%s://%s/%s/ws/" % (protocol, request.host.rstrip("/"), url.lstrip("/"))
+
+    return render_template(
+        "stream.html",
+        task_id=task_id,
+        job_id=job_id,
+        execution_id=execution_id,
+        ws_url=ws_url,
+    )
