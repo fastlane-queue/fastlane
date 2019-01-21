@@ -13,8 +13,11 @@ from rq_scheduler import Scheduler
 
 # Fastlane
 from fastlane.api.execution import (
+    logs_func,
     perform_stop_job_execution,
     retrieve_execution_details,
+    stderr_func,
+    stdout_func,
 )
 from fastlane.api.helpers import return_error
 from fastlane.models import Job, JobExecution, Task
@@ -227,20 +230,14 @@ def stream_job(task_id, job_id):
 
 @bp.route("/tasks/<task_id>/jobs/<job_id>/stdout/")
 def stdout(task_id, job_id):
-    return retrieve_execution_details(
-        task_id, job_id, get_data_fn=lambda execution: execution.log
-    )
+    return retrieve_execution_details(task_id, job_id, get_data_fn=stdout_func)
 
 
 @bp.route("/tasks/<task_id>/jobs/<job_id>/stderr/")
 def stderr(task_id, job_id):
-    return retrieve_execution_details(
-        task_id, job_id, get_data_fn=lambda execution: execution.error
-    )
+    return retrieve_execution_details(task_id, job_id, get_data_fn=stderr_func)
 
 
 @bp.route("/tasks/<task_id>/jobs/<job_id>/logs/")
 def logs(task_id, job_id):
-    func = lambda execution: f"{execution.logs}\n{execution.error}"  # NOQA: 731
-
-    return retrieve_execution_details(task_id, job_id, get_data_fn=func)
+    return retrieve_execution_details(task_id, job_id, get_data_fn=logs_func)

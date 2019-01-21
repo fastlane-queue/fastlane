@@ -122,35 +122,43 @@ def retrieve_execution_details(task_id, job_id, execution_id=None, get_data_fn=N
     return Response(headers=headers, response=logs, status=200)
 
 
+def stdout_func(execution):
+    return execution.log
+
+
+def stderr_func(execution):
+    return execution.error
+
+
+def logs_func(execution):
+    if execution.status not in [
+        JobExecution.Status.running,
+        JobExecution.Status.enqueued,
+    ]:
+        return f"{execution.log}\n-=-\n{execution.error}"
+
+    return ""
+
+
 @bp.route(
     "/tasks/<task_id>/jobs/<job_id>/executions/<execution_id>/stdout/", methods=("GET",)
 )
 def get_job_execution_stdout(task_id, job_id, execution_id):
-    return retrieve_execution_details(task_id, job_id, execution_id)
+    return retrieve_execution_details(task_id, job_id, execution_id, stdout_func)
 
 
 @bp.route(
     "/tasks/<task_id>/jobs/<job_id>/executions/<execution_id>/stderr/", methods=("GET",)
 )
 def get_job_execution_stderr(task_id, job_id, execution_id):
-    return retrieve_execution_details(
-        task_id, job_id, execution_id, lambda execution: execution.error
-    )
+    return retrieve_execution_details(task_id, job_id, execution_id, stderr_func)
 
 
 @bp.route(
     "/tasks/<task_id>/jobs/<job_id>/executions/<execution_id>/logs/", methods=("GET",)
 )
 def get_job_execution_logs(task_id, job_id, execution_id):
-    func = lambda execution: (  # NOQA: 731
-        f"{execution.log}\n-=-\n{execution.error}"
-
-        if execution.status
-        not in [JobExecution.Status.running, JobExecution.Status.enqueued]
-        else ""
-    )
-
-    return retrieve_execution_details(task_id, job_id, execution_id, func)
+    return retrieve_execution_details(task_id, job_id, execution_id, logs_func)
 
 
 def perform_stop_job_execution(job, execution, logger, stop_schedule=True):
