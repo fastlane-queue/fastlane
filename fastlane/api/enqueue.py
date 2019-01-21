@@ -32,7 +32,7 @@ def get_ip_addr():
         return request.headers["X-Real-Ip"]
 
     if "X-Forwarded-For" in request.headers:
-        addresses = request.headers["X-Real-Ip"].split(",")
+        addresses = request.headers["X-Forwarded-For"].split(",")
 
         if addresses:
             return addresses[0]
