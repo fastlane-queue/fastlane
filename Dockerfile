@@ -17,6 +17,7 @@ WORKDIR /app
 COPY . /app
 RUN poetry install --no-dev
 RUN pip install honcho
+RUN echo "Verifying fastlane version..." && fastlane version
 
 ENV REDIS_URL "redis://redis:6379/0"
 ENV DOCKER_HOSTS "[{\"match\": \"\", \"hosts\": [\"localhost:2376\"], \"maxRunning\":2}]"
