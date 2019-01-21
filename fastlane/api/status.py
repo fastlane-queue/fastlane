@@ -3,6 +3,7 @@ from datetime import datetime
 
 # 3rd Party
 import croniter
+import pkg_resources
 from flask import Blueprint, current_app, jsonify, url_for
 
 # Fastlane
@@ -14,6 +15,7 @@ bp = Blueprint("status", __name__, url_prefix="/status")  # pylint: disable=inva
 @bp.route("/", methods=("GET",))
 def status():
     executor = current_app.executor
+    version = pkg_resources.get_distribution("fastlane").version
     metadata = {"hosts": [], "containers": {"running": []}}
 
     containers = executor.get_running_containers()
@@ -36,6 +38,11 @@ def status():
 
     metadata["jobs"]["scheduled"] = []
     scheduled_jobs = Job.objects(scheduled=True).all()
+
+    metadata["fastlane"] = {
+        "version": version,
+        "executor": current_app.config["EXECUTOR"],
+    }
 
     for job in scheduled_jobs:
         j = job.to_dict(include_executions=False)
