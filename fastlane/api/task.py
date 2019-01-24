@@ -1,14 +1,5 @@
 # 3rd Party
-from flask import (
-    Blueprint,
-    abort,
-    current_app,
-    g,
-    jsonify,
-    render_template,
-    request,
-    url_for,
-)
+from flask import Blueprint, current_app, g, jsonify, render_template, request, url_for
 from rq_scheduler import Scheduler
 
 # Fastlane
@@ -26,15 +17,28 @@ from fastlane.worker.job import run_job
 bp = Blueprint("task", __name__)  # pylint: disable=invalid-name
 
 
+def get_current_page(logger):
+    try:
+        page = int(request.args.get("page", 1))
+
+        if page <= 0:
+            raise ValueError()
+
+        return page, None
+    except ValueError:
+        msg = "Tasks pagination page param should be a positive integer."
+
+        return None, return_error(msg, "get_tasks", status=400, logger=logger)
+
+
 @bp.route("/tasks/", methods=("GET",))
 def get_tasks():
     logger = g.logger.bind(operation="get_tasks")
 
-    try:
-        page = int(request.args.get("page", 1))
-    except ValueError:
-        logger.error(f"Tasks pagination page param should be an integer.")
-        abort(404)
+    page, error = get_current_page(logger)
+
+    if error:
+        return error
 
     per_page = current_app.config["PAGINATION_PER_PAGE"]
 
@@ -43,16 +47,70 @@ def get_tasks():
 
     logger.debug("Tasks retrieved successfully...")
 
-    tasks_url = url_for("task.get_tasks", _external=True)
     next_url = None
 
     if paginator.has_next:
-        next_url = f"{tasks_url}?page={paginator.next_num}"
+        next_url = url_for("task.get_tasks", page=paginator.next_num, _external=True)
 
     prev_url = None
 
     if paginator.has_prev:
-        prev_url = f"{tasks_url}?page={paginator.prev_num}"
+        prev_url = url_for("task.get_tasks", page=paginator.prev_num, _external=True)
+
+    data = {
+        "items": [],
+        "total": paginator.total,
+        "page": paginator.page,
+        "pages": paginator.pages,
+        "perPage": paginator.per_page,
+        "hasNext": paginator.has_next,
+        "hasPrev": paginator.has_prev,
+        "nextUrl": next_url,
+        "prevUrl": prev_url,
+    }
+
+    for task in paginator.items:
+        data["items"].append(task.to_dict())
+
+    return jsonify(data)
+
+
+@bp.route("/search/", methods=("GET",))
+def search_tasks():
+    logger = g.logger.bind(operation="search_tasks")
+
+    query = request.args.get("query")
+
+    if not query:
+        msg = "The query param is required."
+
+        return return_error(msg, "search_tasks", status=400, logger=logger)
+
+    page, error = get_current_page(logger)
+
+    if error:
+        return error
+
+    per_page = current_app.config["PAGINATION_PER_PAGE"]
+
+    logger.debug(f"Getting tasks page={page} per_page={per_page}...")
+    paginator = Task.search_tasks(query=query, page=page, per_page=per_page)
+
+    logger.debug("Tasks retrieved successfully...")
+
+    next_url = None
+
+    if paginator.has_next:
+        next_url = url_for(
+            "task.search_tasks", query=query, page=paginator.next_num, _external=True
+        )
+
+    prev_url = None
+
+    if paginator.has_prev:
+        prev_url = url_for(
+            "task.search_tasks", query=query, page=paginator.prev_num, _external=True
+        )
 
     data = {
         "items": [],

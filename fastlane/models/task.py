@@ -17,6 +17,10 @@ class Task(db.Document):
     task_id = StringField(required=True)
     jobs = ListField(ReferenceField("Job"))
 
+    meta = {
+        "indexes": ["task_id", {"fields": ["$task_id"], "default_language": "english"}]
+    }
+
     def _validate(self):
         errors = {}
 
@@ -64,6 +68,10 @@ class Task(db.Document):
         return cls.objects.paginate(page, per_page)  # pylint: disable=no-member
 
     @classmethod
+    def search_tasks(cls, query, page=1, per_page=20):
+        return cls.objects.search_text(query).paginate(page, per_page)
+
+    @classmethod
     def get_by_task_id(cls, task_id):
         if task_id is None or task_id == "":
             raise RuntimeError("Task ID is required and can't be None or empty.")
@@ -74,7 +82,7 @@ class Task(db.Document):
         from fastlane.models.job import Job
 
         job_id = uuid4()
-        j = Job(job_id=str(job_id))
+        j = Job(task_id=str(self.task_id), job_id=str(job_id))
         j.task = self
         j.save()
 
@@ -89,7 +97,7 @@ class Task(db.Document):
         jobs = list(filter(lambda job: str(job.job_id) == job_id, self.jobs))
 
         if not jobs:
-            j = Job(job_id=str(job_id))
+            j = Job(task_id=str(self.task_id), job_id=str(job_id))
             j.task = self
             j.save()
             self.jobs.append(j)

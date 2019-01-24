@@ -75,6 +75,7 @@ class JobExecution(db.EmbeddedDocument):  # pylint: disable=no-member
 class Job(db.Document):
     created_at = DateTimeField(required=True)
     last_modified_at = DateTimeField(required=True, default=datetime.datetime.now)
+    task_id = StringField(required=True)
     job_id = StringField(required=True)
     executions = ListField(EmbeddedDocumentField(JobExecution))
     task = ReferenceField(
@@ -84,7 +85,10 @@ class Job(db.Document):
     metadata = DictField(required=False)
     scheduled = BooleanField(required=True, default=False)
 
-    meta = {"ordering": ["-last_modified_at"]}
+    meta = {
+        "ordering": ["-last_modified_at"],
+        "indexes": ["last_modified_at", "job_id", {"fields": ["task_id", "job_id"]}],
+    }
 
     def save(self, *args, **kwargs):
         if self.executions is None:

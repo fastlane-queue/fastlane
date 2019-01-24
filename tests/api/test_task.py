@@ -63,21 +63,21 @@ def test_get_tasks_pagination(client):
     expect(data["nextUrl"]).to_be_null()
 
 
-def test_get_tasks_pagination_404(client):
+def test_get_tasks_pagination2(client):
     """
-    Test getting tasks pagination should respond 404 when page is invalid
+    Test getting tasks pagination should respond 400 when page is invalid
     """
     resp1 = client.get("/tasks/?page=asdasdas")
-    expect(resp1.status_code).to_equal(404)
+    expect(resp1.status_code).to_equal(400)
 
     resp2 = client.get("/tasks/?page=1019021")
     expect(resp2.status_code).to_equal(404)
 
     resp3 = client.get("/tasks/?page=0")
-    expect(resp3.status_code).to_equal(404)
+    expect(resp3.status_code).to_equal(400)
 
     resp4 = client.get("/tasks/?page=-1")
-    expect(resp4.status_code).to_equal(404)
+    expect(resp4.status_code).to_equal(400)
 
 
 def test_get_task_details(client):
@@ -100,6 +100,28 @@ def test_get_task_details(client):
     expect(job_data["url"]).to_equal(
         f"http://localhost:10000/tasks/{task_id}/jobs/{job_id}/"
     )
+
+
+def test_search_tasks1(client):
+    """Tests search task by task_id."""
+    pytest.skip("Not implemented")
+
+
+def test_search_tasks2(client):
+    """
+    Test search tasks pagination should respond error when page is invalid
+    """
+    resp1 = client.get("/search/?query=qwe&page=asdasdas")
+    expect(resp1.status_code).to_equal(400)
+
+    resp2 = client.get("/search/?query=qwe&page=1019021")
+    expect(resp2.status_code).to_equal(404)
+
+    resp3 = client.get("/search/?query=qwe&page=0")
+    expect(resp3.status_code).to_equal(400)
+
+    resp4 = client.get("/search/?query=qwe&page=-1")
+    expect(resp4.status_code).to_equal(400)
 
 
 def test_job_details1(client):
