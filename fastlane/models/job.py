@@ -84,6 +84,8 @@ class Job(db.Document):
     metadata = DictField(required=False)
     scheduled = BooleanField(required=True, default=False)
 
+    meta = {"ordering": ["-last_modified_at"]}
+
     def save(self, *args, **kwargs):
         if self.executions is None:
             self.executions = []
