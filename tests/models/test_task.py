@@ -48,11 +48,11 @@ def test_task_to_dict(client):
 
     expect(res["taskId"]).to_equal("my-task")
 
-    created_at = int(task.created_at.timestamp())
-    expect(int(res["createdAt"])).to_equal(created_at)
+    created_at = task.created_at.isoformat()
+    expect(res["createdAt"]).to_equal(created_at)
 
-    last_modified_at = int(task.last_modified_at.timestamp())
-    expect(int(res["lastModifiedAt"])).to_equal(last_modified_at)
+    last_modified_at = task.last_modified_at.isoformat()
+    expect(res["lastModifiedAt"]).to_equal(last_modified_at)
 
     expect(res["url"]).to_equal(f"http://{server_name}/tasks/my-task/")
     expect(res["jobsCount"]).to_equal(0)

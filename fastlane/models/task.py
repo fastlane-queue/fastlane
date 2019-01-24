@@ -44,8 +44,8 @@ class Task(db.Document):
     def to_dict(self):
         res = {
             "taskId": self.task_id,
-            "createdAt": self.created_at.timestamp(),
-            "lastModifiedAt": self.last_modified_at.timestamp(),
+            "createdAt": self.created_at.isoformat(),
+            "lastModifiedAt": self.last_modified_at.isoformat(),
             "url": self.get_url(),
             "jobsCount": len(self.jobs),
         }

@@ -78,9 +78,9 @@ If the execution for the enqueued job is delayed (CRON or scheduled job), then t
   "hasPrev": false, 
   "items": [
     {
-      "createdAt": 1547737982.644, 
+      "createdAt": "2019-01-17T15:13:02.754000", 
       "jobsCount": 2, 
-      "lastModifiedAt": 1547738263.561, 
+      "lastModifiedAt": "2019-01-17T15:13:02.754000", 
       "taskId": "test-wrkng", 
       "url": "http://localhost:10000/tasks/test-wrkng"
     }
