@@ -100,6 +100,53 @@ This route returns all the registered tasks in [fastlane](https://github.com/hey
 
 Using the included details for pagination is advised. The `hasNext` and `hasPrev` flags can be used to determine the available directions for pagination. The `nextUrl` and `prevUrl` keys can be used to navigate in that direction. The number of pages can be determined by the `pages` key. The number of items per page can be obtained using the `perPage` key.
 
+## API - Search tasks
+
+### Request Details
+
+`Method`: `GET`
+
+`URL`: `/search/`
+
+`Body`: -
+
+`Query Parameters`:
+
+* `query`: text to be searched in `task_id`.
+* `page`: current page in the tasks pagination. Defaults to `1`.
+
+### Example Response
+
+```json
+{
+  "hasNext": false, 
+  "hasPrev": false, 
+  "items": [
+    {
+      "createdAt": "2019-01-17T15:13:02.754000", 
+      "jobsCount": 2, 
+      "lastModifiedAt": "2019-01-17T15:13:02.754000", 
+      "taskId": "test-wrkng", 
+      "url": "http://localhost:10000/tasks/test-wrkng"
+    }
+  ], 
+  "nextUrl": null, 
+  "page": 1, 
+  "pages": 1, 
+  "perPage": 10, 
+  "prevUrl": null, 
+  "total": 1
+}
+```
+
+### Description
+
+This route searches for tasks by `task_id` in [fastlane](https://github.com/heynemann/fastlane).
+
+The query is done by complete words, so if you search for `hel`, you won't find `hello`. On the other hand, you only need to know one complete word, so searching for `world` will find `hello-world`.
+
+Using the included details for pagination is advised. The `hasNext` and `hasPrev` flags can be used to determine the available directions for pagination. The `nextUrl` and `prevUrl` keys can be used to navigate in that direction. The number of pages can be determined by the `pages` key. The number of items per page can be obtained using the `perPage` key.
+
 ## API - Enqueue/Update Job
 
 ### Request Details
