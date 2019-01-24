@@ -21,7 +21,7 @@ def test_enqueue1(client):
         task_id = str(uuid4())
         data = {"image": "ubuntu", "command": "ls"}
         response = client.post(
-            f"/tasks/{task_id}", data=dumps(data), follow_redirects=True
+            f"/tasks/{task_id}/", data=dumps(data), follow_redirects=True
         )
 
         expect(response.status_code).to_equal(200)
@@ -85,7 +85,7 @@ def test_enqueue2(client):
             follow_redirects=True,
         )
 
-        response = client.post(f"/tasks/{task_id}", **options)
+        response = client.post(f"/tasks/{task_id}/", **options)
         expect(response.status_code).to_equal(200)
 
         obj = loads(response.data)
@@ -93,7 +93,7 @@ def test_enqueue2(client):
         expect(job_id).not_to_be_null()
         expect(obj["queueJobId"]).not_to_be_null()
 
-        response = client.post(f"/tasks/{task_id}", **options)
+        response = client.post(f"/tasks/{task_id}/", **options)
         expect(response.status_code).to_equal(200)
         obj = loads(response.data)
         job_id = obj["jobId"]
@@ -128,7 +128,7 @@ def test_enqueue3(client):
             follow_redirects=True,
         )
 
-        response = client.post(f"/tasks/{task_id}", **options)
+        response = client.post(f"/tasks/{task_id}/", **options)
         expect(response.status_code).to_equal(200)
         obj = loads(response.data)
         job_id = obj["jobId"]
@@ -170,7 +170,7 @@ def enqueue_in(client, start_in, delta):
         follow_redirects=True,
     )
 
-    response = client.post(f"/tasks/{task_id}", **options)
+    response = client.post(f"/tasks/{task_id}/", **options)
     expect(response.status_code).to_equal(200)
     obj = loads(response.data)
     job_id = obj["jobId"]
@@ -203,7 +203,7 @@ def test_enqueue5(client):
             follow_redirects=True,
         )
 
-        response = client.post(f"/tasks/{task_id}", **options)
+        response = client.post(f"/tasks/{task_id}/", **options)
         expect(response.status_code).to_equal(200)
         obj = loads(response.data)
         job_id = obj["jobId"]
@@ -243,7 +243,7 @@ def test_enqueue6(client):
             follow_redirects=True,
         )
 
-        response = client.post(f"/tasks/{task_id}", **options)
+        response = client.post(f"/tasks/{task_id}/", **options)
         expect(response.status_code).to_equal(200)
         obj = loads(response.data)
         job_id = obj["jobId"]
@@ -274,7 +274,7 @@ def test_enqueue7(client):
             follow_redirects=True,
         )
 
-        response = client.post(f"/tasks/{task_id}", **options)
+        response = client.post(f"/tasks/{task_id}/", **options)
         expect(response.status_code).to_equal(200)
         obj = loads(response.data)
         job_id = obj["jobId"]
@@ -307,7 +307,7 @@ def test_enqueue8(client):
                 follow_redirects=True,
             )
 
-            response = client.post(f"/tasks/{task_id}", **options)
+            response = client.post(f"/tasks/{task_id}/", **options)
             expect(response.status_code).to_equal(200)
             obj = loads(response.data)
             job_id = obj["jobId"]
@@ -336,7 +336,7 @@ def test_enqueue9(client):
             follow_redirects=True,
         )
 
-        response = client.post(f"/tasks/{task_id}", **options)
+        response = client.post(f"/tasks/{task_id}/", **options)
         expect(response.status_code).to_equal(400)
         expect(response.data).to_be_like(
             "Failed to enqueue task because JSON body could not be parsed."
@@ -359,7 +359,7 @@ def test_enqueue10(client):
             follow_redirects=True,
         )
 
-        response = client.post(f"/tasks/{task_id}", **options)
+        response = client.post(f"/tasks/{task_id}/", **options)
         expect(response.status_code).to_equal(400)
         expect(response.data).to_be_like(
             "image and command must be filled in the request."
@@ -392,7 +392,7 @@ def test_enqueue11(client):
             follow_redirects=True,
         )
 
-        response = client.post(f"/tasks/{task_id}", **options)
+        response = client.post(f"/tasks/{task_id}/", **options)
         expect(response.status_code).to_equal(400)
         expect(response.data).to_be_like(
             "Only ONE of 'startAt', 'startIn' and 'cron' should be in the request."
@@ -407,7 +407,7 @@ def test_enqueue12(client):
         job_id = str(uuid4())
         data = {"image": "ubuntu", "command": "ls"}
         response = client.put(
-            f"/tasks/{task_id}/jobs/{job_id}", data=dumps(data), follow_redirects=True
+            f"/tasks/{task_id}/jobs/{job_id}/", data=dumps(data), follow_redirects=True
         )
 
         expect(response.status_code).to_equal(200)
