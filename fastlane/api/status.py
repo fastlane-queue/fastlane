@@ -66,6 +66,6 @@ def status():
         del j["taskId"]
         j["task"] = {"id": task_id, "url": task_url}
 
-        metadata["scheduled"].append(j)
+        metadata["jobs"]["scheduled"].append(j)
 
     return jsonify(metadata), 200
