@@ -18,6 +18,22 @@ This should be unique per environment.""",
 )
 
 Config.define(
+    "ENABLE_CORS",
+    True,
+    "This configuration enabled CORS headers in the API. CORS is enabled "
+    "on '*' by default in Fastlane. It's the administrator's job to secure"
+    " it behind some gateway.",
+    "General",
+)
+
+Config.define(
+    "CORS_ORIGINS",
+    "*",
+    "This configuration enabled CORS headers in the API.",
+    "General",
+)
+
+Config.define(
     "REDIS_URL",
     "redis://localhost:10100/0",
     """Redis connection string in the form of 'redis://' protocol.

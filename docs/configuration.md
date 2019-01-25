@@ -14,6 +14,14 @@ ENV = 'production'
 # Defaults to: 'OTNDN0VCRDAtRTMyMS00NUM0LUFFQUYtNEI4QUE4RkFCRjUzCg=='
 SECRET_KEY = 'OTNDN0VCRDAtRTMyMS00NUM0LUFFQUYtNEI4QUE4RkFCRjUzCg=='
 
+# This configuration enabled CORS headers in the API.
+# Defaults to: True
+ENABLE_CORS = True
+
+# This configuration enabled CORS headers in the API.
+# Defaults to: '*'
+CORS_ORIGINS = '*'
+
 ###############################################################################
 
 

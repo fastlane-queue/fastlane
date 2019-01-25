@@ -289,6 +289,18 @@ itsdangerous = ">=0.24"
 
 [[package]]
 category = "main"
+description = "A Flask extension adding a decorator for CORS support"
+name = "flask-cors"
+optional = false
+python-versions = "*"
+version = "3.0.7"
+
+[package.dependencies]
+Flask = ">=0.9"
+Six = "*"
+
+[[package]]
+category = "main"
 description = "Flask-MongoEngine is a Flask extension that provides integration with MongoEngine and WTF model forms."
 name = "flask-mongoengine"
 optional = false
@@ -1259,7 +1271,7 @@ python-versions = "*"
 version = "2.2.1"
 
 [metadata]
-content-hash = "7f80167c50fd85ee424e51aeb6d090ce3a2fe3c79fbe6d29d9e42fe22a4f7b84"
+content-hash = "1f1539aa9cd1461cc331693569aaddb5deca93dec5ceaf2457622a8ddc4b0c2f"
 python-versions = "^3.6"
 
 [metadata.hashes]
@@ -1291,6 +1303,7 @@ docutils = ["02aec4bd92ab067f6ff27a38a38a41173bf01bed8f89157768c1573f53e474a6", 
 fakeredis = ["0794ce07407c3cf8fa082ffae604e1be5c176df3c16561db44c36c9d07334148", "c57e5c0f11f08ce77f86975157f4fc368b69b22bde9c97bb6c82a494a78e3759"]
 flake8 = ["6a35f5b8761f45c5513e3405f110a86bea57982c3b75b766ce7b65217abe1670", "c01f8a3963b3571a8e6bd7a4063359aff90749e160778e03817cd9b71c9e07d2"]
 flask = ["2271c0070dbcb5275fad4a82e29f23ab92682dc45f9dfbc22c02ba9b9322ce48", "a080b744b7e345ccfcbc77954861cb05b3c63786e93f2b3875e0913d44b43f05"]
+flask-cors = ["7ad56ee3b90d4955148fc25a2ecaa1124fc84298471e266a7fea59aeac4405a5", "7e90bf225fdf163d11b84b59fb17594d0580a16b97ab4e1146b1fb2737c1cfec"]
 flask-mongoengine = ["0f426aeafc4be2c37e9b4c0f8b5d02d012b7afc4b3b97a4119024684fe148fc1", "b6376b33cd1e624c09983a0884dc87303e54084f0e6b7f8df6794d56d35fa66f"]
 flask-redis = ["56ebd5e69a42988e9a7a904f07b37cd625a7dbcdfbfe31797885c3c4a92516f5", "ffb8e636c7af0226a3074860200602850a5a871169bc53fcde05b7d973aad714"]
 flask-redis-sentinel = ["0deb2bef4977144a008bae2457c931ff8b1f3f97dce94c09003ed360e39f89a4", "a17ef135f607f1531fd80a283368ef5f11ecf5a4237b48fd192549e8c8998f02"]

@@ -29,6 +29,25 @@ def test_get_tasks(client):
     expect(data["hasPrev"]).to_be_false()
 
 
+def test_get_tasks2(client):
+    """Test getting tasks returns CORS headers"""
+    resp = client.get("/tasks/")
+    expect(resp.status_code).to_equal(200)
+    headers = dict(resp.headers)
+    expect(headers).to_include("Access-Control-Allow-Origin")
+    expect(headers["Access-Control-Allow-Origin"]).to_equal("*")
+
+
+def test_get_tasks3(client):
+    """Test getting tasks returns CORS headers with custom origin"""
+    client.application.config["CORS_ORIGINS"] = "domain.com"
+    resp = client.get("/tasks/")
+    expect(resp.status_code).to_equal(200)
+    headers = dict(resp.headers)
+    expect(headers).to_include("Access-Control-Allow-Origin")
+    expect(headers["Access-Control-Allow-Origin"]).to_equal("*")
+
+
 def test_get_tasks_data(client):
     """Test getting tasks resource data"""
     task = Task.create_task("my-task")

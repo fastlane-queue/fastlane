@@ -7,6 +7,7 @@ from json import loads
 import rq_dashboard
 import structlog
 from flask import Flask
+from flask_cors import CORS
 from flask_redis import FlaskRedis
 from flask_redis_sentinel import SentinelExtension
 from flask_sockets import Sockets
@@ -43,6 +44,7 @@ class Application:
 
     def create_app(self, testing):
         self.app = Flask("fastlane")
+
         self.testing = testing
         self.app.testing = testing
         self.app.config.from_object(rq_dashboard.default_settings)
@@ -61,6 +63,16 @@ class Application:
         self.connect_db()
         self.load_executor()
         self.load_error_handlers()
+
+        enable_cors = self.app.config["ENABLE_CORS"]
+
+        if (
+            isinstance(enable_cors, (str, bytes)) and enable_cors.lower() == "true"
+        ) or (isinstance(enable_cors, (bool)) and enable_cors):
+            self.app.logger.info(
+                f'Configured CORS to allow access from \'{self.app.config["CORS_ORIGINS"]}\'.'
+            )
+            CORS(self.app)
 
         metrics.init_app(self.app)
         self.app.register_blueprint(metrics.bp)
