@@ -17,7 +17,7 @@ services:
     image: docker:stable-dind
     privileged: true
   fastlane:
-    image: heynemann/fastlane:0.5.13
+    image: heynemann/fastlane:1.2.1
     ports:
       - "10000:10000"
     environment:
