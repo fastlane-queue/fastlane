@@ -67,6 +67,25 @@ Instead of the tedious, repetitive work of yesteryear where you had to implement
 -   [x]  Store IP address of enqueued job for auditing (`X-Real-IP`, then `X-Forwarded-For`, then `request.addr`);
 -   [ ]  Admin to inspect tasks and jobs.
 
+## Getting started
+
+Getting [fastlane](https://github.com/heynemann/fastlane) up and running is very simple if you have both [docker](https://docs.docker.com/) and [docker-compose](https://docs.docker.com/compose/) installed.
+
+We'll use a sample docker compose that gets all our requirements up (ps: this [docker-compose](https://docs.docker.com/compose/) file runs [Docker In Docker](https://hub.docker.com/_/docker/) and requires privileged mode to run):
+
+```bash
+$ curl https://raw.githubusercontent.com/heynemann/fastlane/master/docker-compose-sample.yml | docker-compose -f - up -d
+
+Starting fastlane...
+Creating fastlane_mongo_1       ... done
+Creating fastlane_docker-host_1 ... done
+Creating fastlane_redis_1       ... done
+Creating fastlane_fastlane_1    ... done
+fastlane started successfully.
+```
+
+After that you can start using [fastlane](https://github.com/heynemann/fastlane). For more details on getting started, read the [following page](https://fastlane.readthedocs.io/en/latest/getting-started/).
+
 ## Documentation
 
 Read more about fastlane at [read the docs](https://fastlane.readthedocs.io/en/latest/).
