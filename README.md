@@ -4,7 +4,7 @@
 
 [![demo](https://asciinema.org/a/219455.svg)](https://asciinema.org/a/219455)
 
-## Why [fastlane](https://github.com/heynemann/fastlane)?
+## [fastlane](https://github.com/heynemann/fastlane) service
 
 [fastlane](https://github.com/heynemann/fastlane) is a [redis](https://redis.io/)-based queueing service that outsmarts everyone else by using containers.
 
