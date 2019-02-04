@@ -1,9 +1,11 @@
 FROM python:3.7.2-slim-stretch
 
-RUN apt-get update -y && apt-get install -y curl make \
+RUN apt-get update -y && apt-get install -y --no-install-recommends curl make \
                                                  software-properties-common \
                                                  build-essential \
-                                                 git
+                                                 git \
+                      && apt-get clean \
+                      && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir -p /home
 ENV HOME="/home"
