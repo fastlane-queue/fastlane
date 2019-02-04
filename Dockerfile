@@ -18,7 +18,7 @@ RUN mkdir -p /app
 WORKDIR /app
 COPY . /app
 RUN poetry install --no-dev
-RUN pip install honcho
+RUN pip install honcho==1.0.1
 RUN echo "Verifying fastlane version..." && fastlane version
 
 ENV REDIS_URL "redis://redis:6379/0"
