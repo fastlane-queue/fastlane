@@ -199,7 +199,7 @@ def validate_and_enqueue(details, task, job, logger):
     return result, execution, None
 
 
-@bp.route("/tasks/<task_id>/", methods=("POST",))
+@bp.route("/tasks/<task_id>/", methods=("POST",), strict_slashes=False)
 def create_task(task_id):
     task, details, logger, response = get_task_and_details(task_id)
 
@@ -216,7 +216,7 @@ def create_task(task_id):
     return get_enqueue_response(task, job, execution, enqueued_id)
 
 
-@bp.route("/tasks/<task_id>/jobs/<job_id>/", methods=("PUT",))
+@bp.route("/tasks/<task_id>/jobs/<job_id>/", methods=("PUT",), strict_slashes=False)
 def create_or_update_task(task_id, job_id):
     try:
         job_id = str(UUID(job_id))

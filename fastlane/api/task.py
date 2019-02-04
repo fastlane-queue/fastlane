@@ -191,7 +191,9 @@ def get_job(task_id, job_id):
     return jsonify({"task": {"id": task_id, "url": task_url}, "job": details})
 
 
-@bp.route("/tasks/<task_id>/jobs/<job_id>/stop/", methods=("POST",))
+@bp.route(
+    "/tasks/<task_id>/jobs/<job_id>/stop/", methods=("POST",), strict_slashes=False
+)
 def stop_job(task_id, job_id):
     logger = g.logger.bind(operation="stop_job", task_id=task_id, job_id=job_id)
 
@@ -215,7 +217,9 @@ def stop_job(task_id, job_id):
     return get_job_summary(task_id, job_id)
 
 
-@bp.route("/tasks/<task_id>/jobs/<job_id>/retry/", methods=("POST",))
+@bp.route(
+    "/tasks/<task_id>/jobs/<job_id>/retry/", methods=("POST",), strict_slashes=False
+)
 def retry_job(task_id, job_id):
     logger = g.logger.bind(operation="retry", task_id=task_id, job_id=job_id)
 

@@ -199,7 +199,9 @@ def perform_stop_job_execution(job, execution, logger, stop_schedule=True):
 
 
 @bp.route(
-    "/tasks/<task_id>/jobs/<job_id>/executions/<execution_id>/stop/", methods=("POST",)
+    "/tasks/<task_id>/jobs/<job_id>/executions/<execution_id>/stop/",
+    methods=("POST",),
+    strict_slashes=False,
 )
 def stop_job_execution(task_id, job_id, execution_id):
     logger = g.logger.bind(

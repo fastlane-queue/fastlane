@@ -191,3 +191,8 @@ def test_stop_container2(client):
 def test_stop_container3(client):
     """Tests that stopping a CRON job kills the scheduling."""
     pytest.skip("Not implemented")
+
+
+def test_stop_container4(client):
+    """Tests that stopping without an end slash fails with 404."""
+    pytest.skip("Not implemented")

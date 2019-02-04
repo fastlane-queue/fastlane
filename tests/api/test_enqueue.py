@@ -463,3 +463,27 @@ def test_enqueue14(client):
 def test_enqueue15(client):
     """Tests enqueue stores IP Address for request using request address as fallback."""
     pytest.skip("Not implemented")
+
+
+def test_enqueue16(client):
+    """Tests POST enqueue works when used without last slash."""
+    with client.application.app_context():
+        task_id = str(uuid4())
+        data = {"image": "ubuntu", "command": "ls"}
+        response = client.post(
+            f"/tasks/{task_id}", data=dumps(data), follow_redirects=False
+        )
+        expect(response.status_code).to_equal(200)
+
+
+def test_enqueue17(client):
+    """Tests PUT enqueue works when accessed without last slash."""
+    with client.application.app_context():
+        task_id = str(uuid4())
+        job_id = str(uuid4())
+        data = {"image": "ubuntu", "command": "ls"}
+        response = client.put(
+            f"/tasks/{task_id}/jobs/{job_id}", data=dumps(data), follow_redirects=False
+        )
+
+        expect(response.status_code).to_equal(200)

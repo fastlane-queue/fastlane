@@ -388,3 +388,8 @@ def test_stop_execution2(client):
         expect(resp).to_be_an_error_with(
             status=404, msg=msg, operation="stop_job_execution"
         )
+
+        resp = client.post(
+            f"/tasks/{task.task_id}/jobs/{job.job_id}/executions/{execution.execution_id}/stop"
+        )
+        expect(resp.status_code).to_equal(200)

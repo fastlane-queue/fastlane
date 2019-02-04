@@ -59,7 +59,7 @@ focus:
 watch:
 	@poetry run ptw -c -w -- --quiet --nf --cov=fastlane tests/
 
-run:
+run: deps
 	@poetry run fastlane api -vvv -c ./fastlane/config/local.conf
 
 worker:
