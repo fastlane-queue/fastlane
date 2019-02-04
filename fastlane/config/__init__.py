@@ -4,6 +4,12 @@ from derpconf.config import Config
 Config.allow_environment_variables()
 
 Config.define(
+    "DEBUG",
+    False,
+    "This configuration details if fastlane is running in debug mode.",
+    "General",
+)
+Config.define(
     "ENV",
     "production",
     "This configuration details the environment fastlane is running in.",

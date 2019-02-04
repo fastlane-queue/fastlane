@@ -53,8 +53,8 @@ class Application:
         for key in self.config.items.keys():
             self.app.config[key] = self.config[key]
 
-        self.app.config.DEBUG = self.config.DEBUG
-        self.app.config.ENV = self.config.ENV
+        self.app.config["ENV"] = self.config.ENV
+        self.app.config["DEBUG"] = self.config.DEBUG
         self.app.original_config = self.config
         self.app.log_level = self.log_level
         self.configure_logging()
