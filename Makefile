@@ -1,4 +1,5 @@
 COMPOSE := $(shell command -v docker-compose 2> /dev/null)
+YARN := $(shell command -v yarn 2> /dev/null)
 POETRY := $(shell command -v poetry 2> /dev/null)
 LAST_TAG := $(shell git for-each-ref --format='%(*committerdate:raw)%(committerdate:raw) %(refname) %(*objectname) %(objectname)' refs/tags 2>/dev/null | sort -n | awk '{ print $$3 }' | tail -n1 | sed s@refs/tags/@@g)
 OS_NAME := $(shell uname -s)
@@ -12,6 +13,11 @@ ifndef POETRY
 	@exit 1
 endif
 	@poetry install
+ifdef YARN
+	@yarn install
+else
+	@npm install
+endif
 
 setup-ci:
 	@pip install poetry
