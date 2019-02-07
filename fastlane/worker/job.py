@@ -85,7 +85,11 @@ def download_image(executor, job, ex, image, tag, command, logger):
         executor.update_image(job.task, job, ex, image, tag)
         ellapsed = time.time() - before
         current_app.report_metric(
-            "report_image_download", image=image, tag=tag, ellapsed=(ellapsed * 1000.0)
+            "report_image_download",
+            execution=ex,
+            image=image,
+            tag=tag,
+            ellapsed=(ellapsed * 1000.0),
         )
         logger.info(
             "Image downloaded successfully.", image=image, tag=tag, ellapsed=ellapsed
@@ -137,6 +141,10 @@ def run_container(executor, job, ex, image, tag, command, logger):
         before = time.time()
         executor.run(job.task, job, ex, image, tag, command)
         ellapsed = time.time() - before
+
+        current_app.report_metric(
+            "report_job_run", execution=ex, ellapsed=(ellapsed * 1000.0)
+        )
         logger.info(
             "Container started successfully.",
             image=image,

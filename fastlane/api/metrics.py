@@ -9,10 +9,13 @@ bp = Blueprint("metrics", __name__)  # pylint: disable=invalid-name
 
 
 class BaseMetricsReporter:
-    def report_request(self, url, status_code, ellapsed):
+    def report_request(self, method, url, status_code, ellapsed):
         pass
 
-    def report_image_download(self, image, tag, ellapsed):
+    def report_image_download(self, execution, image, tag, ellapsed):
+        pass
+
+    def report_job_run(self, execution, ellapsed):
         pass
 
 
@@ -50,7 +53,11 @@ def init_app(app):
             log_params["request_id"] = request_id
 
         current_app.report_metric(
-            "report_request", request.path, response.status_code, duration
+            "report_request",
+            request.method,
+            request.path,
+            response.status_code,
+            duration,
         )
 
         if response.status_code < 400:

@@ -29,34 +29,35 @@ class Prometheus(BaseMetricsReporter):
         self.request_count = Counter(
             "fastlane_request_count",
             "Number of requests to Fastlane API",
+            ["method", "endpoint", "status_code"],
             registry=registry,
         )
-        self.request_count_per_url = {}
 
         self.request_duration = Summary(
             "fastlane_request_duration_milliseconds",
             "Duration of all requests to Fastlane API",
+            ["method", "endpoint", "status_code"],
             registry=registry,
         )
-        self.request_duration_per_url = {}
 
         self.request_duration_hist = Histogram(
             "fastlane_request_duration_hist_milliseconds",
             "Histogram of the duration of all requests to Fastlane API",
+            ["method", "endpoint", "status_code"],
             registry=registry,
         )
-        self.request_duration_hist_per_url = {}
 
         self.image_download_count = Counter(
             "fastlane_docker_image_download_count",
             "Number of all docker image downloads",
+            ["execution_id", "image", "tag"],
             registry=registry,
         )
-        self.image_download_count_per_image = {}
 
         self.image_download_duration = Summary(
             "fastlane_docker_image_download_duration_milliseconds",
             "Duration of all docker image downloads",
+            ["execution_id", "image", "tag"],
             registry=registry,
         )
         self.image_download_duration_per_image = {}
@@ -68,69 +69,43 @@ class Prometheus(BaseMetricsReporter):
         push_to_gateway(gateway, job=job, registry=self.registry)
         logger.info("Prometheus Pushgateway log done successfully.")
 
-    def report_request(self, url, status_code, ellapsed):
+    def report_request(self, method, url, status_code, ellapsed):
         url_key = slugify(url).replace("-", "_")
 
-        self.request_count.inc()
-        counter = self.request_count_per_url.get(url_key)
+        self.request_count.labels(method, url_key, status_code).inc()
 
-        if counter is None:
-            counter = self.request_count_per_url[url_key] = Counter(
-                f"fastlane_request_{url_key}_count",
-                f"Number of requests to Fastlane API for {url}",
-                registry=self.registry,
-            )
-        counter.inc()
+        self.request_duration.labels(method, url_key, status_code).observe(ellapsed)
 
-        self.request_duration.observe(ellapsed)
-        summ = self.request_duration_per_url.get(url_key)
-
-        if summ is None:
-            summ = self.request_duration_per_url[url_key] = Summary(
-                f"fastlane_request_duration_{url_key}_milliseconds",
-                f"Duration of requests to Fastlane API for {url}",
-                registry=self.registry,
-            )
-        summ.observe(ellapsed)
-
-        self.request_duration_hist.observe(ellapsed)
-        hist = self.request_duration_hist_per_url.get(url_key)
-
-        if hist is None:
-            hist = self.request_duration_hist_per_url[url_key] = Histogram(
-                f"fastlane_request_duration_hist_{url_key}_milliseconds",
-                f"Duration of requests to Fastlane API for {url}",
-                registry=self.registry,
-            )
-        hist.observe(ellapsed)
+        self.request_duration_hist.labels(method, url_key, status_code).observe(
+            ellapsed
+        )
 
         self.submit()
 
-    def report_image_download(self, image, tag, ellapsed):
+    def report_image_download(self, execution, image, tag, ellapsed):
         if not tag:
             tag = "latest"
-        image_key = f"{image}_{tag}"
 
-        self.image_download_count.inc()
-        counter = self.image_download_count_per_image.get(image_key)
+        self.image_download_count.labels(execution.execution_id, image, tag).inc()
 
-        if counter is None:
-            counter = self.image_download_count_per_image[image_key] = Counter(
-                f"fastlane_docker_image_download_{image_key}_count",
-                f"Number of downloads of {image}:{tag}.",
-                registry=self.registry,
-            )
-        counter.inc()
-
-        self.image_download_duration.observe(ellapsed)
-        summ = self.image_download_duration_per_image.get(image_key)
-
-        if summ is None:
-            summ = self.image_download_duration_per_image[image_key] = Summary(
-                f"fastlane_docker_image_download_duration_{image_key}_milliseconds",
-                f"Duration of download of docker image {image}:{tag}.",
-                registry=self.registry,
-            )
-        summ.observe(ellapsed)
+        self.image_download_duration.labels(execution.execution_id, image, tag).observe(
+            ellapsed
+        )
 
         self.submit(job="worker")
+
+    def report_job_run(self, execution, ellapsed):
+        pass
+        #  self.job_run_duration.observe(ellapsed)
+        #  execution_id = str(execution.execution_id)
+        #  summ = self.job_run_duration_per_image.get(execution_id)
+
+        #  if summ is None:
+        #  summ = self.job_run_duration_per_image[execution_id] = Summary(
+        #  f"fastlane_docker_job_run_duration_{execution_id}_milliseconds",
+        #  f"Duration of running docker container for execution {execution_id}.",
+        #  registry=self.registry,
+        #  )
+        #  summ.observe(ellapsed)
+
+        #  self.submit(job="worker")
