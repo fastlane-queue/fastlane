@@ -44,6 +44,10 @@ services:
       - 9090:9090
     depends_on:
       - exporter
+  push-gateway:
+    image: prom/pushgateway
+    ports:
+      - "9091:9091"
   exporter:
     image: prom/node-exporter:latest
     ports:

@@ -48,7 +48,6 @@ class Application:
         self.app = Flask("fastlane")
 
         self.app.register_metrics_reporter = self.register_metrics_reporter
-        self.app.report_metric = self.report_metric
 
         self.app.middlewares_to_register = []
         self.app.metrics_reporters = []
@@ -101,6 +100,8 @@ class Application:
 
         for (url, middleware) in self.app.middlewares_to_register:
             self.app = DispatcherMiddleware(self.app, {url: middleware})
+
+        self.app.report_metric = self.report_metric
 
     def register_metrics_reporter(self, reporter):
         self.app.metrics_reporters.append(reporter)

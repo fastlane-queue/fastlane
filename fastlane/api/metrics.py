@@ -12,6 +12,9 @@ class BaseMetricsReporter:
     def report_request(self, url, status_code, ellapsed):
         pass
 
+    def report_image_download(self, image, tag, ellapsed):
+        pass
+
 
 def init_app(app):
     def start_timer():
@@ -46,8 +49,9 @@ def init_app(app):
         if request_id:
             log_params["request_id"] = request_id
 
-        for reporter in current_app.metrics_reporters:
-            reporter.report_request(request.path, response.status_code, duration)
+        current_app.report_metric(
+            "report_request", request.path, response.status_code, duration
+        )
 
         if response.status_code < 400:
             current_app.logger.info("Request succeeded", **log_params)
