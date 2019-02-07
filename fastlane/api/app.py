@@ -20,10 +20,12 @@ from structlog.processors import (
     format_exc_info,
 )
 from structlog.stdlib import add_log_level, add_logger_name, filter_by_level
+from werkzeug.wsgi import DispatcherMiddleware
 
 # Fastlane
 import fastlane.api.gzipped as gzipped
 import fastlane.api.metrics as metrics
+import fastlane.api.prometheus as prometheus
 import fastlane.api.rqb as rqb
 from fastlane.api.enqueue import bp as enqueue
 from fastlane.api.execution import bp as execution_api
@@ -44,6 +46,12 @@ class Application:
 
     def create_app(self, testing):
         self.app = Flask("fastlane")
+
+        self.app.register_metrics_reporter = self.register_metrics_reporter
+        self.app.report_metric = self.report_metric
+
+        self.app.middlewares_to_register = []
+        self.app.metrics_reporters = []
 
         self.testing = testing
         self.app.testing = testing
@@ -82,11 +90,28 @@ class Application:
         self.app.register_blueprint(execution_api)
         self.app.register_blueprint(status)
 
+        prometheus.init_app(self.app)
+        self.app.register_blueprint(prometheus.bp)
+
         self.app.register_blueprint(gzipped.bp)
         gzipped.init_app(self.app)
 
         sockets = Sockets(self.app)
         sockets.register_blueprint(stream)
+
+        for (url, middleware) in self.app.middlewares_to_register:
+            self.app = DispatcherMiddleware(self.app, {url: middleware})
+
+    def register_metrics_reporter(self, reporter):
+        self.app.metrics_reporters.append(reporter)
+
+    def report_metric(self, method_name, *args, **kw):
+        for reporter in self.app.metrics_reporters:
+            method = getattr(reporter, method_name, None)
+
+            if method is None:
+                continue
+            method(*args, **kw)
 
     def configure_logging(self):
         if self.app.testing:

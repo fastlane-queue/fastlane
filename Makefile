@@ -45,6 +45,11 @@ ifdef COMPOSE
 	@docker-compose --project-name fastlane rm -f
 endif
 
+ps:
+ifdef COMPOSE
+	@docker-compose --project-name fastlane ps
+endif
+
 docker-build:
 	@docker build -t fastlane .
 

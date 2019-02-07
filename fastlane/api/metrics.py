@@ -8,6 +8,11 @@ from flask import Blueprint, current_app, g, request
 bp = Blueprint("metrics", __name__)  # pylint: disable=invalid-name
 
 
+class BaseMetricsReporter:
+    def report_request(self, url, status_code, ellapsed):
+        pass
+
+
 def init_app(app):
     def start_timer():
         request_id = request.headers.get("X-Request-ID", str(uuid4()))
@@ -40,6 +45,9 @@ def init_app(app):
 
         if request_id:
             log_params["request_id"] = request_id
+
+        for reporter in current_app.metrics_reporters:
+            reporter.report_request(request.path, response.status_code, duration)
 
         if response.status_code < 400:
             current_app.logger.info("Request succeeded", **log_params)

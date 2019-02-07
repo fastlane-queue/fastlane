@@ -315,6 +315,18 @@ six = "*"
 
 [[package]]
 category = "main"
+description = "Prometheus client instrumentation for flask. See http://github.com/sbarratt/flask-prometheus"
+name = "flask-prometheus"
+optional = false
+python-versions = "*"
+version = "0.0.1"
+
+[package.dependencies]
+Flask = ">=0.10"
+prometheus-client = ">=0.0.14"
+
+[[package]]
+category = "main"
 description = "Redis Extension for Flask Applications"
 name = "flask-redis"
 optional = false
@@ -669,6 +681,14 @@ six = "*"
 unidecode = "*"
 
 [[package]]
+category = "main"
+description = "Python client for the Prometheus monitoring system."
+name = "prometheus-client"
+optional = false
+python-versions = "*"
+version = "0.5.0"
+
+[[package]]
 category = "dev"
 description = "Library for building powerful interactive command lines in Python"
 marker = "python_version >= \"3.3\""
@@ -907,6 +927,14 @@ future = ">=0.14.0"
 jedi = ">=0.12"
 pluggy = "*"
 python-jsonrpc-server = "*"
+
+[[package]]
+category = "main"
+description = "A Python Slugify application that handles Unicode"
+name = "python-slugify"
+optional = false
+python-versions = "*"
+version = "2.0.1"
 
 [[package]]
 category = "dev"
@@ -1271,7 +1299,7 @@ python-versions = "*"
 version = "2.2.1"
 
 [metadata]
-content-hash = "1f1539aa9cd1461cc331693569aaddb5deca93dec5ceaf2457622a8ddc4b0c2f"
+content-hash = "f6b13f97e3e147b582110c51f7f84e32bd5a536678cc7bd01b94cb7ef273df9f"
 python-versions = "^3.6"
 
 [metadata.hashes]
@@ -1305,6 +1333,7 @@ flake8 = ["6a35f5b8761f45c5513e3405f110a86bea57982c3b75b766ce7b65217abe1670", "c
 flask = ["2271c0070dbcb5275fad4a82e29f23ab92682dc45f9dfbc22c02ba9b9322ce48", "a080b744b7e345ccfcbc77954861cb05b3c63786e93f2b3875e0913d44b43f05"]
 flask-cors = ["7ad56ee3b90d4955148fc25a2ecaa1124fc84298471e266a7fea59aeac4405a5", "7e90bf225fdf163d11b84b59fb17594d0580a16b97ab4e1146b1fb2737c1cfec"]
 flask-mongoengine = ["0f426aeafc4be2c37e9b4c0f8b5d02d012b7afc4b3b97a4119024684fe148fc1", "b6376b33cd1e624c09983a0884dc87303e54084f0e6b7f8df6794d56d35fa66f"]
+flask-prometheus = ["589eec403d263bf19f51c37e6fce25161bb2511ac198c8e4a6a3f8036a383c2c", "5b0dfaaa4b15849aebb47d4a50ea71c3afa5f4de404e0f2f9bc99cdb5d1e6f5d"]
 flask-redis = ["56ebd5e69a42988e9a7a904f07b37cd625a7dbcdfbfe31797885c3c4a92516f5", "ffb8e636c7af0226a3074860200602850a5a871169bc53fcde05b7d973aad714"]
 flask-redis-sentinel = ["0deb2bef4977144a008bae2457c931ff8b1f3f97dce94c09003ed360e39f89a4", "a17ef135f607f1531fd80a283368ef5f11ecf5a4237b48fd192549e8c8998f02"]
 flask-sockets = ["072927da8edca0e81e024f5787e643c87d80b351b714de95d723becb30e0643b", "350a76d55f5889f64afd2ca9b32f262680b7960965f0830365576307d30cfe1e"]
@@ -1338,6 +1367,7 @@ pexpect = ["2a8e88259839571d1251d278476f3eec5db26deb73a70be5ed5dc5435e418aba", "
 pickleshare = ["87683d47965c1da65cdacaf31c8441d12b8044cdec9aca500cd78fc2c683afca", "9649af414d74d4df115d5d718f82acb59c9d418196b7b4290ed47a12ce62df56"]
 pluggy = ["447ba94990e8014ee25ec853339faf7b0fc8050cdc3289d4d71f7f410fb90095", "bde19360a8ec4dfd8a20dcb811780a30998101f078fc7ded6162f0076f50508f"]
 preggy = ["1c825448a40412ffb70c85c2de438bcfce0bd1842a0843f46f75b600a074913c"]
+prometheus-client = ["e8c11ff5ca53de6c3d91e1510500611cafd1d247a937ec6c588a0a7cc3bef93c"]
 prompt-toolkit = ["c1d6aff5252ab2ef391c2fe498ed8c088066f66bc64a8d5c095bbf795d9fec34", "d4c47f79b635a0e70b84fdb97ebd9a274203706b1ee5ed44c10da62755cf3ec9", "fd17048d8335c1e6d5ee403c3569953ba3eb8555d710bfc548faf0712666ea39"]
 ptyprocess = ["923f299cc5ad920c68f2bc0bc98b75b9f838b93b599941a6b63ddbc2476394c0", "d7cc528d76e76342423ca640335bd3633420dc1366f258cb31d05e865ef5ca1f"]
 py = ["bf92637198836372b520efcba9e020c330123be8ce527e535d185ed4b6f45694", "e76826342cefe3c3d5f7e8ee4316b80d1dd8a300781612ddbc765c17ba25a6c6"]
@@ -1360,6 +1390,7 @@ pytest-watch = ["06136f03d5b361718b8d0d234042f7b2f203910d8568f63df2f866b547b3d4b
 python-dateutil = ["063df5763652e21de43de7d9e00ccf239f953a832941e37be541614732cdfc93", "88f9287c0174266bb0d8cedd395cfba9c58e87e5ad86b2ce58859bc11be3cf02"]
 python-jsonrpc-server = ["533434fa982eb42c36ddb0b6758cef8e6eaf46d014f76b70a401b8790a3e6d57"]
 python-language-server = ["51d238ffefda57b23e4a4cf728532ab0a70b778fc7fa765d7a910fd08683d2fa"]
+python-slugify = ["d3e034397236020498e677a35e5c05dcc6ba1624b608b9ef7e5fe3090ccbd5a8"]
 pytz = ["32b0891edff07e28efe91284ed9c31e123d84bea3fd98e1f72be2508f43ef8d9", "d5f05e487007e29e03409f9398d074e158d920d36eb82eaf66fb1136b0c5374c"]
 pywin32 = ["22e218832a54ed206452c8f3ca9eff07ef327f8e597569a4c2828be5eaa09a77", "32b37abafbfeddb0fe718008d6aada5a71efa2874f068bee1f9e703983dcc49a", "35451edb44162d2f603b5b18bd427bc88fcbc74849eaa7a7e7cfe0f507e5c0c8", "4eda2e1e50faa706ff8226195b84fbcbd542b08c842a9b15e303589f85bfb41c", "5f265d72588806e134c8e1ede8561739071626ea4cc25c12d526aa7b82416ae5", "6852ceac5fdd7a146b570655c37d9eacd520ed1eaeec051ff41c6fc94243d8bf", "6dbc4219fe45ece6a0cc6baafe0105604fdee551b5e876dc475d3955b77190ec", "9bd07746ce7f2198021a9fa187fa80df7b221ec5e4c234ab6f00ea355a3baf99"]
 pyyaml = ["1cbc199009e78f92d9edf554be4fe40fb7b0bef71ba688602a00e97a51909110", "254bf6fda2b7c651837acb2c718e213df29d531eebf00edb54743d10bcb694eb", "3108529b78577327d15eec243f0ff348a0640b0c3478d67ad7f5648f93bac3e2", "3c17fb92c8ba2f525e4b5f7941d850e7a48c3a59b32d331e2502a3cdc6648e76", "6f89b5c95e93945b597776163403d47af72d243f366bf4622ff08bdfd1c950b7", "8d6d96001aa7f0a6a4a95e8143225b5d06e41b1131044913fecb8f85a125714b", "be622cc81696e24d0836ba71f6272a2b5767669b0d79fdcf0295d51ac2e156c8", "c8a88edd93ee29ede719080b2be6cb2333dfee1dccba213b422a9c8e97f2967b", "f39411e380e2182ad33be039e8ee5770a5d9efe01a2bfb7ae58d9ba31c4a2a9d"]
