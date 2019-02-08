@@ -9,6 +9,7 @@ pages:
   - 'Configuration':
     - 'Installing and Running': install.md
     - 'Configuration Options': configuration.md
+    - 'Metrics': metrics.md
   - 'Reference':
     - 'Executors': executors.md
     - 'Architecture and Design': architecture.md

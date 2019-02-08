@@ -1,6 +1,7 @@
 # Standard Library
 import logging
 import sys
+import traceback
 from json import loads
 
 # 3rd Party
@@ -25,7 +26,6 @@ from werkzeug.wsgi import DispatcherMiddleware
 # Fastlane
 import fastlane.api.gzipped as gzipped
 import fastlane.api.metrics as metrics
-import fastlane.api.prometheus as prometheus
 import fastlane.api.rqb as rqb
 from fastlane.api.enqueue import bp as enqueue
 from fastlane.api.execution import bp as execution_api
@@ -89,8 +89,7 @@ class Application:
         self.app.register_blueprint(execution_api)
         self.app.register_blueprint(status)
 
-        prometheus.init_app(self.app)
-        self.app.register_blueprint(prometheus.bp)
+        self.load_metrics_reporters()
 
         self.app.register_blueprint(gzipped.bp)
         gzipped.init_app(self.app)
@@ -103,6 +102,24 @@ class Application:
 
         self.app.report_metric = self.report_metric
 
+    def load_metrics_reporters(self):
+        for fullname in self.config.METRICS_REPORTERS:
+            parts = fullname.split(".")
+            reporter = __import__(".".join(parts), None, None, [parts[-1]], 0)
+
+            if hasattr(reporter, "init_app"):
+                reporter.init_app(self.app)
+                self.app.logger.info(
+                    "Metrics Reporter init_app worked successfully.", reporter=fullname
+                )
+
+            if hasattr(reporter, "bp"):
+                self.app.register_blueprint(reporter.bp)
+                self.app.logger.info(
+                    "Metrics Reporter blueprint registered successfully.",
+                    reporter=fullname,
+                )
+
     def register_metrics_reporter(self, reporter):
         self.app.metrics_reporters.append(reporter)
 
@@ -112,7 +129,12 @@ class Application:
 
             if method is None:
                 continue
-            method(*args, **kw)
+            try:
+                method(*args, **kw)
+            except Exception:
+                self.app.logger.error(
+                    "Failed to run metrics reporter.", error=traceback.format_exc()
+                )
 
     def configure_logging(self):
         if self.app.testing:

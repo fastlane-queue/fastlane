@@ -12,10 +12,29 @@ class BaseMetricsReporter:
     def report_request(self, method, url, status_code, ellapsed):
         pass
 
-    def report_image_download(self, execution, image, tag, ellapsed):
+    def report_image_download(self, job, execution, image, tag, docker_host, ellapsed):
         pass
 
-    def report_job_run(self, execution, ellapsed):
+    def report_job_run(self, job, execution, docker_host, ellapsed):
+        pass
+
+    def report_container_metrics(
+        self,
+        job,
+        execution,
+        docker_host,
+        container_id,
+        rss,
+        total_rss,
+        total_cpu_usage,
+        system_cpu_usage,
+        per_cpu_usage,
+    ):
+        pass
+
+    def report_container_result(
+        self, job, execution, docker_host, container_id, status, ellapsed
+    ):
         pass
 
 

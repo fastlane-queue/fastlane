@@ -3,6 +3,7 @@ from flask import Blueprint, current_app
 from prometheus_client import (
     CollectorRegistry,
     Counter,
+    Gauge,
     Histogram,
     Summary,
     push_to_gateway,
@@ -27,40 +28,53 @@ class Prometheus(BaseMetricsReporter):
         self.registry = registry
 
         self.request_count = Counter(
-            "fastlane_request_count",
+            "fastlane_req_count",
             "Number of requests to Fastlane API",
             ["method", "endpoint", "status_code"],
             registry=registry,
         )
 
         self.request_duration = Summary(
-            "fastlane_request_duration_milliseconds",
+            "fastlane_req_duration_ms",
             "Duration of all requests to Fastlane API",
             ["method", "endpoint", "status_code"],
             registry=registry,
         )
 
         self.request_duration_hist = Histogram(
-            "fastlane_request_duration_hist_milliseconds",
+            "fastlane_req_duration_histogram",
             "Histogram of the duration of all requests to Fastlane API",
             ["method", "endpoint", "status_code"],
             registry=registry,
         )
 
         self.image_download_count = Counter(
-            "fastlane_docker_image_download_count",
+            "fastlane_image_download_count",
             "Number of all docker image downloads",
-            ["execution_id", "image", "tag"],
+            ["task_id", "job_id", "execution_id", "image", "tag", "docker_host"],
             registry=registry,
         )
 
         self.image_download_duration = Summary(
-            "fastlane_docker_image_download_duration_milliseconds",
+            "fastlane_image_download_ms",
             "Duration of all docker image downloads",
-            ["execution_id", "image", "tag"],
+            ["task_id", "job_id", "execution_id", "image", "tag", "docker_host"],
             registry=registry,
         )
-        self.image_download_duration_per_image = {}
+
+        self.docker_run_count = Counter(
+            "fastlane_docker_run_count",
+            "Number of all docker API run commands",
+            ["task_id", "job_id", "execution_id", "docker_host"],
+            registry=registry,
+        )
+
+        self.docker_run_duration = Summary(
+            "fastlane_docker_run_ms",
+            "Duration of all docker API run commands",
+            ["task_id", "job_id", "execution_id", "docker_host"],
+            registry=registry,
+        )
 
     def submit(self, job="api"):
         gateway = current_app.config["PROMETHEUS_PUSHGATEWAY_ADDR"]
@@ -82,30 +96,182 @@ class Prometheus(BaseMetricsReporter):
 
         self.submit()
 
-    def report_image_download(self, execution, image, tag, ellapsed):
+    def report_image_download(self, job, execution, image, tag, docker_host, ellapsed):
         if not tag:
             tag = "latest"
 
-        self.image_download_count.labels(execution.execution_id, image, tag).inc()
+        self.image_download_count.labels(
+            job.task.task_id,
+            str(job.job_id),
+            execution.execution_id,
+            image,
+            tag,
+            docker_host,
+        ).inc()
 
-        self.image_download_duration.labels(execution.execution_id, image, tag).observe(
-            ellapsed
-        )
+        self.image_download_duration.labels(
+            job.task.task_id,
+            str(job.job_id),
+            execution.execution_id,
+            image,
+            tag,
+            docker_host,
+        ).observe(ellapsed)
 
         self.submit(job="worker")
 
-    def report_job_run(self, execution, ellapsed):
-        pass
-        #  self.job_run_duration.observe(ellapsed)
-        #  execution_id = str(execution.execution_id)
-        #  summ = self.job_run_duration_per_image.get(execution_id)
+    def report_job_run(self, job, execution, docker_host, ellapsed):
+        self.docker_run_count.labels(
+            job.task.task_id, str(job.job_id), execution.execution_id, docker_host
+        ).inc()
 
-        #  if summ is None:
-        #  summ = self.job_run_duration_per_image[execution_id] = Summary(
-        #  f"fastlane_docker_job_run_duration_{execution_id}_milliseconds",
-        #  f"Duration of running docker container for execution {execution_id}.",
-        #  registry=self.registry,
-        #  )
-        #  summ.observe(ellapsed)
+        self.docker_run_duration.labels(
+            job.task.task_id, str(job.job_id), execution.execution_id, docker_host
+        ).observe(ellapsed)
 
-        #  self.submit(job="worker")
+        self.submit(job="worker")
+
+    def report_container_metrics(  # pylint: disable=too-many-arguments
+        self,
+        job,
+        execution,
+        docker_host,
+        container_id,
+        rss,
+        total_rss,
+        total_cpu_usage,
+        system_cpu_usage,
+        per_cpu_usage,
+    ):
+        if rss is not None:
+            metric = Gauge(
+                "fastlane_container_memory_rss",
+                "Container stats - memory rss",
+                ["task_id", "job_id", "execution_id", "docker_host", "container_id"],
+                registry=self.registry,
+            )
+            metric.labels(
+                job.task.task_id,
+                str(job.job_id),
+                execution.execution_id,
+                docker_host,
+                container_id,
+            ).set(rss)
+
+        if total_rss is not None:
+            metric = Gauge(
+                "fastlane_container_memory_total_rss",
+                "Container stats - memory total rss",
+                ["task_id", "job_id", "execution_id", "docker_host", "container_id"],
+                registry=self.registry,
+            )
+            metric.labels(
+                job.task.task_id,
+                str(job.job_id),
+                execution.execution_id,
+                docker_host,
+                container_id,
+            ).set(total_rss)
+
+        if system_cpu_usage is not None:
+            metric = Gauge(
+                "fastlane_container_system_cpu_usage",
+                "Container stats - system cpu usage",
+                ["task_id", "job_id", "execution_id", "docker_host", "container_id"],
+                registry=self.registry,
+            )
+            metric.labels(
+                job.task.task_id,
+                str(job.job_id),
+                execution.execution_id,
+                docker_host,
+                container_id,
+            ).set(system_cpu_usage)
+
+        if total_cpu_usage is not None:
+            metric = Gauge(
+                "fastlane_container_total_cpu_usage",
+                "Container stats - total cpu usage",
+                ["task_id", "job_id", "execution_id", "docker_host", "container_id"],
+                registry=self.registry,
+            )
+            metric.labels(
+                job.task.task_id,
+                str(job.job_id),
+                execution.execution_id,
+                docker_host,
+                container_id,
+            ).set(total_cpu_usage)
+
+        if per_cpu_usage is not None:
+            for index, cpu_usage in enumerate(per_cpu_usage):
+                metric = Gauge(
+                    f"fastlane_container_per_cpu_usage_{index}",
+                    "Container stats - cpu usage per cpu index",
+                    [
+                        "task_id",
+                        "job_id",
+                        "execution_id",
+                        "docker_host",
+                        "container_id",
+                    ],
+                    registry=self.registry,
+                )
+                metric.labels(
+                    job.task.task_id,
+                    str(job.job_id),
+                    execution.execution_id,
+                    docker_host,
+                    container_id,
+                ).set(cpu_usage)
+
+        self.submit()
+
+    def report_container_result(
+        self, job, execution, docker_host, container_id, status, ellapsed
+    ):
+        container_duration = Summary(
+            "fastlane_container_duration_ms",
+            "Duration of container execution",
+            [
+                "task_id",
+                "job_id",
+                "execution_id",
+                "docker_host",
+                "container_id",
+                "status",
+            ],
+            registry=self.registry,
+        )
+        container_duration.labels(
+            job.task.task_id,
+            str(job.job_id),
+            execution.execution_id,
+            docker_host,
+            container_id,
+            status,
+        ).observe(ellapsed)
+
+        container_duration_hist = Histogram(
+            "fastlane_container_duration_histogram",
+            "Histogram of duration of container execution",
+            [
+                "task_id",
+                "job_id",
+                "execution_id",
+                "docker_host",
+                "container_id",
+                "status",
+            ],
+            registry=self.registry,
+        )
+        container_duration_hist.labels(
+            job.task.task_id,
+            str(job.job_id),
+            execution.execution_id,
+            docker_host,
+            container_id,
+            status,
+        ).observe(ellapsed)
+
+        self.submit()

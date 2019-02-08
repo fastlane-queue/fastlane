@@ -84,13 +84,6 @@ def download_image(executor, job, ex, image, tag, command, logger):
         before = time.time()
         executor.update_image(job.task, job, ex, image, tag)
         ellapsed = time.time() - before
-        current_app.report_metric(
-            "report_image_download",
-            execution=ex,
-            image=image,
-            tag=tag,
-            ellapsed=(ellapsed * 1000.0),
-        )
         logger.info(
             "Image downloaded successfully.", image=image, tag=tag, ellapsed=ellapsed
         )
@@ -142,9 +135,6 @@ def run_container(executor, job, ex, image, tag, command, logger):
         executor.run(job.task, job, ex, image, tag, command)
         ellapsed = time.time() - before
 
-        current_app.report_metric(
-            "report_job_run", execution=ex, ellapsed=(ellapsed * 1000.0)
-        )
         logger.info(
             "Container started successfully.",
             image=image,
@@ -464,7 +454,7 @@ def monitor_job(task_id, job_id, execution_id):
                 seconds=1,
             )
 
-            interval = timedelta(seconds=5)
+            interval = timedelta(seconds=1)
             scheduler.enqueue_in(interval, monitor_job, task_id, job_id, execution_id)
 
             return True

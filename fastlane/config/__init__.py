@@ -196,3 +196,10 @@ Config.define(
     "Total items per page to be used on api pagination methods",
     "API",
 )
+
+Config.define(
+    "METRICS_REPORTERS",
+    ["fastlane.api.prometheus"],
+    "Metrics reporters blueprints to load",
+    "Metrics",
+)

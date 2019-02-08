@@ -1,6 +1,7 @@
 # Standard Library
 import random
 import re
+import time
 import traceback
 from json import loads
 
@@ -314,6 +315,8 @@ class Executor:
         )
 
     def update_image(self, task, job, execution, image, tag, blacklisted_hosts=None):
+        start_time = time.time()
+
         if blacklisted_hosts is None:
             blacklisted_hosts = self.get_blacklisted_hosts()
 
@@ -362,10 +365,23 @@ class Executor:
 
         try:
             run(logger)
+
+            ellapsed = time.time() - start_time
+            current_app.report_metric(
+                "report_image_download",
+                job=job,
+                execution=execution,
+                image=image,
+                tag=tag,
+                docker_host=f"{host}:{port}",
+                ellapsed=(ellapsed * 1000.0),
+            )
         except pybreaker.CircuitBreakerError as err:
             raise HostUnavailableError(host, port, err) from err
 
     def run(self, task, job, execution, image, tag, command, blacklisted_hosts=None):
+        start_time = time.time()
+
         logger = self.logger.bind(
             task_id=task.task_id,
             job_id=str(job.job_id),
@@ -429,6 +445,16 @@ class Executor:
 
         try:
             run(logger)
+
+            ellapsed = time.time() - start_time
+
+            current_app.report_metric(
+                "report_job_run",
+                job=job,
+                execution=execution,
+                docker_host=f"{docker_host}:{docker_port}",
+                ellapsed=(ellapsed * 1000.0),
+            )
         except pybreaker.CircuitBreakerError as err:
             raise HostUnavailableError(host, port, err) from err
 
@@ -511,6 +537,33 @@ class Executor:
             STATUS.get(container.status, ExecutionResult.Status.done)
         )
 
+        stats = container.stats(stream=False)
+
+        # memory_stats.stats.rss
+        # memory_stats.stats.total_rss
+        # cpu_stats.cpu_usage.total_usage
+        # cpu_stats.cpu_usage.system_usage
+        # cpu_stats.cpu_usage.percpu_usage (add cpu # label)
+
+        current_app.report_metric(
+            "report_container_metrics",
+            job=job,
+            execution=execution,
+            docker_host=f"{host}:{port}",
+            container_id=container_id,
+            rss=stats.get("memory_stats", {}).get("stats", {}).get("rss", None),
+            total_rss=stats.get("memory_stats", {})
+            .get("stats", {})
+            .get("total_rss", None),
+            total_cpu_usage=stats.get("cpu_stats", {})
+            .get("cpu_usage", {})
+            .get("total_usage", None),
+            system_cpu_usage=stats.get("cpu_stats", {}).get("system_cpu_usage", None),
+            per_cpu_usage=stats.get("cpu_stats", {})
+            .get("cpu_usage", {})
+            .get("percpu_usage", None),
+        )
+
         state = container.attrs["State"]
         result.exit_code = state["ExitCode"]
         result.error = state["Error"]
@@ -532,6 +585,18 @@ class Executor:
             # TODO: Use circuit in this point
             result.finished_at = convert_date(state["FinishedAt"])
             result.log = container.logs(stdout=True, stderr=False)
+
+            ellapsed = (result.finished_at - result.started_at).total_seconds() * 1000
+
+            current_app.report_metric(
+                "report_container_result",
+                job=job,
+                execution=execution,
+                docker_host=f"{host}:{port}",
+                container_id=container_id,
+                status=result.status,
+                ellapsed=ellapsed,
+            )
 
             if result.error != "":
                 logs = container.logs(stdout=False, stderr=True).decode("utf-8")
