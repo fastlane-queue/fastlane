@@ -131,10 +131,10 @@ class Application:
                 continue
             try:
                 method(*args, **kw)
-            except Exception:
-                self.app.logger.error(
-                    "Failed to run metrics reporter.", error=traceback.format_exc()
-                )
+            except Exception as err:
+                msg = "Failed to run metrics reporter."
+                self.app.logger.error(msg, error=traceback.format_exc())
+                self.report_error(err)
 
     def configure_logging(self):
         if self.app.testing:

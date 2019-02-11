@@ -315,6 +315,14 @@ class Executor:
         )
 
     def update_image(self, task, job, execution, image, tag, blacklisted_hosts=None):
+        current_app.report_metric(
+            "report_image_download_start",
+            job=job,
+            execution=execution,
+            image=image,
+            tag=tag,
+        )
+
         start_time = time.time()
 
         if blacklisted_hosts is None:
@@ -378,6 +386,14 @@ class Executor:
             )
         except pybreaker.CircuitBreakerError as err:
             raise HostUnavailableError(host, port, err) from err
+        finally:
+            current_app.report_metric(
+                "report_image_download_end",
+                job=job,
+                execution=execution,
+                image=image,
+                tag=tag,
+            )
 
     def run(self, task, job, execution, image, tag, command, blacklisted_hosts=None):
         start_time = time.time()
@@ -402,6 +418,13 @@ class Executor:
         docker_port = execution.metadata["docker_port"]
         host, port, client = self.pool.get_client(
             self, task.task_id, docker_host, docker_port
+        )
+
+        current_app.report_metric(
+            "report_job_run_start",
+            job=job,
+            execution=execution,
+            docker_host=f"{docker_host}:{docker_port}",
         )
 
         logger = logger.bind(host=host, port=port)
@@ -457,6 +480,13 @@ class Executor:
             )
         except pybreaker.CircuitBreakerError as err:
             raise HostUnavailableError(host, port, err) from err
+        finally:
+            current_app.report_metric(
+                "report_job_run_end",
+                job=job,
+                execution=execution,
+                docker_host=f"{docker_host}:{docker_port}",
+            )
 
         return True
 

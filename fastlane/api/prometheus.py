@@ -62,6 +62,13 @@ class Prometheus(BaseMetricsReporter):
             registry=registry,
         )
 
+        self.image_download_current = Gauge(
+            "fastlane_image_downloads_current",
+            "Current image downloads",
+            ["task_id", "job_id", "execution_id", "image", "tag"],
+            registry=self.registry,
+        )
+
         self.docker_run_count = Counter(
             "fastlane_docker_run_count",
             "Number of all docker API run commands",
@@ -74,6 +81,13 @@ class Prometheus(BaseMetricsReporter):
             "Duration of all docker API run commands",
             ["task_id", "job_id", "execution_id", "docker_host"],
             registry=registry,
+        )
+
+        self.docker_run_current = Gauge(
+            "fastlane_docker_run_current",
+            "Current docker run commands being run in the API",
+            ["task_id", "job_id", "execution_id", "docker_host"],
+            registry=self.registry,
         )
 
     def submit(self, job="api"):
@@ -95,6 +109,18 @@ class Prometheus(BaseMetricsReporter):
         )
 
         self.submit()
+
+    def report_image_download_start(self, job, execution, image, tag):
+        self.image_download_current.labels(
+            job.task.task_id, str(job.job_id), execution.execution_id, image, tag
+        ).inc()
+        self.submit(job="worker")
+
+    def report_image_download_end(self, job, execution, image, tag):
+        self.image_download_current.labels(
+            job.task.task_id, str(job.job_id), execution.execution_id, image, tag
+        ).dec()
+        self.submit(job="worker")
 
     def report_image_download(self, job, execution, image, tag, docker_host, ellapsed):
         if not tag:
@@ -118,6 +144,18 @@ class Prometheus(BaseMetricsReporter):
             docker_host,
         ).observe(ellapsed)
 
+        self.submit(job="worker")
+
+    def report_job_run_start(self, job, execution, docker_host):
+        self.docker_run_current.labels(
+            job.task.task_id, str(job.job_id), execution.execution_id, docker_host
+        ).inc()
+        self.submit(job="worker")
+
+    def report_job_run_end(self, job, execution, docker_host):
+        self.docker_run_current.labels(
+            job.task.task_id, str(job.job_id), execution.execution_id, docker_host
+        ).dec()
         self.submit(job="worker")
 
     def report_job_run(self, job, execution, docker_host, ellapsed):
@@ -225,7 +263,7 @@ class Prometheus(BaseMetricsReporter):
                     container_id,
                 ).set(cpu_usage)
 
-        self.submit()
+        self.submit(job="worker")
 
     def report_container_result(
         self, job, execution, docker_host, container_id, status, ellapsed
@@ -274,4 +312,4 @@ class Prometheus(BaseMetricsReporter):
             status,
         ).observe(ellapsed)
 
-        self.submit()
+        self.submit(job="worker")
