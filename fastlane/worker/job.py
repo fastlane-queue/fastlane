@@ -251,9 +251,9 @@ def run_job(task_id, job_id, execution_id, image, command):
             "Job status changed successfully.", status=JobExecution.Status.running
         )
 
-        app.monitor_queue.enqueue(
-            monitor_job, task_id, job_id, ex.execution_id, timeout=-1
-        )
+        scheduler = Scheduler("monitor", connection=app.redis)
+        interval = timedelta(seconds=1)
+        scheduler.enqueue_in(interval, monitor_job, task_id, job_id, ex.execution_id)
 
         return True
     except Exception as err:
@@ -752,3 +752,42 @@ def send_webhook(
             logger.info("Webhook dispatch retry scheduled.", date=delta)
 
     return True
+
+
+def enqueue_missing_monitor_jobs(app):
+    # find running/created executions
+    executions = Job.get_unfinished_executions()
+
+    # verify if they are scheduled to be monitored
+    all_monitored = app.redis.zrange("rq:scheduler:scheduled_jobs", 0, -1)
+    monitored_jobs = set()
+
+    for monitored in all_monitored:
+        details = app.redis.hgetall(f"rq:job:{monitored.decode('utf-8')}")
+        monitored_jobs.add(details[b"description"].decode("utf-8"))
+
+    executions_to_monitor = []
+    for (job, execution) in executions:
+        command = (
+            "fastlane.worker.job.monitor_job("
+            f"'{job.task.task_id}', '{job.job_id}', '{execution.execution_id}')"
+        )
+        if command in monitored_jobs:
+            continue
+        executions_to_monitor.append((job, execution))
+
+    if not executions_to_monitor:
+        return
+
+    current_app.logger.info(
+        "Found executions missing monitoring. Enqueueing monitor.",
+        executions=len(executions_to_monitor),
+    )
+
+    # enqueue if execution not scheduled to be monitored
+    scheduler = Scheduler("monitor", connection=app.redis)
+    for (job, execution) in executions_to_monitor:
+        interval = timedelta(seconds=5)
+        scheduler.enqueue_in(
+            interval, monitor_job, job.task.task_id, job.job_id, execution.execution_id
+        )

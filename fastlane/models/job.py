@@ -187,3 +187,31 @@ class Job(db.Document):
             return None
 
         return self.executions[-1]
+
+    @classmethod
+    def get_unfinished_executions(cls):
+        query = {
+            "executions": {
+                "$elemMatch": {
+                    "$or": [
+                        {"status": JobExecution.Status.pulling},
+                        {"status": JobExecution.Status.running},
+                    ]
+                }
+            }
+        }
+        jobs = Job.objects(__raw__=query)
+
+        execs = []
+
+        for job in jobs:
+            for execution in job.executions:
+                if execution.status not in [
+                    JobExecution.Status.running,
+                    JobExecution.Status.pulling,
+                ]:
+                    continue
+
+                execs.append((job, execution))
+
+        return execs

@@ -3,9 +3,10 @@ from uuid import uuid4
 
 # 3rd Party
 from preggy import expect
+from tests.fixtures.models import JobExecutionFixture
 
 # Fastlane
-from fastlane.models import Job, Task
+from fastlane.models import Job, JobExecution, Task
 
 
 # Must inject client to connect to redis and DB
@@ -68,3 +69,30 @@ def test_job_get_by_job_id(client):  # pylint: disable=unused-argument
 
     topic = Job.get_by_id("invalid", "invalid")
     expect(topic).to_be_null()
+
+
+def test_get_unfinished_executions(client):
+    with client.application.app_context():
+        app = client.application
+        app.redis.flushall()
+
+        for status in [
+            JobExecution.Status.enqueued,
+            JobExecution.Status.pulling,
+            JobExecution.Status.running,
+            JobExecution.Status.done,
+            JobExecution.Status.failed,
+        ]:
+            _, job, execution = JobExecutionFixture.new_defaults()
+            execution.status = status
+            job.save()
+
+        topic = Job.get_unfinished_executions()
+        expect(topic).to_length(2)
+
+        for (_, execution) in topic:
+            expect(execution).to_be_instance_of(JobExecution)
+            expect(
+                execution.status
+                in [JobExecution.Status.pulling, JobExecution.Status.running]
+            ).to_be_true()

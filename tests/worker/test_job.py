@@ -6,11 +6,12 @@ from unittest.mock import MagicMock
 import pytest
 from preggy import expect
 from rq import Queue, SimpleWorker
+from rq_scheduler import Scheduler
 from tests.fixtures.models import JobExecutionFixture
 
 # Fastlane
 import fastlane.worker.job as job_mod
-from fastlane.models import JobExecution, Task
+from fastlane.models import JobExecution
 
 
 def test_run_job1(client):
@@ -48,6 +49,14 @@ def test_run_job1(client):
         expect(execution.image).to_equal("image")
         expect(execution.command).to_equal("command")
 
+        hash_key = "rq:scheduler:scheduled_jobs"
+        res = app.redis.exists(hash_key)
+        expect(res).to_be_true()
+
+        res = app.redis.zrange(hash_key, 0, -1)
+        expect(res).to_length(1)
+        monitored_key = res[0].decode("utf-8")
+
         hash_key = f"rq:job:{result.id}"
 
         res = app.redis.exists(hash_key)
@@ -59,23 +68,9 @@ def test_run_job1(client):
         res = app.redis.hexists(hash_key, "data")
         expect(res).to_be_true()
 
-        keys = app.redis.keys()
-        next_job_id = [
-            key
-
-            for key in keys
-
-            if key.decode("utf-8").startswith("rq:job")
-            and not key.decode("utf-8").endswith(result.id)
-        ]
-        expect(next_job_id).to_length(1)
-        next_job_id = next_job_id[0]
-
+        next_job_id = f"rq:job:{monitored_key}"
         res = app.redis.exists(next_job_id)
         expect(res).to_be_true()
-
-        res = app.redis.hget(next_job_id, "status")
-        expect(res).to_equal("queued")
 
         res = app.redis.hexists(next_job_id, "data")
         expect(res).to_be_true()
@@ -85,11 +80,9 @@ def test_run_job1(client):
 
         res = app.redis.hget(next_job_id, "description")
         expect(res).to_equal(
-            f"fastlane.worker.job.monitor_job('{task.task_id}', '{job.job_id}', '{execution.execution_id}')"
+            f"fastlane.worker.job.monitor_job('{task.task_id}', "
+            f"'{job.job_id}', '{execution.execution_id}')"
         )
-
-        res = app.redis.hget(next_job_id, "timeout")
-        expect(res).to_equal("-1")
 
         task.reload()
         expect(task.jobs[0].executions[0].status).to_equal(JobExecution.Status.running)
@@ -342,3 +335,41 @@ def test_monitor_job_with_retry2(client):
             and not key.decode("utf-8").endswith(result.id)
         ]
         expect(next_job_id).to_length(0)
+
+
+def test_enqueue_missing1(client):
+    """Test self-healing enqueueing missing monitor jobs"""
+    with client.application.app_context():
+        app = client.application
+        app.redis.flushall()
+
+        for status in [
+            JobExecution.Status.enqueued,
+            JobExecution.Status.pulling,
+            JobExecution.Status.running,
+            JobExecution.Status.done,
+            JobExecution.Status.failed,
+        ]:
+            _, job, execution = JobExecutionFixture.new_defaults()
+            execution.status = status
+            job.save()
+
+            if status == JobExecution.Status.pulling:
+                scheduler = Scheduler("monitor", connection=app.redis)
+                interval = timedelta(seconds=1)
+                scheduler.enqueue_in(
+                    interval,
+                    job_mod.monitor_job,
+                    job.task.task_id,
+                    job.job_id,
+                    execution.execution_id,
+                )
+
+        job_mod.enqueue_missing_monitor_jobs(app)
+
+        hash_key = "rq:scheduler:scheduled_jobs"
+        res = app.redis.exists(hash_key)
+        expect(res).to_be_true()
+
+        res = app.redis.zrange(hash_key, 0, -1)
+        expect(res).to_length(2)

@@ -51,7 +51,7 @@ connect to sentinel to get redis host.""",
 
 Config.define(
     "WORKER_SLEEP_TIME_MS",
-    10,
+    1000,
     "Number of milliseconds that fastlane must sleep before getting the next job",
     "Worker",
 )

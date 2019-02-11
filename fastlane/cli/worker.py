@@ -9,6 +9,7 @@ from rq import Connection, Worker
 # Fastlane
 from fastlane.api.app import Application
 from fastlane.config import Config
+from fastlane.worker.job import enqueue_missing_monitor_jobs
 from fastlane.worker.scheduler import QueueScheduler
 
 
@@ -82,6 +83,7 @@ class WorkerHandler:
 
                         # app.logger.debug('Processing queues...')
                         worker.work(burst=True)
+                        enqueue_missing_monitor_jobs(app.app)
                         time.sleep(interval)
                 except rq.worker.StopRequested:
                     app.logger.info("Worker exiting gracefully.")

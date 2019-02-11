@@ -38,7 +38,7 @@ Instead of the tedious, repetitive work of yesteryear where you had to implement
 -   [x]  Web hooks on job completion;
 -   [x]  Redact any env that contains blacklisted keywords;
 -   [ ]  Exponential back-off parameters per job;
--   [ ]  Self-healing handling of interrupted jobs;
+-   [x]  Self-healing handling of interrupted jobs;
 -   [x]  Workers should handle SIGTERM and exit gracefully;
 -   [x]  [Docker](https://docs.docker.com/) Container Runner (with [docker](https://docs.docker.com/) host pool);
 -   [x]  [Docker](https://docs.docker.com/) Pool per task name (Regular Expressions);
