@@ -7,6 +7,7 @@ from flask import Blueprint, current_app
 
 # Fastlane
 from fastlane.models import Job, JobExecution
+from fastlane.worker.errors import ContainerUnavailableError
 
 bp = Blueprint("stream", __name__)  # pylint: disable=invalid-name
 
@@ -36,6 +37,21 @@ def stream_log(executor, task_id, job, ex, websocket):
                 return
             websocket.send(log)
     except BrokenPipeError:
+        websocket.close(message="wsretry")
+
+        return
+    except ContainerUnavailableError as err:
+        current_app.report_error(
+            err,
+            metadata=dict(
+                operation="Job Execution Stream",
+                task_id=task_id,
+                job_id=job.job_id,
+                execution_id=ex.execution_id,
+            ),
+        )
+        websocket.close(message="wsretry")
+
         return
 
     websocket.close(message="wsdone")

@@ -10,3 +10,7 @@ class HostUnavailableError(RuntimeError):
 
 class NoAvailableHostsError(RuntimeError):
     pass
+
+
+class ContainerUnavailableError(RuntimeError):
+    pass

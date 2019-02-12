@@ -193,6 +193,12 @@ def perform_stop_job_execution(job, execution, logger, stop_schedule=True):
         scheduler.cancel(job.metadata["enqueued_id"])
         job.scheduled = False
 
+    if execution.error is None:
+        execution.error = ""
+    execution.error += "\nUser stopped job execution manually."
+    execution.status = JobExecution.Status.failed
+    job.save()
+
     logger.debug("Job stopped.")
 
     return True, None

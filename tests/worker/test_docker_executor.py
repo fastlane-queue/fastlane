@@ -904,33 +904,6 @@ def test_get_running4(client):
         expect(container_id).to_equal("fastlane-job-123")
 
 
-def test_get_current_logs1(client):
-    """
-    Tests getting logs for a containers' stderr and stdout
-    """
-
-    with client.application.app_context():
-        containers = [
-            ContainerFixture.new(
-                container_id="fastlane-job-123",
-                name="fastlane-job-123",
-                stdout="stdout",
-                stderr="stderr",
-            )
-        ]
-        _, pool_mock, _ = PoolFixture.new_defaults(
-            r"test.+", max_running=1, containers=containers
-        )
-
-        task, _, execution = JobExecutionFixture.new_defaults(
-            container_id="fastlane-job-123"
-        )
-        executor = Executor(client.application, pool_mock)
-
-        result = executor.get_current_logs(task.task_id, execution)
-        expect(result).to_equal("stdout\nstderr")
-
-
 def test_get_blacklisted_hosts1(client):
     """
     Tests getting the blacklisted hosts

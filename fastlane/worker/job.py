@@ -402,10 +402,37 @@ def monitor_job(task_id, job_id, execution_id):
         execution = job.get_execution_by_id(execution_id)
         try:
             result = executor.get_result(job.task, job, execution)
-        except HostUnavailableError:
+        except HostUnavailableError as err:
+            current_app.report_error(
+                err,
+                metadata=dict(
+                    operation="Monitoring Job",
+                    task_id=task_id,
+                    job_id=job_id,
+                    execution_id=execution_id,
+                ),
+            )
+
             reenqueue_monitor_due_to_break(task_id, job_id, execution_id)
 
             logger.warn("Job monitor re-enqueued successfully.")
+
+            return False
+
+        if result is None:
+            execution.finished_at = datetime.utcnow()
+            execution.exit_code = result.exit_code
+            execution.status = JobExecution.Status.failed
+            execution.log = ""
+            execution.error = (
+                "Job failed since container could not be found in docker host."
+            )
+
+            logger.debug(
+                "Job failed, since container could not be found in host.",
+                status="failed",
+            )
+            job.save()
 
             return False
 
@@ -428,7 +455,17 @@ def monitor_job(task_id, job_id, execution_id):
 
                 try:
                     executor.stop_job(job.task, job, execution)
-                except HostUnavailableError:
+                except HostUnavailableError as err:
+                    current_app.report_error(
+                        err,
+                        metadata=dict(
+                            operation="Monitoring Job",
+                            task_id=task_id,
+                            job_id=job_id,
+                            execution_id=execution_id,
+                        ),
+                    )
+
                     reenqueue_monitor_due_to_break(task_id, job_id, execution_id)
 
                     logger.warn("Job monitor re-enqueued successfully.")

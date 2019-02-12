@@ -13,7 +13,11 @@ from flask import Blueprint, current_app, g, make_response, request
 
 # Fastlane
 from fastlane.worker import ExecutionResult
-from fastlane.worker.errors import HostUnavailableError, NoAvailableHostsError
+from fastlane.worker.errors import (
+    ContainerUnavailableError,
+    HostUnavailableError,
+    NoAvailableHostsError,
+)
 
 # http://docs.docker.com/engine/reference/commandline/ps/#examples
 # One of created, restarting, running, removing, paused, exited, or dead
@@ -463,6 +467,13 @@ class Executor:
         logger = logger.bind(container_id=container_id)
         container = self.get_container_by_id(container_id, host, port, client)
 
+        if container is None:
+            logger.warn(
+                "Can't stop Job Execution, since container was not found. Aborting..."
+            )
+
+            return False
+
         @circuit
         def run(logger):
             try:
@@ -499,6 +510,9 @@ class Executor:
 
         container_id = execution.metadata["container_id"]
         container = self.get_container_by_id(container_id, host, port, client)
+
+        if container is None:
+            return None
 
         # container.attrs['State']
         # {'Status': 'exited', 'Running': False, 'Paused': False, 'Restarting': False,
@@ -633,22 +647,6 @@ class Executor:
             "running": running,
         }
 
-    def get_current_logs(self, task_id, execution):
-        execution_host = execution.metadata["docker_host"]
-        execution_port = execution.metadata["docker_port"]
-        _, _, client = self.pool.get_client(
-            self, task_id, execution_host, execution_port
-        )
-
-        container_id = execution.metadata["container_id"]
-        container = self.get_container_by_id(
-            container_id, execution_host, execution_port, client
-        )
-
-        log = container.logs(stdout=True, stderr=True).decode("utf-8")
-
-        return log
-
     def get_streaming_logs(self, task_id, job, execution):
         execution_host = execution.metadata["docker_host"]
         execution_port = execution.metadata["docker_port"]
@@ -672,6 +670,11 @@ class Executor:
         container = self.get_container_by_id(
             container_id, execution_host, execution_port, client
         )
+
+        if container is None:
+            raise ContainerUnavailableError(
+                f"Container {container_id} was not found in {execution_host}:{execution_port}!"
+            )
         logger.info("Container found successfully.")
 
         for log in container.logs(stdout=True, stderr=True, stream=True):
@@ -703,11 +706,17 @@ class Executor:
         )
 
         container = self.get_container_by_id(container_id, host, port, client)
+
+        if container is None:
+            return False
+
         try:
             new_name = f"defunct-{container.name}"
             logger.debug("Renaming container...", new_name=new_name)
             container.rename(new_name)
             logger.debug("Container renamed.", new_name=new_name)
+
+            return True
         except (
             pybreaker.CircuitBreakerError,
             requests.exceptions.ConnectionError,
