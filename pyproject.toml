@@ -54,6 +54,7 @@ recommonmark = "^0.5.0"
 pygments = "^2.3"
 sphinx_bootstrap_theme = "^0.6.5"
 mkdocs = "^1.0"
+honcho = "^1.0"
 
 [tool.poetry.scripts]
 fl = 'fastlane.cli:main'

@@ -35,14 +35,14 @@ from fastlane.models import db
 
 
 class Application:
-    def __init__(self, config, log_level, testing=False):
+    def __init__(self, config, log_level, testing=False, auto_connect_db=True):
         self.config = config
         self.logger = None
         self.log_level = log_level
 
-        self.create_app(testing)
+        self.create_app(testing, auto_connect_db=auto_connect_db)
 
-    def create_app(self, testing):
+    def create_app(self, testing, auto_connect_db=True):
         self.app = Flask("fastlane")
 
         self.testing = testing
@@ -60,7 +60,9 @@ class Application:
         self.configure_logging()
         self.connect_redis()
         self.connect_queue()
-        self.connect_db()
+
+        if auto_connect_db:
+            self.connect_db()
         self.load_executor()
         self.load_error_handlers()
 

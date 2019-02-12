@@ -45,7 +45,7 @@ class WorkerHandler:
     def __call__(self):
         # self.click.echo(
         # f'Running fastlane worker processing queues {",".join(self.queues)}.')
-        app = Application(self.config, self.log_level)
+        app = Application(self.config, self.log_level, auto_connect_db=False)
         app.logger.info(
             f'Running fastlane worker processing queues {",".join(self.queues)}.'
         )

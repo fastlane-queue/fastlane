@@ -1,0 +1,2 @@
+api: poetry run fastlane api -vvv -c ./fastlane/config/local.conf
+worker: poetry run fastlane worker -vv -c ./fastlane/config/local.conf
