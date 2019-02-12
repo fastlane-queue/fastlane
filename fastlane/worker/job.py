@@ -89,7 +89,7 @@ def download_image(executor, job, ex, image, tag, command, logger):
         )
     except HostUnavailableError:
         enqueued_id = reenqueue_job_due_to_break(
-            job.task.task_id, str(job.job_id), image, command
+            job.task.task_id, str(job.job_id), ex.execution_id, image, command
         )
 
         job.metadata["enqueued_id"] = enqueued_id
@@ -143,7 +143,7 @@ def run_container(executor, job, ex, image, tag, command, logger):
         )
     except HostUnavailableError:
         enqueued_id = reenqueue_job_due_to_break(
-            job.task.task_id, str(job.job_id), image, command
+            job.task.task_id, str(job.job_id), ex.execution_id, image, command
         )
 
         job.metadata["enqueued_id"] = enqueued_id
