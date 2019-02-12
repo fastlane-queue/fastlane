@@ -54,16 +54,19 @@ docker-push: docker-build
 	@docker tag fastlane heynemann/fastlane:latest
 	@docker push heynemann/fastlane:latest
 
-test: deps unit
+test: deps unit func
 
 unit:
-	@poetry run pytest -sv --quiet --nf --cov=fastlane tests/
+	@poetry run pytest -sv --quiet --nf --cov=fastlane tests/unit/
 
 focus:
-	@poetry run pytest -sv --quiet --nf -m focus --cov=fastlane tests/
+	@poetry run pytest -sv --quiet --nf -m focus --cov=fastlane tests/unit/
 
 watch:
-	@poetry run ptw -c -w -- --quiet --nf --cov=fastlane tests/
+	@poetry run ptw -c -w -- --quiet --nf --cov=fastlane tests/unit/
+
+func:
+	@poetry run pytest -sv --quiet --nf --cov=fastlane tests/func/
 
 run: deps
 	@poetry run fastlane api -vvv -c ./fastlane/config/local.conf

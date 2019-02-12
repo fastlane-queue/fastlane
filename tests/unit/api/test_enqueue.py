@@ -11,7 +11,7 @@ from preggy import expect
 # Fastlane
 from fastlane.models import Job, Task
 
-import tests.api.helpers  # NOQA isort:skip pylint:disable=unused-import
+import tests.unit.api.helpers  # NOQA isort:skip pylint:disable=unused-import
 
 
 def test_enqueue1(client):

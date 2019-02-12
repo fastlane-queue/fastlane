@@ -10,7 +10,7 @@ from tests.fixtures.models import JobExecutionFixture
 # Fastlane
 from fastlane.models import JobExecution
 
-import tests.api.helpers  # NOQA isort:skip pylint:disable=unused-import
+import tests.unit.api.helpers  # NOQA isort:skip pylint:disable=unused-import
 
 
 def test_get_execution1(client):
