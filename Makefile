@@ -45,6 +45,22 @@ ifdef COMPOSE
 	@docker-compose --project-name fastlane rm -f
 endif
 
+stop-deps-func:
+ifdef COMPOSE
+	@echo "Stopping func tests dependencies..."
+	@docker-compose --project-name fastlane-tests -f ./docker-compose-func-tests.yml stop
+	@docker-compose --project-name fastlane-tests -f ./docker-compose-func-tests.yml rm -f
+endif
+
+deps-func: stop-deps stop-deps-func
+	@rm -rf /tmp/fastlane-tests
+	@mkdir -p /tmp/fastlane-tests/{mongo,redis}
+ifdef COMPOSE
+	@echo "Starting func tests dependencies..."
+	@docker-compose --project-name fastlane-tests -f ./docker-compose-func-tests.yml up -d
+	@echo "Func tests dependencies started successfully."
+endif
+
 docker-build:
 	@docker build -t fastlane .
 
@@ -54,7 +70,7 @@ docker-push: docker-build
 	@docker tag fastlane heynemann/fastlane:latest
 	@docker push heynemann/fastlane:latest
 
-test: deps unit func
+test: deps unit deps-func func
 
 unit:
 	@poetry run pytest -sv --quiet --nf --cov=fastlane tests/unit/
@@ -66,7 +82,7 @@ watch:
 	@poetry run ptw -c -w -- --quiet --nf --cov=fastlane tests/unit/
 
 func:
-	@poetry run pytest -sv --quiet --nf --cov=fastlane tests/func/
+	@poetry run pytest -sv --quiet --nf tests/func/
 
 run: deps
 	@poetry run fastlane api -vvv -c ./fastlane/config/local.conf

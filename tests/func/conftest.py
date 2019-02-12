@@ -1,2 +1,2 @@
-# Fastlane
-from tests.fixtures.func import client, api, worker  # NOQA pylint: disable=unused-import
+# 3rd Party
+from tests.fixtures.func import cleanup, client  # NOQA pylint: disable=unused-import

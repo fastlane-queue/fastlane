@@ -22,7 +22,10 @@ def get_details():
         details = None
 
     if details is None and request.get_data():
-        details = loads(request.get_data())
+        try:
+            details = loads(request.get_data())
+        except Exception:
+            details = None
 
     return details
 
