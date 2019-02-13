@@ -35,8 +35,12 @@ ENV PATH="${WORKON_HOME}/fastlane/bin:${PATH}"
 RUN pip install honcho==1.0.1
 RUN mkdir -p /app
 WORKDIR /app
-COPY . /app
+
+COPY pyproject.toml /app
+COPY poetry.lock /app
 RUN poetry install --no-dev
+COPY . /app
+# RUN poetry install --no-dev
 RUN echo "Verifying fastlane version..." && poetry run fastlane version
 
 ENV REDIS_URL "redis://redis:6379/0"
