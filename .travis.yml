@@ -14,5 +14,11 @@ install:
 after_success:
   - coverage xml
   - CODACY_PROJECT_TOKEN=6094c750148a4305b986d049385bbf9a python-codacy-coverage -r coverage.xml
-script:
-  - make unit
+jobs:
+  include:
+    - stage: "Unit"
+      name: "Unit Tests"
+      script: make unit
+    - stage: "Functional"
+      name: "Functional Tests"
+      script: make deps-func func
