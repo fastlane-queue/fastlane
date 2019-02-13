@@ -14,7 +14,7 @@ Instead of the tedious, repetitive work of yesteryear where you had to implement
 
 ## Features
 
--   [x]  Ad-Hoc execution of jobs (run job right now);
+-   [x]  [Ad-Hoc execution of jobs (run job right now)](tests/func/test_adhoc.py)
 -   [x]  Scheduled execution of jobs (run job next sunday at 6am, or run in 10 minutes from now);
 -   [x]  Crontab execution of jobs (run job at `_/10 _ \* \* \*` - every ten minutes);
 -   [x]  Allows job details to be updated;
