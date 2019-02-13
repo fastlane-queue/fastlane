@@ -1,5 +1,5 @@
-api: fastlane api -vvv
-worker: fastlane worker -vv
-worker2: fastlane worker -vv
-worker3: fastlane worker -vv
-worker4: fastlane worker -vv
+api: poetry run fastlane api -vvv
+worker: poetry run fastlane worker -vv
+worker2: poetry run fastlane worker -vv
+worker3: poetry run fastlane worker -vv
+worker4: poetry run fastlane worker -vv

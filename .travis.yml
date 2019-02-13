@@ -1,11 +1,6 @@
 language: python
-python:
-  - "3.6.5"
-  - "3.7-dev"
 services:
   - docker
-before_install:
-  - docker-compose up -d
 install:
   - pip install -U setuptools
   - pip install poetry
@@ -14,12 +9,21 @@ install:
 jobs:
   include:
     - stage: test
+      before_install:
+        - docker-compose up -d
+      python:
+        - "3.6.5"
+        - "3.7-dev"
       after_success:
         - coverage xml
         - CODACY_PROJECT_TOKEN=6094c750148a4305b986d049385bbf9a python-codacy-coverage -r coverage.xml
     - stage: "Functional"
       python: "3.7-dev"
       name: "Functional Tests"
-      script: make deps-func func
+      before_install:
+        - rm -rf /tmp/fastlane-tests
+	      - mkdir -p /tmp/fastlane-tests/{mongo,redis}
+        - docker-compose --project-name fastlane-tests -f ./docker-compose-func-tests.yml up -d
+      script: make func
 script:
   - make unit

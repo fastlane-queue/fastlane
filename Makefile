@@ -53,7 +53,7 @@ ifdef COMPOSE
 endif
 
 deps-func: stop-deps stop-deps-func
-	@rm -rf /tmp/fastlane-tests
+	@sudo rm -rf /tmp/fastlane-tests
 	@mkdir -p /tmp/fastlane-tests/{mongo,redis}
 ifdef COMPOSE
 	@echo "Starting func tests dependencies..."
