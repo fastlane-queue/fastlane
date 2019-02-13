@@ -847,6 +847,17 @@ pytest = ">=2.9"
 
 [[package]]
 category = "dev"
+description = "a pytest plugin for parallel and concurrent testing"
+name = "pytest-parallel"
+optional = false
+python-versions = "*"
+version = "0.0.9"
+
+[package.dependencies]
+pytest = ">=3.0.0"
+
+[[package]]
+category = "dev"
 description = "pytest-sugar is a plugin for pytest that changes the default look and feel of pytest (e.g. progressbar, show tests that fail instantly)."
 name = "pytest-sugar"
 optional = false
@@ -1271,7 +1282,7 @@ python-versions = "*"
 version = "2.2.1"
 
 [metadata]
-content-hash = "1f1539aa9cd1461cc331693569aaddb5deca93dec5ceaf2457622a8ddc4b0c2f"
+content-hash = "546b88a0329fecbb7951bc647c7db4b1a659b642a100413a11a344f0d5c70631"
 python-versions = "^3.6"
 
 [metadata.hashes]
@@ -1355,6 +1366,7 @@ pyparsing = ["40856e74d4987de5d01761a22d1621ae1c7f8774585acae358aa5c5936c6c90b",
 pypiwin32 = ["67adf399debc1d5d14dffc1ab5acacb800da569754fafdc576b2a039485aa775", "71be40c1fbd28594214ecaecb58e7aa8b708eabfa0125c8a109ebd51edbd776a"]
 pytest = ["3f193df1cfe1d1609d4c583838bea3d532b18d6160fd3f55c9447fdca30848ec", "e246cf173c01169b9617fc07264b7b1316e78d7a650055235d6d897bc80d9660"]
 pytest-cov = ["513c425e931a0344944f84ea47f3956be0e416d95acbd897a44970c8d926d5d7", "e360f048b7dae3f2f2a9a4d067b2dd6b6a015d384d1577c994a43f3f7cbad762"]
+pytest-parallel = ["94df6b0ebf48e03cbce66622d55ba6bd2cb116b06cfb39cc5fc4d2d310df25ca", "c4226352462ae32ff01d47a642d087005c3b9bf995cea61fc37a4becb146278d"]
 pytest-sugar = ["26cf8289fe10880cbbc130bd77398c4e6a8b936d8393b116a5c16121d95ab283", "fcd87a74b2bce5386d244b49ad60549bfbc4602527797fac167da147983f58ab"]
 pytest-watch = ["06136f03d5b361718b8d0d234042f7b2f203910d8568f63df2f866b547b3d4b9"]
 python-dateutil = ["063df5763652e21de43de7d9e00ccf239f953a832941e37be541614732cdfc93", "88f9287c0174266bb0d8cedd395cfba9c58e87e5ad86b2ce58859bc11be3cf02"]

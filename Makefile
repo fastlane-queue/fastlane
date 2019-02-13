@@ -82,7 +82,7 @@ watch:
 	@poetry run ptw -c -w -- --quiet --nf --cov=fastlane tests/unit/
 
 func:
-	@poetry run pytest -sv --quiet --nf tests/func/
+	@poetry run pytest -s --quiet --nf --workers auto tests/func/
 
 run: deps
 	@poetry run fastlane api -vvv -c ./fastlane/config/local.conf
