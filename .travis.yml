@@ -1,4 +1,7 @@
 language: python
+python:
+  - "3.6.5"
+  - "3.7-dev"
 services:
   - docker
 before_install:
@@ -13,14 +16,9 @@ after_success:
   - CODACY_PROJECT_TOKEN=6094c750148a4305b986d049385bbf9a python-codacy-coverage -r coverage.xml
 jobs:
   include:
-    - stage: test
-      name: "Unit Tests"
-      python:
-        - "3.6.5"
-        - "3.7-dev"
-      script: make unit
     - stage: "Functional"
+      python: "3.7-dev"
       name: "Functional Tests"
-      python:
-        - "3.7-dev"
       script: make deps-func func
+script:
+  - make unit
