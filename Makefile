@@ -134,3 +134,4 @@ update-config-doc:
 	@echo '```' >> docs/configuration.md
 	@sed -i.bak 's/^#//g' docs/configuration.md
 	@rm docs/configuration.md.bak
+
