@@ -10,34 +10,38 @@ import tests.func.base  # NOQA isort:skip pylint:disable=unused-import
 
 
 @assertion
-def to_have_finished(topic, status, log, client, timeout=5000):
-    start = time.time()
-    actual_status = ""
+def to_have_finished_with(topic, client, timeout=10, **kw):
+    def validate(execution, **arguments):
+        for key, value in arguments.items():
+            val = execution[kw]
+            if isinstance(val, (bytes, str)):
+                val = val.strip()
+            if val != value:
+                raise AssertionError(
+                    'Execution did not match expectations! \n'
+                    f'{key}:\n\tExpected: {value}\nActual:   {val}')
 
-    while actual_status != status and time.time() - start < timeout:
+    start = time.time()
+
+    last_obj = None
+    while time.time() - start < timeout:
         status_code, body, _ = client.get(topic, absolute=True)
 
         if status_code != 200:
-            raise AssertionError(f"{topic} could not be found (status: {status}).")
+            raise AssertionError(
+                f"{topic} could not be found (status: {status_code}).")
 
-        obj = loads(body)
+        last_obj = loads(body)
 
-        actual_status = obj.get("execution", {}).get("status", "")
-        actual_log = obj.get("execution", {}).get("log", "")
-
-        if actual_log is None:
-            actual_log = ""
-        actual_log = actual_log.strip()
-
-        if actual_status == status and actual_log == log:
-            return
+        try:
+            if validate(last_obj['execution']):
+                return
+        except AssertionError:
+            pass
 
         time.sleep(0.5)
 
-    raise AssertionError(
-        f"{topic}\nstatus:\n\tEXPECTED:'{status}'\n\tACTUAL:  '{actual_status}'"
-        f"\nlog:\n\tEXPECTED:'{log}'\n\tACTUAL:  '{actual_log}'"
-    )
+    validate(last_obj['execution'])
 
 
 def test_get_tasks(client):
@@ -50,12 +54,16 @@ def test_get_tasks(client):
     task_id = uuid4()
 
     status, body, _ = client.post(
-        f"/tasks/{task_id}/", data={"image": "ubuntu", "command": "echo 'it works'"}
-    )
+        f"/tasks/{task_id}/",
+        data={
+            "image": "ubuntu",
+            "command": "echo 'it works'"
+        })
 
     expect(status).to_equal(200)
     result = loads(body)
     expect(result["executionId"]).not_to_be_null()
     execution_url = result["executionUrl"]
 
-    expect(execution_url).to_have_finished(status="done", log="it works", client=client)
+    expect(execution_url).to_have_finished_with(
+        status='done', log='it works', exit_code=0, client=client)
