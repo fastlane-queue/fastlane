@@ -16,7 +16,7 @@ after_success:
   - CODACY_PROJECT_TOKEN=6094c750148a4305b986d049385bbf9a python-codacy-coverage -r coverage.xml
 jobs:
   include:
-    - stage: "Unit"
+    - stage: test
       name: "Unit Tests"
       script: make unit
     - stage: "Functional"
