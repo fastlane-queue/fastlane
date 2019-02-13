@@ -113,3 +113,27 @@ def to_have_finished_with(topic, cli, timeout=20, **kw):
         time.sleep(0.5)
 
     __validate(topic, last_obj['execution'], **kw)
+
+
+@assertion
+def to_have_execution(topic, cli, execution, timeout=20):
+    start = time.time()
+
+    last_obj = None
+    while time.time() - start < timeout:
+        status_code, body, _ = cli.get(topic, absolute=True)
+
+        if status_code != 200:
+            raise AssertionError(
+                f"{topic} could not be found (status: {status_code}).")
+
+        last_obj = loads(body)
+        if last_obj['job']['executions']:
+            ex = last_obj['job']['executions'][0]
+            execution['url'] = ex['url']
+            execution['executionId'] = ex['executionId']
+            return
+
+        time.sleep(0.5)
+
+    raise AssertionError(f'Execution for job {topic} has not started.')
