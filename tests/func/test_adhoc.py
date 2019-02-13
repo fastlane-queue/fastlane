@@ -56,3 +56,32 @@ def test_adhoc2(client):
 
     expect(execution_url).to_have_finished_with(
         status='failed', log='it failed', error='', exitCode=123, cli=client)
+
+
+def test_adhoc3(client):
+    """
+    Given API and Worker are UP
+    When I submit a new job that fails
+    Then I can see its error log in API
+    """
+
+    task_id = uuid4()
+
+    status, body, _ = client.post(
+        f"/tasks/{task_id}/",
+        data={
+            "image": "ubuntu",
+            "command": """bash -c 'qwe'""",
+        })
+
+    expect(status).to_equal(200)
+    result = loads(body)
+    expect(result["executionId"]).not_to_be_null()
+    execution_url = result["executionUrl"]
+
+    expect(execution_url).to_have_finished_with(
+        status='failed',
+        log='',
+        error='bash: qwe: command not found',
+        exitCode=127,
+        cli=client)
