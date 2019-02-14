@@ -92,4 +92,4 @@ Read more about fastlane at [read the docs](https://fastlane.readthedocs.io/en/l
  
 ## Contributing
 
-Logo was created using <https://logomakr.com/4xwJMs>.
+Logo was created by [Artur Sousa](https://github.com/arturfsousa).
