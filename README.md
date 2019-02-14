@@ -1,16 +1,16 @@
 ![fastlane](fastlane-logo.svg)
 
-[![github repo](https://img.shields.io/badge/github-repo-blue.svg)](https://github.com/heynemann/fastlane) [![Build Status](https://travis-ci.org/heynemann/fastlane.svg?branch=master)](https://travis-ci.org/heynemann/fastlane) [![Codacy Badge](https://api.codacy.com/project/badge/Coverage/55791f14727846f5a330f409ff4266c1)](https://www.codacy.com/app/heynemann/fastlane?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=heynemann/fastlane&amp;utm_campaign=Badge_Coverage) [![Docs](https://readthedocs.org/projects/fastlane/badge/?version=latest)](https://fastlane.readthedocs.io/en/latest/?badge=latest) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/55791f14727846f5a330f409ff4266c1)](https://www.codacy.com/app/heynemann/fastlane?utm_source=github.com&utm_medium=referral&utm_content=heynemann/fastlane&utm_campaign=Badge_Grade) [![BCH compliance](https://bettercodehub.com/edge/badge/heynemann/fastlane?branch=master)](https://bettercodehub.com/results/heynemann/fastlane) [![Issues](https://img.shields.io/github/issues/heynemann/fastlane.svg)](https://github.com/heynemann/fastlane/issues)
+[![github repo](https://img.shields.io/badge/github-repo-blue.svg)](https://github.com/fastlane-queue/fastlane) [![Build Status](https://travis-ci.org/fastlane-queue/fastlane.svg?branch=master)](https://travis-ci.org/fastlane-queue/fastlane) [![Codacy Badge](https://api.codacy.com/project/badge/Coverage/55791f14727846f5a330f409ff4266c1)](https://www.codacy.com/app/fastlane-queue/fastlane?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=fastlane-queue/fastlane&amp;utm_campaign=Badge_Coverage) [![Docs](https://readthedocs.org/projects/fastlane/badge/?version=latest)](https://fastlane.readthedocs.io/en/latest/?badge=latest) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/55791f14727846f5a330f409ff4266c1)](https://www.codacy.com/app/fastlane-queue/fastlane?utm_source=github.com&utm_medium=referral&utm_content=fastlane-queue/fastlane&utm_campaign=Badge_Grade) [![BCH compliance](https://bettercodehub.com/edge/badge/fastlane-queue/fastlane?branch=master)](https://bettercodehub.com/results/fastlane-queue/fastlane) [![Issues](https://img.shields.io/github/issues/fastlane-queue/fastlane.svg)](https://github.com/fastlane-queue/fastlane/issues)
 
 [![demo](https://asciinema.org/a/219455.svg)](https://asciinema.org/a/219455)
 
-## [fastlane](https://github.com/heynemann/fastlane) service
+## [fastlane](https://github.com/fastlane-queue/fastlane) service
 
-[fastlane](https://github.com/heynemann/fastlane) is a [redis](https://redis.io/)-based queueing service that outsmarts everyone else by using containers.
+[fastlane](https://github.com/fastlane-queue/fastlane) is a [redis](https://redis.io/)-based queueing service that outsmarts everyone else by using containers.
 
-More seriously, though, [fastlane](https://github.com/heynemann/fastlane) allows you to easily implement new workers in the form of containers.
+More seriously, though, [fastlane](https://github.com/fastlane-queue/fastlane) allows you to easily implement new workers in the form of containers.
 
-Instead of the tedious, repetitive work of yesteryear where you had to implement a worker in language X or Y, you just spin a new container with all the dependencies you require already previously installed, and instruct [fastlane](https://github.com/heynemann/fastlane) to run a command in that container. Bang! Instant Super-Powered Workers!
+Instead of the tedious, repetitive work of yesteryear where you had to implement a worker in language X or Y, you just spin a new container with all the dependencies you require already previously installed, and instruct [fastlane](https://github.com/fastlane-queue/fastlane) to run a command in that container. Bang! Instant Super-Powered Workers!
 
 ## Features
 
@@ -69,12 +69,12 @@ Instead of the tedious, repetitive work of yesteryear where you had to implement
 
 ## Getting started
 
-Getting [fastlane](https://github.com/heynemann/fastlane) up and running is very simple if you have both [docker](https://docs.docker.com/) and [docker-compose](https://docs.docker.com/compose/) installed.
+Getting [fastlane](https://github.com/fastlane-queue/fastlane) up and running is very simple if you have both [docker](https://docs.docker.com/) and [docker-compose](https://docs.docker.com/compose/) installed.
 
 We'll use a sample docker compose that gets all our requirements up (ps: this [docker-compose](https://docs.docker.com/compose/) file runs [Docker In Docker](https://hub.docker.com/_/docker/) and requires privileged mode to run):
 
 ```bash
-$ curl https://raw.githubusercontent.com/heynemann/fastlane/master/docker-compose-sample.yml | docker-compose -f - up -d
+$ curl https://raw.githubusercontent.com/fastlane-queue/fastlane/master/docker-compose-sample.yml | docker-compose -f - up -d
 
 Starting fastlane...
 Creating fastlane_mongo_1       ... done
@@ -84,7 +84,7 @@ Creating fastlane_fastlane_1    ... done
 fastlane started successfully.
 ```
 
-After that you can start using [fastlane](https://github.com/heynemann/fastlane). For more details on getting started, read the [following page](https://fastlane.readthedocs.io/en/latest/getting-started/).
+After that you can start using [fastlane](https://github.com/fastlane-queue/fastlane). For more details on getting started, read the [following page](https://fastlane.readthedocs.io/en/latest/getting-started/).
 
 ## Documentation
 
