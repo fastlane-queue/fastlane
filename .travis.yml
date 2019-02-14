@@ -1,3 +1,4 @@
+---
 language: python
 services:
   - docker
@@ -22,7 +23,7 @@ jobs:
       name: "Functional Tests"
       before_install:
         - rm -rf /tmp/fastlane-tests
-	      - mkdir -p /tmp/fastlane-tests/{mongo,redis}
+        - mkdir -p /tmp/fastlane-tests/{mongo,redis}
         - docker-compose --project-name fastlane-tests -f ./docker-compose-func-tests.yml up -d
       script: make func
 script:
