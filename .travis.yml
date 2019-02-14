@@ -15,9 +15,6 @@ jobs:
     - stage: test
       before_install:
         - docker-compose up -d
-      python:
-        - "3.6.5"
-        - "3.7-dev"
       after_success:
         - coverage xml
         - CODACY_PROJECT_TOKEN=6094c750148a4305b986d049385bbf9a python-codacy-coverage -r coverage.xml
