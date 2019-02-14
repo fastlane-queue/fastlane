@@ -10,14 +10,11 @@ install:
   - pip install poetry
   - poetry install
   - pip install codacy-coverage
+after_success:
+  - coverage xml
+  - CODACY_PROJECT_TOKEN=6094c750148a4305b986d049385bbf9a python-codacy-coverage -r coverage.xml
 jobs:
   include:
-    - stage: test
-      before_install:
-        - docker-compose up -d
-      after_success:
-        - coverage xml
-        - CODACY_PROJECT_TOKEN=6094c750148a4305b986d049385bbf9a python-codacy-coverage -r coverage.xml
     - stage: "Functional"
       python: "3.7-dev"
       name: "Functional Tests"
@@ -27,4 +24,4 @@ jobs:
         - docker-compose --project-name fastlane-tests -f ./docker-compose-func-tests.yml up -d
       script: make func
 script:
-  - make unit
+  - make deps unit
