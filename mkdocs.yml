@@ -1,20 +1,20 @@
 site_name: fastlane
-repo_url: https://github.com/heynemann/fastlane/
+repo_url: https://github.com/fastlane-queue/fastlane/
 pages:
   - 'Home': index.md
-  - 'Getting Started': 
-    - 'Your First 5 Minutes': getting-started.md
-    - 'How To': how-to.md
-    - 'Job Payload': job-payload.md
+  - 'Getting Started':
+      - 'Your First 5 Minutes': getting-started.md
+      - 'How To': how-to.md
+      - 'Job Payload': job-payload.md
   - 'Configuration':
-    - 'Installing and Running': install.md
-    - 'Configuration Options': configuration.md
+      - 'Installing and Running': install.md
+      - 'Configuration Options': configuration.md
   - 'Reference':
-    - 'Executors': executors.md
-    - 'Architecture and Design': architecture.md
-    - 'API/Workers': api.md
+      - 'Executors': executors.md
+      - 'Architecture and Design': architecture.md
+      - 'API/Workers': api.md
   - 'Contributing':
-    - 'Contributions': contributions.md
-    - 'License': license.md
+      - 'Contributions': contributions.md
+      - 'License': license.md
 extra_css:
   - custom.css
