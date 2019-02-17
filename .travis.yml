@@ -12,7 +12,7 @@ install:
   - pip install codacy-coverage
 after_success:
   - coverage xml
-  - CODACY_PROJECT_TOKEN=6094c750148a4305b986d049385bbf9a python-codacy-coverage -r coverage.xml
+  - CODACY_PROJECT_TOKEN=aee98ac5d1544fdc91857371cbb877a0 python-codacy-coverage -r coverage.xml
 jobs:
   include:
     - stage: "Functional"
