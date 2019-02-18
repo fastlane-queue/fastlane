@@ -40,7 +40,7 @@ COPY pyproject.toml /app
 COPY poetry.lock /app
 RUN poetry install --no-dev
 COPY . /app
-# RUN poetry install --no-dev
+RUN poetry install --no-dev
 RUN echo "Verifying fastlane version..." && poetry run fastlane version
 
 ENV REDIS_URL "redis://redis:6379/0"

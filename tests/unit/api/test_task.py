@@ -196,3 +196,8 @@ def test_stop_container3(client):
 def test_stop_container4(client):
     """Tests that stopping without an end slash fails with 404."""
     pytest.skip("Not implemented")
+
+
+def test_stop_container5(client):
+    """Tests that stopping a scheduled job with no executions actually kills the scheduled job."""
+    pytest.skip("Not implemented")

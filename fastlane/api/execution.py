@@ -162,24 +162,8 @@ def get_job_execution_logs(task_id, job_id, execution_id):
 
 
 def perform_stop_job_execution(job, execution, logger, stop_schedule=True):
-    if execution is None:
-        if not job.executions:
-            msg = "No executions found in job."
-
-            return (
-                False,
-                return_error(msg, "stop_job_execution", status=400, logger=logger),
-            )
-
-        execution = job.get_last_execution()
-
-    if execution is not None and execution.status == JobExecution.Status.running:
-        logger.debug("Stopping current execution...")
-        executor = current_app.executor
-        executor.stop_job(job.task, job, execution)
-        logger.debug("Current execution stopped.")
-
     if "retries" in job.metadata:
+        logger.info("Cleared any further job retries.")
         job.metadata["retry_count"] = job.metadata["retries"] + 1
         job.save()
 
@@ -190,13 +174,22 @@ def perform_stop_job_execution(job, execution, logger, stop_schedule=True):
         and "enqueued_id" in job.metadata
         and job.metadata["enqueued_id"] in scheduler
     ):
+        logger.info("Removed job from scheduling.")
         scheduler.cancel(job.metadata["enqueued_id"])
         job.scheduled = False
 
-    if execution.error is None:
-        execution.error = ""
-    execution.error += "\nUser stopped job execution manually."
-    execution.status = JobExecution.Status.failed
+    if execution is not None:
+        if execution.status == JobExecution.Status.running:
+            logger.debug("Stopping current execution...")
+            executor = current_app.executor
+            executor.stop_job(job.task, job, execution)
+            logger.debug("Current execution stopped.")
+
+            if execution.error is None:
+                execution.error = ""
+            execution.error += "\nUser stopped job execution manually."
+            execution.status = JobExecution.Status.failed
+
     job.save()
 
     logger.debug("Job stopped.")
