@@ -7,6 +7,7 @@ from uuid import uuid4
 import pytest
 from croniter import croniter
 from preggy import expect
+from rq_scheduler import Scheduler
 
 # Fastlane
 from fastlane.models import Job, Task
@@ -448,6 +449,40 @@ def test_enqueue12(client):
 
         count = Task.objects.count()
         expect(count).to_equal(1)
+
+
+def test_enqueue12_2(client):
+    """Test updating a scheduled job removes the scheduling and re-schedules"""
+
+    with client.application.app_context():
+        task_id = str(uuid4())
+        job_id = str(uuid4())
+        data = {"image": "ubuntu", "command": "ls", "startIn": "6h"}
+        response = client.put(
+            f"/tasks/{task_id}/jobs/{job_id}/", data=dumps(data), follow_redirects=True
+        )
+
+        expect(response.status_code).to_equal(200)
+
+        job = Job.get_by_id(task_id, job_id)
+        expect(job).not_to_be_null()
+
+        enqueued_id = job["metadata"]["enqueued_id"]
+        expect(enqueued_id).not_to_be_null()
+
+        scheduler = Scheduler("jobs", connection=client.application.redis)
+        expect(enqueued_id in scheduler).to_be_true()
+
+        response = client.put(
+            f"/tasks/{task_id}/jobs/{job_id}/", data=dumps(data), follow_redirects=True
+        )
+        expect(response.status_code).to_equal(200)
+        job.reload()
+        expect(job.metadata["enqueued_id"]).not_to_equal(enqueued_id)
+
+        # reschedule job
+        expect(enqueued_id in scheduler).to_be_false()
+        expect(job.metadata["enqueued_id"] in scheduler).to_be_true()
 
 
 def test_enqueue13(client):

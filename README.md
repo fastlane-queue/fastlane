@@ -17,7 +17,7 @@ Instead of the tedious, repetitive work of yesteryear where you had to implement
 -   [x]  [Ad-Hoc execution of jobs (run job right now)](tests/func/test_adhoc.py)
 -   [x]  [Scheduled execution of jobs (run job next sunday at 6am, or run in 10 minutes from now)](tests/func/test_scheduled.py);
 -   [x]  [Crontab execution of jobs (run job at `_/10 _ \* \* \*` - every ten minutes)](tests/func/test_cron.py);
--   [x]  Allows job details to be updated;
+-   [x]  [Allows job details to be updated](tests/func/test_update_details.py);
 -   [x]  API to retrieve tasks, `/tasks`;
 -   [x]  API to retrieve task details, `/tasks/my-task` (`<taskUrl>`);
 -   [x]  API to retrieve job details, `<taskUrl>/jobs/<jobId>` (`<jobUrl>`);

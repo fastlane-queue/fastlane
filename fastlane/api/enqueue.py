@@ -237,6 +237,12 @@ def create_or_update_task(task_id, job_id):
         details, task, logger, lambda task: task.create_or_update_job(job_id)
     )
 
+    scheduler = Scheduler("jobs", connection=current_app.redis)
+
+    if "enqueued_id" in job.metadata and job.metadata["enqueued_id"] in scheduler:
+        scheduler.cancel(job.metadata["enqueued_id"])
+        job.scheduled = False
+
     enqueued_id, execution, response = validate_and_enqueue(details, task, job, logger)
 
     if response is not None:
