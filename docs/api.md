@@ -234,7 +234,7 @@ This route returns the jobs for this task.
 
 `Method`: `GET`
 
-`URL`: `/tasks/<task-id>/job/<job-id>/`
+`URL`: `/tasks/<task-id>/jobs/<job-id>/`
 
 * `task-id` is the ID for the required task.
 * `job-id` is the ID for the required job.
@@ -308,7 +308,7 @@ This route returns the details for this job and all its last 20 executions, with
 
 `Method`: `GET`
 
-`URL`: `/tasks/<task-id>/job/<job-id>/logs/`
+`URL`: `/tasks/<task-id>/jobs/<job-id>/logs/`
 
 * `task-id` is the ID for the required task.
 * `job-id` is the ID for the required job.
@@ -357,7 +357,7 @@ This route returns the logs for the last execution for the job.
 
 `Method`: `GET`
 
-`URL`: `/tasks/<task-id>/job/<job-id>/stdout/`
+`URL`: `/tasks/<task-id>/jobs/<job-id>/stdout/`
 
 * `task-id` is the ID for the required task.
 * `job-id` is the ID for the required job.
@@ -404,7 +404,7 @@ This route returns the stdout results for last execution for the job.
 
 `Method`: `GET`
 
-`URL`: `/tasks/<task-id>/job/<job-id>/stderr/`
+`URL`: `/tasks/<task-id>/jobs/<job-id>/stderr/`
 
 * `task-id` is the ID for the required task.
 * `job-id` is the ID for the required job.
@@ -429,7 +429,7 @@ This route returns the stderr results for last execution for the job.
 
 `Method`: `POST`
 
-`URL`: `/tasks/<task-id>/job/<job-id>/stop/`
+`URL`: `/tasks/<task-id>/jobs/<job-id>/stop/`
 
 * `task-id` is the ID for the required task.
 * `job-id` is the ID for the required job.
@@ -463,7 +463,7 @@ TBW.
 
 `Method`: `GET`
 
-`URL`: `/tasks/<task-id>/job/<job-id>/stream/`
+`URL`: `/tasks/<task-id>/jobs/<job-id>/stream/`
 
 * `task-id` is the ID for the required task;
 * `job-id` is the ID for the required job.
@@ -486,7 +486,7 @@ This route renders a web page that streams the job's last execution's logs to th
 
 `Method`: `GET`
 
-`URL`: `ws://fastlane-server/tasks/<task-id>/job/<job-id>/ws/`
+`URL`: `ws://fastlane-server/tasks/<task-id>/jobs/<job-id>/ws/`
 
 * `task-id` is the ID for the required task;
 * `job-id` is the ID for the required job.
@@ -540,7 +540,7 @@ connect()
 
 `Method`: `GET`
 
-`URL`: `/tasks/<task-id>/job/<job-id>/executions/<execution-id>/`
+`URL`: `/tasks/<task-id>/jobs/<job-id>/executions/<execution-id>/`
 
 * `task-id` is the ID for the required task;
 * `job-id` is the ID for the required job;
@@ -592,7 +592,7 @@ This route returns the details for the specified job execution.
 
 `Method`: `GET`
 
-`URL`: `/tasks/<task-id>/job/<job-id>/executions/<execution-id>/logs/`
+`URL`: `/tasks/<task-id>/jobs/<job-id>/executions/<execution-id>/logs/`
 
 * `task-id` is the ID for the required task;
 * `job-id` is the ID for the required job;
@@ -642,7 +642,7 @@ This route returns the stdout and stderr results for the specified job execution
 
 `Method`: `GET`
 
-`URL`: `/tasks/<task-id>/job/<job-id>/executions/<execution-id>/stdout/`
+`URL`: `/tasks/<task-id>/jobs/<job-id>/executions/<execution-id>/stdout/`
 
 * `task-id` is the ID for the required task;
 * `job-id` is the ID for the required job;
@@ -688,7 +688,7 @@ This route returns the stdout result for the specified job execution.
 
 `Method`: `GET`
 
-`URL`: `/tasks/<task-id>/job/<job-id>/executions/<execution-id>/stderr/`
+`URL`: `/tasks/<task-id>/jobs/<job-id>/executions/<execution-id>/stderr/`
 
 * `task-id` is the ID for the required task;
 * `job-id` is the ID for the required job;
@@ -712,7 +712,7 @@ This route returns the stderr result for the specified job execution.
 
 `Method`: `POST`
 
-`URL`: `/tasks/<task-id>/job/<job-id>/executions/<execution-id>/stop/`
+`URL`: `/tasks/<task-id>/jobs/<job-id>/executions/<execution-id>/stop/`
 
 * `task-id` is the ID for the required task;
 * `job-id` is the ID for the required job;
@@ -753,7 +753,7 @@ This route stops a running job execution. If the job is a scheduled (or a CRON) 
 
 `Method`: `GET`
 
-`URL`: `/tasks/<task-id>/job/<job-id>/stream/executions/<execution-id>/`
+`URL`: `/tasks/<task-id>/jobs/<job-id>/stream/executions/<execution-id>/`
 
 * `task-id` is the ID for the required task;
 * `job-id` is the ID for the required job;
