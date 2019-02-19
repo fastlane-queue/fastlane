@@ -279,7 +279,7 @@ def run_job(task_id, job_id, execution_id, image, command):
 
 def _webhook_dispatch(task, job, execution, collection, logger):
     task_id = task.task_id
-    job_id = str(job.id)
+    job_id = str(job.job_id)
     execution_id = str(execution.execution_id)
 
     for webhook in collection:
@@ -320,7 +320,7 @@ def send_webhooks(task, job, execution, logger):
 
 def notify_users(task, job, execution, logger):
     task_id = task.task_id
-    job_id = str(job.id)
+    job_id = str(job.job_id)
     execution_id = str(execution.execution_id)
     succeed = job.metadata.get("notify", {}).get("succeeds", [])
     fails = job.metadata.get("notify", {}).get("fails", [])
