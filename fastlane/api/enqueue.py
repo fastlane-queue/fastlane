@@ -43,10 +43,18 @@ def get_ip_addr():
     return request.remote_addr
 
 
+def get_additional_dns_entries(details):
+    additional_dns_entries = details.get("additionalDNSEntries")
+    if not additional_dns_entries:
+        return []
+
+    return list(additional_dns_entries.items())
+
 def create_job(details, task, logger, get_new_job_fn):
     logger.debug("Creating job...")
     retries = details.get("retries", 0)
     expiration = details.get("expiration")
+    additional_dns_entries = get_additional_dns_entries(details)
 
     # people to notify when job succeeds, fails or finishes
     notify = details.get("notify", {"succeeds": [], "fails": [], "finishes": []})
@@ -74,6 +82,7 @@ def create_job(details, task, logger, get_new_job_fn):
     j.metadata["expiration"] = expiration
     j.metadata["timeout"] = timeout
     j.metadata["envs"] = details.get("envs", {})
+    j.metadata["additional_dns_entries"] = additional_dns_entries
     j.request_ip = get_ip_addr()
 
     if metadata:

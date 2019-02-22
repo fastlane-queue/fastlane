@@ -116,7 +116,6 @@ class Job(db.Document):
     def get_metadata(self, blacklist):
         if "envs" in self.metadata:
             envs = {}
-
             for key, val in self.metadata["envs"].items():
                 for word in blacklist:
                     if word in key.lower():
