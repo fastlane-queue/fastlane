@@ -86,6 +86,7 @@ def test_run1(client):
             command="command",
             detach=True,
             name=f"fastlane-job-{execution.execution_id}",
+            extra_hosts={}
         )
 
 
