@@ -10,11 +10,12 @@ from email.mime.text import MIMEText
 
 # 3rd Party
 from flask import current_app, url_for
-from rq_scheduler import Scheduler
 
 # Fastlane
 from fastlane.helpers import dumps, loads
 from fastlane.models import Job, JobExecution
+from fastlane.models.categories import Categories
+from fastlane.utils import to_unix
 from fastlane.worker import ExecutionResult
 from fastlane.worker.errors import HostUnavailableError
 from fastlane.worker.webhooks import WebhooksDispatcher, WebhooksDispatchError
@@ -28,8 +29,8 @@ def validate_max_concurrent(
             "Maximum number of global container executions reached. Enqueuing job execution..."
         )
         args = [task_id, job.id, execution_id, image, command]
-        result = current_app.job_queue.enqueue(run_job, *args, timeout=-1)
-        job.metadata["enqueued_id"] = result.id
+        result = current_app.job_queue.enqueue(Categories.Job, *args)
+        job.metadata["enqueued_id"] = result
         job.save()
         logger.info(
             "Job execution re-enqueued successfully due to max number of container executions."
@@ -71,11 +72,10 @@ def reenqueue_job_due_to_break(task_id, job_id, execution_id, image, command):
     args = [task_id, job_id, execution_id, image, command]
     delta = timedelta(seconds=1.0)
 
-    scheduler = Scheduler("jobs", connection=current_app.redis)
     future_date = datetime.utcnow() + delta
-    enqueued = scheduler.enqueue_at(future_date, run_job, *args)
+    enqueued = current_app.jobs_queue.enqueue_at(future_date, Categories.Job, *args)
 
-    return enqueued.id
+    return enqueued
 
 
 def download_image(executor, job, ex, image, tag, command, logger):
@@ -251,9 +251,9 @@ def run_job(task_id, job_id, execution_id, image, command):
             "Job status changed successfully.", status=JobExecution.Status.running
         )
 
-        scheduler = Scheduler("monitor", connection=app.redis)
-        interval = timedelta(seconds=1)
-        scheduler.enqueue_in(interval, monitor_job, task_id, job_id, ex.execution_id)
+        current_app.monitor_queue.enqueue_in(
+            "1s", Categories.Monitor, task_id, job_id, ex.execution_id
+        )
 
         return True
     except Exception as err:
@@ -298,7 +298,7 @@ def _webhook_dispatch(task, job, execution, collection, logger):
 
         hook_logger.debug("Enqueueing webhook...")
         args = [task_id, job_id, execution_id, method, url, headers, retries, 0]
-        current_app.webhook_queue.enqueue(send_webhook, *args, timeout=-1)
+        current_app.webhook_queue.enqueue(Categories.Webhook, *args)
         hook_logger.info("Webhook enqueued successfully.")
 
 
@@ -333,7 +333,7 @@ def notify_users(task, job, execution, logger):
             logger.info("Notifying user of success...", email=email)
             subject = "Job %s/%s succeeded!" % (task_id, job_id)
             args = [task_id, job_id, execution_id, subject, email]
-            current_app.notify_queue.enqueue(send_email, *args, timeout=-1)
+            current_app.notify_queue.enqueue(Categories.Notify, *args)
 
     if execution.status == JobExecution.Status.failed:
         logger.info("Notifying users of failure...")
@@ -350,7 +350,7 @@ def notify_users(task, job, execution, logger):
                 execution.exit_code,
             )
             args = [task_id, job_id, execution_id, subject, email]
-            current_app.notify_queue.enqueue(send_email, *args, timeout=-1)
+            current_app.notify_queue.enqueue(Categories.Notify, *args)
 
     logger.info("Notifying users of completion...")
 
@@ -367,18 +367,14 @@ def notify_users(task, job, execution, logger):
             execution.exit_code,
         )
         args = [task_id, job_id, execution_id, subject, email]
-        current_app.notify_queue.enqueue(send_email, *args, timeout=-1)
+        current_app.notify_queue.enqueue(Categories.Notify, *args)
 
 
 def reenqueue_monitor_due_to_break(task_id, job_id, execution_id):
     args = [task_id, job_id, execution_id]
-    delta = timedelta(seconds=1.0)
+    enqueued_id = current_app.monitor_queue.enqueue_in("1s", Categories.Monitor, *args)
 
-    scheduler = Scheduler("monitor", connection=current_app.redis)
-    future_date = datetime.utcnow() + delta
-    enqueued = scheduler.enqueue_at(future_date, monitor_job, *args)
-
-    return enqueued.id
+    return enqueued_id
 
 
 def monitor_job(task_id, job_id, execution_id):
@@ -483,15 +479,15 @@ def monitor_job(task_id, job_id, execution_id):
 
                 return False
 
-            scheduler = Scheduler("monitor", connection=app.redis)
             logger.info(
                 "Job has not finished. Retrying monitoring in the future.",
                 container_status=result.status,
                 seconds=1,
             )
 
-            interval = timedelta(seconds=5)
-            scheduler.enqueue_in(interval, monitor_job, task_id, job_id, execution_id)
+            current_app.monitor_queue.enqueue_in(
+                "5s", Categories.Monitor, task_id, job_id, execution_id
+            )
 
             return True
 
@@ -507,8 +503,6 @@ def monitor_job(task_id, job_id, execution_id):
             )
             retry_logger.debug("Job failed. Enqueuing job retry...")
             job.metadata["retry_count"] += 1
-
-            scheduler = Scheduler("jobs", connection=current_app.redis)
 
             new_exec = job.create_execution(execution.image, execution.command)
             new_exec.status = JobExecution.Status.enqueued
@@ -529,9 +523,11 @@ def monitor_job(task_id, job_id, execution_id):
                     seconds=math.pow(factor, job.metadata["retry_count"]) * min_backoff
                 )
             future_date = datetime.utcnow() + delta
-            enqueued = scheduler.enqueue_at(future_date, run_job, *args)
+            enqueued_id = current_app.jobs_queue.enqueue_at(
+                to_unix(future_date), Categories.Job, *args
+            )
 
-            job.metadata["enqueued_id"] = enqueued.id
+            job.metadata["enqueued_id"] = enqueued_id
             job.save()
 
             retry_logger.info("Job execution enqueued successfully.")
@@ -781,12 +777,14 @@ def send_webhook(
                 retries,
                 retry_count + 1,
             ]
-            scheduler = Scheduler("webhooks", connection=current_app.redis)
 
             factor = app.config["WEBHOOKS_EXPONENTIAL_BACKOFF_FACTOR"]
             min_backoff = app.config["WEBHOOKS_EXPONENTIAL_BACKOFF_MIN_MS"] / 1000.0
-            delta = timedelta(seconds=math.pow(factor, retry_count) * min_backoff)
-            scheduler.enqueue_in(delta, send_webhook, *args)
+            delta = to_unix(
+                datetime.utcnow()
+                + timedelta(seconds=math.pow(factor, retry_count) * min_backoff)
+            )
+            current_app.webhook_queue.enqueue_at(delta, Categories.Webhook, *args)
             logger.info("Webhook dispatch retry scheduled.", date=delta)
 
     return True
@@ -796,22 +794,15 @@ def enqueue_missing_monitor_jobs(app):
     # find running/created executions
     executions = Job.get_unfinished_executions()
 
-    # verify if they are scheduled to be monitored
-    all_monitored = app.redis.zrange("rq:scheduler:scheduled_jobs", 0, -1)
-    monitored_jobs = set()
-
-    for monitored in all_monitored:
-        details = app.redis.hgetall(f"rq:job:{monitored.decode('utf-8')}")
-        monitored_jobs.add(details[b"description"].decode("utf-8"))
+    queue = app.monitor_queue
 
     executions_to_monitor = []
     for (job, execution) in executions:
-        command = (
-            "fastlane.worker.job.monitor_job("
-            f"'{job.task.task_id}', '{job.job_id}', '{execution.execution_id}')"
-        )
-        if command in monitored_jobs:
+        if "enqueued_id" in job.metadata and queue.is_scheduled(
+            job.metadata["enqueued_id"]
+        ):
             continue
+
         executions_to_monitor.append((job, execution))
 
     if not executions_to_monitor:
@@ -823,9 +814,11 @@ def enqueue_missing_monitor_jobs(app):
     )
 
     # enqueue if execution not scheduled to be monitored
-    scheduler = Scheduler("monitor", connection=app.redis)
     for (job, execution) in executions_to_monitor:
-        interval = timedelta(seconds=5)
-        scheduler.enqueue_in(
-            interval, monitor_job, job.task.task_id, job.job_id, execution.execution_id
+        current_app.monitor_queue.enqueue_in(
+            "5s",
+            Categories.Monitor,
+            job.task.task_id,
+            job.job_id,
+            execution.execution_id,
         )

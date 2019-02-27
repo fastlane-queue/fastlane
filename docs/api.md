@@ -52,7 +52,7 @@ If the database contains a task with the provided `task_id`, it will be used. Ot
 
 The response includes `IDs` that can be used to track the Taks, Job  and Job Execution, as well as the the respective URLs to get further details.
 
-The `queueJobId` key is the ID in the [RQ](http://python-rq.org/) queue and should not be very relevant for users of [fastlane](https://github.com/heynemann/fastlane).
+The `queueJobId` key is the ID in the queue and should not be very relevant for users of [fastlane](https://github.com/heynemann/fastlane).
 
 If the execution for the enqueued job is delayed (CRON or scheduled job), then the execution ID and URL will be null. The owner of the job must poll the job details URL later on to retrieve the execution id.
 

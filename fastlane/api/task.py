@@ -1,6 +1,5 @@
 # 3rd Party
 from flask import Blueprint, current_app, g, jsonify, render_template, request, url_for
-from rq_scheduler import Scheduler
 
 # Fastlane
 from fastlane.api.execution import (
@@ -12,7 +11,7 @@ from fastlane.api.execution import (
 )
 from fastlane.api.helpers import return_error
 from fastlane.models import Job, JobExecution, Task
-from fastlane.worker.job import run_job
+from fastlane.models.categories import Categories
 
 bp = Blueprint("task", __name__)  # pylint: disable=invalid-name
 
@@ -238,9 +237,9 @@ def retry_job(task_id, job_id):
             "No execution yet to retry.", "retry_job", status=400, logger=logger
         )
 
-    scheduler = Scheduler("jobs", connection=current_app.redis)
-
-    if "enqueued_id" in job.metadata and job.metadata["enqueued_id"] in scheduler:
+    if "enqueued_id" in job.metadata and current_app.jobs_queue.is_scheduled(
+        job.metadata["enqueued_id"]
+    ):
         msg = "Can't retry a scheduled job."
 
         return return_error(msg, "retry_job", status=400, logger=logger)
@@ -259,7 +258,7 @@ def retry_job(task_id, job_id):
 
     logger.debug("Enqueuing job execution...")
     args = [task_id, job_id, new_exec.execution_id, execution.image, execution.command]
-    result = current_app.job_queue.enqueue(run_job, *args, timeout=-1)
+    result = current_app.jobs_queue.enqueue(Categories.Job, *args)
     job.metadata["enqueued_id"] = result.id
     job.save()
     logger.info("Job execution enqueued successfully.")

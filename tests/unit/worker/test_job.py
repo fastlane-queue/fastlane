@@ -5,30 +5,31 @@ from unittest.mock import MagicMock
 # 3rd Party
 import pytest
 from preggy import expect
-from rq import Queue, SimpleWorker
-from rq_scheduler import Scheduler
 from tests.fixtures.models import JobExecutionFixture
 
 # Fastlane
 import fastlane.worker.job as job_mod
 from fastlane.models import JobExecution
+from fastlane.models.categories import Categories
+from fastlane.queue import Message, Queue
 
 
-def test_run_job1(client):
+def test_run_job1(worker):
     """Test running a new job for a task"""
-    with client.application.app_context():
-        app = client.application
+    app = worker.app.app
+
+    with app.app_context():
         app.redis.flushall()
 
         task, job, execution = JobExecutionFixture.new_defaults()
 
         exec_mock = MagicMock()
         exec_mock.validate_max_running_executions.return_value = True
-        client.application.executor = exec_mock
+        app.executor = exec_mock
 
-        queue = Queue("jobs", is_async=False, connection=client.application.redis)
-        result = queue.enqueue(
-            job_mod.run_job,
+        queue = app.jobs_queue
+        queue.enqueue(
+            Categories.Job,
             task.task_id,
             job.job_id,
             execution.execution_id,
@@ -36,8 +37,7 @@ def test_run_job1(client):
             "command",
         )
 
-        worker = SimpleWorker([queue], connection=queue.connection)
-        worker.work(burst=True)
+        worker.loop_once()
 
         task.reload()
         expect(task.jobs).to_length(1)
@@ -49,158 +49,126 @@ def test_run_job1(client):
         expect(execution.image).to_equal("image")
         expect(execution.command).to_equal("command")
 
-        hash_key = "rq:scheduler:scheduled_jobs"
-        res = app.redis.exists(hash_key)
-        expect(res).to_be_true()
-
-        res = app.redis.zrange(hash_key, 0, -1)
-        expect(res).to_length(1)
-        monitored_key = res[0].decode("utf-8")
-
-        hash_key = f"rq:job:{result.id}"
-
-        res = app.redis.exists(hash_key)
-        expect(res).to_be_true()
-
-        res = app.redis.hget(hash_key, "status")
-        expect(res).to_equal("finished")
-
-        res = app.redis.hexists(hash_key, "data")
-        expect(res).to_be_true()
-
-        next_job_id = f"rq:job:{monitored_key}"
-        res = app.redis.exists(next_job_id)
-        expect(res).to_be_true()
-
-        res = app.redis.hexists(next_job_id, "data")
-        expect(res).to_be_true()
-
-        res = app.redis.hget(next_job_id, "origin")
-        expect(res).to_equal("monitor")
-
-        res = app.redis.hget(next_job_id, "description")
-        expect(res).to_equal(
-            f"fastlane.worker.job.monitor_job('{task.task_id}', "
-            f"'{job.job_id}', '{execution.execution_id}')"
-        )
+        res = app.redis.llen(queue.queue_name)
+        expect(res).to_equal(0)
 
         task.reload()
         expect(task.jobs[0].executions[0].status).to_equal(JobExecution.Status.running)
 
 
-def test_validate_max1(client):
+def test_validate_max1(worker):
     """
     Test validating max concurent executions for a farm returns True
     if max concurrent executions not reached.
     """
-    with client.application.app_context():
+    with worker.app.app.app_context():
         pytest.skip("Not implemented")
 
 
-def test_validate_max2(client):
+def test_validate_max2(worker):
     """
     Test validating max concurent executions for a farm returns False
     if max concurrent executions reached and re-enqueues the Job.
     """
-    with client.application.app_context():
+    with worker.app.app.app_context():
         pytest.skip("Not implemented")
 
 
-def test_validate_expiration1(client):
+def test_validate_expiration1(worker):
     """
     Test validating the expiration of a Job returns True if the job
     has no expiration.
     """
-    with client.application.app_context():
+    with worker.app.app.app_context():
         pytest.skip("Not implemented")
 
 
-def test_validate_expiration2(client):
+def test_validate_expiration2(worker):
     """
     Test validating the expiration of a Job returns True if the job
     has expiration but not expired.
     """
-    with client.application.app_context():
+    with worker.app.app.app_context():
         pytest.skip("Not implemented")
 
 
-def test_validate_expiration3(client):
+def test_validate_expiration3(worker):
     """
     Test validating the expiration of a Job returns False if the job
     has expiration and has expired. It also tests that the job is marked
     as expired with the proper message as error.
     """
-    with client.application.app_context():
+    with worker.app.app.app_context():
         pytest.skip("Not implemented")
 
 
-def test_reenqueue_job1(client):
+def test_reenqueue_job1(worker):
     """
     Test re-enqueuing a job due to Executor HostUnavailableError.
     """
-    with client.application.app_context():
+    with worker.app.app.app_context():
         pytest.skip("Not implemented")
 
 
-def test_downloading_image1(client):
+def test_downloading_image1(worker):
     """
     Test updating an image works and returns True
     """
-    with client.application.app_context():
+    with worker.app.app.app_context():
         pytest.skip("Not implemented")
 
 
-def test_downloading_image2(client):
+def test_downloading_image2(worker):
     """
     Test updating an image when executor raises HostUnavailableError,
     the job is re-enqueued and method returns False
     """
-    with client.application.app_context():
+    with worker.app.app.app_context():
         pytest.skip("Not implemented")
 
 
-def test_downloading_image3(client):
+def test_downloading_image3(worker):
     """
     Test updating an image when executor raises any exception other than
     HostUnavailableError, the job is marked as failed with the proper error
     and method returns False
     """
-    with client.application.app_context():
+    with worker.app.app.app_context():
         pytest.skip("Not implemented")
 
 
-def test_run_container1(client):
+def test_run_container1(worker):
     """
     Test running a container works and returns True
     """
-    with client.application.app_context():
+    with worker.app.app.app_context():
         pytest.skip("Not implemented")
 
 
-def test_run_container2(client):
+def test_run_container2(worker):
     """
     Test running a container when executor raises HostUnavailableError,
     the job is re-enqueued and method returns False
     """
-    with client.application.app_context():
+    with worker.app.app.app_context():
         pytest.skip("Not implemented")
 
 
-def test_run_container3(client):
+def test_run_container3(worker):
     """
     Test running a container when executor raises any exception other than
     HostUnavailableError, the job is marked as failed with the proper error
     and method returns False
     """
-    with client.application.app_context():
+    with worker.app.app.app_context():
         pytest.skip("Not implemented")
 
 
-def test_monitor_job_with_retry(client):
+def test_monitor_job_with_retry(worker):
     """Test monitoring a job for a task that fails"""
 
-    with client.application.app_context():
-        app = client.application
+    app = worker.app.app
+    with app.app_context():
         app.redis.flushall()
 
         task, job, execution = JobExecutionFixture.new_defaults()
@@ -213,15 +181,14 @@ def test_monitor_job_with_retry(client):
         exec_mock.get_result.return_value = MagicMock(
             exit_code=1, log="".encode("utf-8"), error="error".encode("utf-8")
         )
-        client.application.executor = exec_mock
+        app.executor = exec_mock
 
-        queue = Queue("monitor", is_async=False, connection=client.application.redis)
-        result = queue.enqueue(
-            job_mod.monitor_job, task.task_id, job_id, execution.execution_id
+        monitor_queue = app.monitor_queue
+        monitor_queue.enqueue(
+            Categories.Monitor, task.task_id, job_id, execution.execution_id
         )
 
-        worker = SimpleWorker([queue], connection=queue.connection)
-        worker.work(burst=True)
+        worker.loop_once()
 
         task.reload()
         expect(task.jobs).to_length(1)
@@ -233,55 +200,17 @@ def test_monitor_job_with_retry(client):
         expect(execution.image).to_equal("image")
         expect(execution.command).to_equal("command")
 
-        hash_key = f"rq:job:{result.id}"
-
-        res = app.redis.exists(hash_key)
-        expect(res).to_be_true()
-
-        res = app.redis.hget(hash_key, "status")
-        expect(res).to_equal("finished")
-
-        res = app.redis.hexists(hash_key, "data")
-        expect(res).to_be_true()
-
-        res = app.redis.zrange(b"rq:scheduler:scheduled_jobs", 0, -1)
-        expect(res).to_length(1)
-
-        time = datetime.now() + timedelta(seconds=2)
-        res = app.redis.zscore("rq:scheduler:scheduled_jobs", res[0])
-        expect(int(res)).to_be_greater_than(int(time.timestamp()) - 2)
-        expect(int(res)).to_be_lesser_than(int(time.timestamp()) + 2)
-
-        new_job = app.redis.zrange("rq:scheduler:scheduled_jobs", 0, 0)[0].decode(
-            "utf-8"
-        )
-        next_job_id = f"rq:job:{new_job}"
-        res = app.redis.exists(next_job_id)
-        expect(res).to_be_true()
-
-        res = app.redis.hexists(next_job_id, "data")
-        expect(res).to_be_true()
-
-        res = app.redis.hget(next_job_id, "origin")
-        expect(res).to_equal("jobs")
-
-        res = app.redis.hget(next_job_id, "description")
-        job.reload()
-        expect(res).to_equal(
-            (
-                f"fastlane.worker.job.run_job('{task.task_id}', '{job_id}', "
-                f"'{job.executions[-1].execution_id}', 'image', 'command')"
-            )
-        )
+        expect(app.redis.zcard(Queue.SCHEDULED_QUEUE_NAME)).to_equal(1)
 
         task.reload()
         expect(task.jobs[0].executions[0].status).to_equal(JobExecution.Status.failed)
 
 
-def test_monitor_job_with_retry2(client):
+def test_monitor_job_with_retry2(worker):
     """Test monitoring a job for a task that fails stops after max retries"""
-    with client.application.app_context():
-        app = client.application
+
+    app = worker.app.app
+    with app.app_context():
         app.redis.flushall()
 
         task, job, execution = JobExecutionFixture.new_defaults()
@@ -294,15 +223,13 @@ def test_monitor_job_with_retry2(client):
         exec_mock.get_result.return_value = MagicMock(
             exit_code=1, log="".encode("utf-8"), error="error".encode("utf-8")
         )
-        client.application.executor = exec_mock
+        app.executor = exec_mock
 
-        queue = Queue("monitor", is_async=False, connection=client.application.redis)
-        result = queue.enqueue(
-            job_mod.monitor_job, task.task_id, job_id, execution.execution_id
+        monitor_queue = app.monitor_queue
+        monitor_queue.enqueue(
+            Categories.Monitor, task.task_id, job_id, execution.execution_id
         )
-
-        worker = SimpleWorker([queue], connection=queue.connection)
-        worker.work(burst=True)
+        worker.loop_once()
 
         task.reload()
         expect(task.jobs).to_length(1)
@@ -314,33 +241,13 @@ def test_monitor_job_with_retry2(client):
         expect(execution.image).to_equal("image")
         expect(execution.command).to_equal("command")
 
-        hash_key = f"rq:job:{result.id}"
-
-        res = app.redis.exists(hash_key)
-        expect(res).to_be_true()
-
-        res = app.redis.hget(hash_key, "status")
-        expect(res).to_equal("finished")
-
-        res = app.redis.hexists(hash_key, "data")
-        expect(res).to_be_true()
-
-        keys = app.redis.keys()
-        next_job_id = [
-            key
-
-            for key in keys
-
-            if key.decode("utf-8").startswith("rq:job")
-            and not key.decode("utf-8").endswith(result.id)
-        ]
-        expect(next_job_id).to_length(0)
+        expect(app.redis.zcard(Queue.SCHEDULED_QUEUE_NAME)).to_equal(0)
 
 
-def test_enqueue_missing1(client):
+def test_enqueue_missing1(worker):
     """Test self-healing enqueueing missing monitor jobs"""
-    with client.application.app_context():
-        app = client.application
+    with worker.app.app.app_context():
+        app = worker.app.app
         app.redis.flushall()
 
         for status in [
@@ -352,24 +259,21 @@ def test_enqueue_missing1(client):
         ]:
             _, job, execution = JobExecutionFixture.new_defaults()
             execution.status = status
-            job.save()
 
             if status == JobExecution.Status.pulling:
-                scheduler = Scheduler("monitor", connection=app.redis)
-                interval = timedelta(seconds=1)
-                scheduler.enqueue_in(
-                    interval,
-                    job_mod.monitor_job,
+                monitor_queue = worker.app.app.monitor_queue
+                enqueued_id = monitor_queue.enqueue_in(
+                    "1s",
+                    Categories.Monitor,
                     job.task.task_id,
                     job.job_id,
                     execution.execution_id,
                 )
+                job.metadata["enqueued_id"] = enqueued_id
+
+            job.save()
 
         job_mod.enqueue_missing_monitor_jobs(app)
 
-        hash_key = "rq:scheduler:scheduled_jobs"
-        res = app.redis.exists(hash_key)
-        expect(res).to_be_true()
-
-        res = app.redis.zrange(hash_key, 0, -1)
-        expect(res).to_length(2)
+        res = app.redis.zcard(Queue.SCHEDULED_QUEUE_NAME)
+        expect(res).to_equal(2)

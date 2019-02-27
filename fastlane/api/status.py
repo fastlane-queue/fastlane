@@ -8,6 +8,9 @@ from flask import Blueprint, current_app, jsonify, url_for
 
 # Fastlane
 from fastlane.models import Job, Task
+from fastlane.models.categories import QueueNames
+from fastlane.queue import Queue
+from fastlane.utils import from_unix
 
 bp = Blueprint("status", __name__, url_prefix="/status")  # pylint: disable=invalid-name
 
@@ -26,11 +29,34 @@ def status():
         )
 
     metadata["hosts"] = [] + containers["available"] + containers["unavailable"]
-    metadata["queues"] = {"jobs": {}, "monitor": {}, "error": {}}
+    metadata["queues"] = {}
 
-    for queue in ["jobs", "monitor", "error"]:
-        jobs_queue_size = current_app.redis.llen(f"rq:queue:{queue}")
-        metadata["queues"][queue]["length"] = jobs_queue_size
+    for queue_name in [
+        QueueNames.Job,
+        QueueNames.Monitor,
+        QueueNames.Webhook,
+        QueueNames.Notify,
+    ]:
+        queue = getattr(current_app, f"{queue_name}_queue")
+        jobs_queue_size = current_app.redis.llen(queue.queue_name)
+        metadata["queues"][queue_name] = {"length": jobs_queue_size}
+
+    next_scheduled = current_app.redis.zrange(
+        Queue.SCHEDULED_QUEUE_NAME, 0, 0, withscores=True
+    )
+
+    if not next_scheduled:
+        next_timestamp = None
+        next_human = None
+    else:
+        next_timestamp = next_scheduled[0][1]
+        next_human = from_unix(next_timestamp).isoformat()
+
+    metadata["queues"]["scheduled"] = {
+        "length": current_app.redis.zcard(Queue.SCHEDULED_QUEUE_NAME),
+        "nextTimeStamp": next_timestamp,
+        "nextHumanReadableDate": next_human,
+    }
 
     metadata["tasks"] = {"count": Task.objects.count()}
 

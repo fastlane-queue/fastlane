@@ -7,10 +7,10 @@ from uuid import uuid4
 import pytest
 from croniter import croniter
 from preggy import expect
-from rq_scheduler import Scheduler
 
 # Fastlane
 from fastlane.models import Job, Task
+from fastlane.queue import Queue
 
 import tests.unit.api.helpers  # NOQA isort:skip pylint:disable=unused-import
 
@@ -56,17 +56,6 @@ def test_enqueue1(client):
 
         expect(obj["taskUrl"]).to_equal(task.get_url())
         expect(obj).to_be_enqueued()
-        expect(obj).to_be_enqueued_with_value("status", "queued")
-
-        expect(obj).to_be_enqueued_with_value("created_at")
-        expect(obj).to_be_enqueued_with_value("enqueued_at")
-        expect(obj).to_be_enqueued_with_value("data")
-        expect(obj).to_be_enqueued_with_value("origin", "jobs")
-        expect(obj).to_be_enqueued_with_value(
-            "description",
-            f"fastlane.worker.job.run_job('{obj['taskId']}', '{job_id}', '{execution_id}', 'ubuntu', 'ls')",
-        )
-        expect(obj).to_be_enqueued_with_value("timeout", "-1")
 
         count = Task.objects.count()
         expect(count).to_equal(1)
@@ -136,11 +125,8 @@ def test_enqueue3(client):
         expect(job_id).not_to_be_null()
         expect(obj["queueJobId"]).not_to_be_null()
 
-        res = app.redis.zrange(b"rq:scheduler:scheduled_jobs", 0, -1)
-        expect(res).to_length(1)
-
-        res = app.redis.zscore("rq:scheduler:scheduled_jobs", res[0])
-        expect(res).to_equal(time)
+        res = app.redis.zcard(Queue.SCHEDULED_QUEUE_NAME)
+        expect(res).to_equal(1)
 
 
 def test_enqueue4(client):
@@ -179,13 +165,19 @@ def enqueue_in(client, start_in, delta):
     expect(obj["queueJobId"]).not_to_be_null()
 
     # res = app.redis.keys()
-    res = app.redis.zrange(b"rq:scheduler:scheduled_jobs", 0, -1)
-    expect(res).to_length(1)
+
+    res = app.redis.zcard(Queue.SCHEDULED_QUEUE_NAME)
+    expect(res).to_equal(1)
 
     time = int((datetime.now(tz=timezone.utc) + delta).timestamp())
-    res = app.redis.zscore("rq:scheduler:scheduled_jobs", res[0])
-    expect(res).to_be_greater_than(time - 2)
-    expect(res).to_be_lesser_than(time + 2)
+    res = app.redis.zrangebyscore(
+        Queue.SCHEDULED_QUEUE_NAME, "-inf", "+inf", withscores=True
+    )
+    expect(res).to_length(1)
+
+    _, timestamp = res[0]
+    expect(timestamp).to_be_greater_than(time - 2)
+    expect(timestamp).to_be_lesser_than(time + 2)
 
 
 def test_enqueue5(client):
@@ -211,13 +203,19 @@ def test_enqueue5(client):
         expect(job_id).not_to_be_null()
         expect(obj["queueJobId"]).not_to_be_null()
 
-        res = app.redis.zrange(b"rq:scheduler:scheduled_jobs", 0, -1)
+        res = app.redis.zcard(Queue.SCHEDULED_QUEUE_NAME)
+        expect(res).to_equal(1)
+
+        res = app.redis.zrangebyscore(
+            Queue.SCHEDULED_QUEUE_NAME, "-inf", "+inf", withscores=True
+        )
         expect(res).to_length(1)
 
+        _, timestamp = res[0]
+
         cron = croniter("*/10 * * * *", datetime.now())
-        res = app.redis.zscore("rq:scheduler:scheduled_jobs", res[0])
         expected = cron.get_next(datetime)
-        expect(res).to_equal(expected.timestamp())
+        expect(timestamp).to_equal(expected.timestamp())
 
 
 def test_enqueue6(client):
@@ -420,7 +418,6 @@ def test_enqueue12(client):
         expect(obj["queueJobId"]).not_to_be_null()
 
         expect(obj["executionId"]).not_to_be_null()
-        execution_id = obj["executionId"]
 
         task = Task.get_by_task_id(obj["taskId"])
         expect(task).not_to_be_null()
@@ -432,20 +429,6 @@ def test_enqueue12(client):
 
         expect(obj["taskUrl"]).to_equal(task.get_url())
         expect(obj).to_be_enqueued()
-        expect(obj).to_be_enqueued_with_value("status", "queued")
-
-        expect(obj).to_be_enqueued_with_value("created_at")
-        expect(obj).to_be_enqueued_with_value("enqueued_at")
-        expect(obj).to_be_enqueued_with_value("data")
-        expect(obj).to_be_enqueued_with_value("origin", "jobs")
-        expect(obj).to_be_enqueued_with_value(
-            "description",
-            (
-                f"fastlane.worker.job.run_job('{obj['taskId']}', '{job_id}', "
-                f"'{execution_id}', 'ubuntu', 'ls')"
-            ),
-        )
-        expect(obj).to_be_enqueued_with_value("timeout", "-1")
 
         count = Task.objects.count()
         expect(count).to_equal(1)
@@ -470,8 +453,9 @@ def test_enqueue12_2(client):
         enqueued_id = job["metadata"]["enqueued_id"]
         expect(enqueued_id).not_to_be_null()
 
-        scheduler = Scheduler("jobs", connection=client.application.redis)
-        expect(enqueued_id in scheduler).to_be_true()
+        queue = client.application.jobs_queue
+
+        expect(queue.is_scheduled(enqueued_id)).to_be_true()
 
         response = client.put(
             f"/tasks/{task_id}/jobs/{job_id}/", data=dumps(data), follow_redirects=True
@@ -481,8 +465,8 @@ def test_enqueue12_2(client):
         expect(job.metadata["enqueued_id"]).not_to_equal(enqueued_id)
 
         # reschedule job
-        expect(enqueued_id in scheduler).to_be_false()
-        expect(job.metadata["enqueued_id"] in scheduler).to_be_true()
+        expect(queue.is_scheduled(enqueued_id)).to_be_false()
+        expect(queue.is_scheduled(job.metadata["enqueued_id"])).to_be_true()
 
 
 def test_enqueue13(client):

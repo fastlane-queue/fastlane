@@ -4,12 +4,10 @@ import sys
 from json import loads
 
 # 3rd Party
-import rq_dashboard
+import redis_sentinel_url
 import structlog
 from flask import Flask
 from flask_cors import CORS
-from flask_redis import FlaskRedis
-from flask_redis_sentinel import SentinelExtension
 from flask_sockets import Sockets
 from gevent import pywsgi
 from geventwebsocket.handler import WebSocketHandler
@@ -24,7 +22,6 @@ from structlog.stdlib import add_log_level, add_logger_name, filter_by_level
 # Fastlane
 import fastlane.api.gzipped as gzipped
 import fastlane.api.metrics as metrics
-import fastlane.api.rqb as rqb
 from fastlane.api.enqueue import bp as enqueue
 from fastlane.api.execution import bp as execution_api
 from fastlane.api.healthcheck import bp as healthcheck
@@ -32,22 +29,23 @@ from fastlane.api.status import bp as status
 from fastlane.api.stream import bp as stream
 from fastlane.api.task import bp as task_api
 from fastlane.models import db
+from fastlane.models.categories import QueueNames
+from fastlane.queue import Queue, QueueGroup
 
 
 class Application:
-    def __init__(self, config, log_level, testing=False, auto_connect_db=True):
+    def __init__(self, config, log_level, testing=False):
         self.config = config
         self.logger = None
         self.log_level = log_level
 
-        self.create_app(testing, auto_connect_db=auto_connect_db)
+        self.create_app(testing)
 
-    def create_app(self, testing, auto_connect_db=True):
+    def create_app(self, testing):
         self.app = Flask("fastlane")
 
         self.testing = testing
         self.app.testing = testing
-        self.app.config.from_object(rq_dashboard.default_settings)
         self.app.error_handlers = []
 
         for key in self.config.items.keys():
@@ -59,10 +57,10 @@ class Application:
         self.app.log_level = self.log_level
         self.configure_logging()
         self.connect_redis()
-        self.connect_queue()
+        self.configure_queue()
+        #  self.connect_queue()
 
-        if auto_connect_db:
-            self.connect_db()
+        self.connect_db()
         self.load_executor()
         self.load_error_handlers()
 
@@ -100,7 +98,6 @@ class Application:
             "docker.api.build",
             "docker.api.swarm",
             "docker.api.image",
-            "rq.worker",
             "werkzeug",
             "requests",
             "urllib3",
@@ -149,31 +146,34 @@ class Application:
             self.logger.info("Configuring Fake Redis...")
             import fakeredis
 
-            self.app.redis = FlaskRedis.from_custom_provider(fakeredis.FakeStrictRedis)
+            self.app.redis = fakeredis.FakeStrictRedis()
             self.app.redis.connect = self._mock_redis(True)
             self.app.redis.disconnect = self._mock_redis(False)
-            self.app.redis.init_app(self.app)
-        elif self.app.config["REDIS_URL"].startswith("redis+sentinel"):
-            self.logger.info(
-                "Configuring Redis Sentinel...", redis_url=self.app.config["REDIS_URL"]
-            )
-            redis_sentinel = SentinelExtension()
-            redis_connection = redis_sentinel.default_connection
-            redis_sentinel.init_app(self.app)
-            self.app.redis = redis_connection
         else:
-            self.logger.info(
-                "Configuring Redis...", redis_url=self.app.config["REDIS_URL"]
-            )
-            self.app.redis = FlaskRedis()
-            self.app.redis.init_app(self.app)
+            redis_url = self.app.config["REDIS_URL"]
+            self.logger.info("Configuring Redis...", redis_url=redis_url)
+            sentinel, client = redis_sentinel_url.connect(redis_url)
+            self.app.sentinel = sentinel
+            self.app.redis = client
 
-        self.logger.info("Connection to redis successful")
+            self.logger.info("Connection to redis successful")
 
-    def connect_queue(self):
-        self.app.queue = None
-        self.app.register_blueprint(rqb.bp)
-        rqb.init_app(self.app)
+    def configure_queue(self):
+        self.logger.debug("Configuring queue...")
+
+        queues = []
+
+        for queue_name in [
+            QueueNames.Job,
+            QueueNames.Monitor,
+            QueueNames.Notify,
+            QueueNames.Webhook,
+        ]:
+            queue = Queue(self.app.redis, queue_name)
+            setattr(self.app, f"{queue_name}_queue", queue)
+            queues.append(queue)
+
+        self.app.queue_group = QueueGroup(self.app.redis, queues)
 
     def connect_db(self):
         settings = self.app.config["MONGODB_CONFIG"]
@@ -232,6 +232,6 @@ class Application:
 
     def _mock_redis(self, connected):
         def handle():
-            self.app.redis._redis_client.connected = connected
+            self.app.redis.connected = connected
 
         return handle

@@ -1,16 +1,13 @@
 # Standard Library
-from datetime import datetime, timezone
 from uuid import UUID
 
 # 3rd Party
 from flask import Blueprint, current_app, g, jsonify, make_response, request, url_for
-from rq_scheduler import Scheduler
 
 # Fastlane
 from fastlane.helpers import loads
 from fastlane.models import JobExecution, Task
-from fastlane.utils import parse_time
-from fastlane.worker.job import run_job
+from fastlane.queue import Categories
 
 bp = Blueprint("enqueue", __name__)  # pylint: disable=invalid-name
 
@@ -45,10 +42,12 @@ def get_ip_addr():
 
 def get_additional_dns_entries(details):
     additional_dns_entries = details.get("additionalDNSEntries")
+
     if not additional_dns_entries:
         return []
 
     return list(additional_dns_entries.items())
+
 
 def create_job(details, task, logger, get_new_job_fn):
     logger.debug("Creating job...")
@@ -96,39 +95,43 @@ def create_job(details, task, logger, get_new_job_fn):
 
 def enqueue_job(task, job, image, command, start_at, start_in, cron, logger):
     execution = None
-    scheduler = Scheduler("jobs", connection=current_app.redis)
+    #  scheduler = Scheduler("jobs", connection=current_app.redis)
 
     args = [task.task_id, str(job.job_id), None, image, command]
 
     queue_job_id = None
 
     if start_at is not None:
-        future_date = datetime.utcfromtimestamp(int(start_at))
-        logger.debug("Enqueuing job execution in the future...", start_at=future_date)
-        result = scheduler.enqueue_at(future_date, run_job, *args)
-        job.metadata["enqueued_id"] = str(result.id)
-        queue_job_id = str(result.id)
+        logger.debug("Enqueuing job execution in the future...", start_at=start_at)
+        enqueued_id = current_app.jobs_queue.enqueue_at(int(start_at), Categories.Job)
+        #  future_date = datetime.utcfromtimestamp(int(start_at))
+        #  result = scheduler.enqueue_at(future_date, run_job, *args)
+        job.metadata["enqueued_id"] = enqueued_id
+        queue_job_id = enqueued_id
         job.save()
-        logger.info("Job execution enqueued successfully.", start_at=future_date)
+        logger.info("Job execution enqueued successfully.", start_at=start_at)
     elif start_in is not None:
-        future_date = datetime.now(tz=timezone.utc) + start_in
-        logger.debug("Enqueuing job execution in the future...", start_at=future_date)
-        result = scheduler.enqueue_at(future_date, run_job, *args)
-        job.metadata["enqueued_id"] = str(result.id)
-        queue_job_id = str(result.id)
+        #  future_date = datetime.now(tz=timezone.utc) + start_in
+        logger.debug("Enqueuing job execution in the future...", start_in=start_in)
+        enqueued_id = current_app.jobs_queue.enqueue_in(start_in, Categories.Job)
+        #  result = scheduler.enqueue_at(future_date, run_job, *args)
+        job.metadata["enqueued_id"] = enqueued_id
+        queue_job_id = enqueued_id
         job.save()
-        logger.info("Job execution enqueued successfully.", start_at=future_date)
+        logger.info("Job execution enqueued successfully.", start_in=start_in)
     elif cron is not None:
         logger.debug("Enqueuing job execution using cron...", cron=cron)
-        result = scheduler.cron(
-            cron,  # A cron string (e.g. "0 0 * * 0")
-            func=run_job,
-            args=args,
-            repeat=None,
-            queue_name="jobs",
-        )
-        job.metadata["enqueued_id"] = str(result.id)
-        queue_job_id = str(result.id)
+        #  result = scheduler.cron(
+        #  cron,  # A cron string (e.g. "0 0 * * 0")
+        #  func=run_job,
+        #  args=args,
+        #  repeat=None,
+        #  queue_name="jobs",
+        #  )
+
+        enqueued_id = current_app.jobs_queue.enqueue_cron(cron, Categories.Job)
+        job.metadata["enqueued_id"] = enqueued_id
+        queue_job_id = enqueued_id
         job.metadata["cron"] = cron
         job.scheduled = True
         job.save()
@@ -148,9 +151,10 @@ def enqueue_job(task, job, image, command, start_at, start_in, cron, logger):
             command,
         ]
 
-        result = current_app.job_queue.enqueue(run_job, *args, timeout=-1)
-        queue_job_id = result.id
-        job.metadata["enqueued_id"] = result.id
+        #  result = current_app.job_queue.enqueue(run_job, *args, timeout=-1)
+        enqueued_id = current_app.jobs_queue.enqueue(Categories.Job, *args)
+        queue_job_id = enqueued_id
+        job.metadata["enqueued_id"] = enqueued_id
         job.save()
         logger.info("Job execution enqueued successfully.")
 
@@ -191,7 +195,7 @@ def validate_and_enqueue(details, task, job, logger):
     command = details.get("command", None)
 
     start_at = details.get("startAt", None)
-    start_in = parse_time(details.get("startIn", None))
+    start_in = details.get("startIn", None)
     cron = details.get("cron", None)
 
     if len(list(filter(lambda item: item is not None, (start_at, start_in, cron)))) > 1:
@@ -246,10 +250,8 @@ def create_or_update_task(task_id, job_id):
         details, task, logger, lambda task: task.create_or_update_job(job_id)
     )
 
-    scheduler = Scheduler("jobs", connection=current_app.redis)
-
-    if "enqueued_id" in job.metadata and job.metadata["enqueued_id"] in scheduler:
-        scheduler.cancel(job.metadata["enqueued_id"])
+    if "enqueued_id" in job.metadata:
+        current_app.jobs_queue.deschedule(job.metadata["enqueued_id"])
         job.scheduled = False
 
     enqueued_id, execution, response = validate_and_enqueue(details, task, job, logger)

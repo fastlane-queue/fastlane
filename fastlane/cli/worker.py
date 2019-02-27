@@ -1,59 +1,93 @@
 # Standard Library
 import time
+import traceback
 from uuid import uuid4
-
-# 3rd Party
-import rq
-from rq import Connection, Worker
 
 # Fastlane
 from fastlane.api.app import Application
 from fastlane.config import Config
+from fastlane.models.categories import QueueNames
 from fastlane.worker.job import enqueue_missing_monitor_jobs
-from fastlane.worker.scheduler import QueueScheduler
 
 
 class WorkerHandler:
     def __init__(
-        self, click, worker_id, jobs, monitor, notify, webhooks, config, log_level
+        self,
+        click,
+        worker_id,
+        jobs,
+        monitor,
+        notify,
+        webhooks,
+        config,
+        log_level,
+        app=None,
     ):
-        self.config_path = config
-        self.config = None
+        if isinstance(config, (str, bytes)):
+            self.config_path = config
+            self.config = None
+        else:
+            self.config_path = None
+            self.config = config
+
         self.click = click
         self.worker_id = worker_id
         self.log_level = log_level
-        self.queues = []
+        self.queues = set()
 
         if jobs:
-            self.queues.append("jobs")
+            self.queues.add(QueueNames.Job)
 
         if monitor:
-            self.queues.append("monitor")
+            self.queues.add(QueueNames.Monitor)
 
         if notify:
-            self.queues.append("notify")
+            self.queues.add(QueueNames.Notify)
 
         if webhooks:
-            self.queues.append("webhooks")
+            self.queues.add(QueueNames.Webhook)
 
         self.load_config()
+        self.app = app
+        self.queue_group = None
+        self.last_verified_missing_jobs = time.time()
+
+        if self.app is not None:
+            self.queue_group = self.app.app.queue_group
 
     def load_config(self):
         # self.click.echo(f'Loading configuration from {self.config_path}...')
-        self.config = Config.load(self.config_path)
+
+        if self.config is None:
+            self.config = Config.load(self.config_path)
+
+    def loop_once(self):
+        self.queue_group.move_jobs()
+
+        if time.time() - self.last_verified_missing_jobs > 30:
+            enqueue_missing_monitor_jobs(self.app.app)
+            self.last_verified_missing_jobs = time.time()
+
+        item = self.queue_group.dequeue(queues=self.queues, timeout=5)
+
+        if item is None:
+            return None
+
+        return item.run()
 
     def __call__(self):
         # self.click.echo(
         # f'Running fastlane worker processing queues {",".join(self.queues)}.')
-        app = Application(self.config, self.log_level, auto_connect_db=True)
+        self.app = app = Application(self.config, self.log_level)
+        self.queue_group = self.app.app.queue_group
+
         app.logger.info(
             f'Running fastlane worker processing queues {",".join(self.queues)}.'
         )
         interval = app.config["WORKER_SLEEP_TIME_MS"] / 1000.0
+        self.last_verified_missing_jobs = time.time()
 
         with app.app.app_context():
-            worker_kw = dict(connection=app.app.redis)
-
             if self.worker_id is None:
                 app.logger.warn(
                     "The worker id was not set for this worker and a random one will be used."
@@ -62,30 +96,11 @@ class WorkerHandler:
 
             app.logger = app.logger.bind(worker_id=self.worker_id, queues=self.queues)
             app.app.logger = app.logger
-            worker_kw["name"] = self.worker_id
 
-            worker = Worker(self.queues, **worker_kw)
-
-            schedulers = {}
-
-            with Connection(app.app.redis):
-                for queue in self.queues:
-                    schedulers[queue] = QueueScheduler(queue, app=app.app)
-                app.schedulers = schedulers
-
-                # app.logger.debug('Processing enqueued items...')
-
+            while True:
                 try:
-                    while True:
-                        for queue in self.queues:
-                            # app.logger.debug("Processing scheduler...", queue=queue)
-                            schedulers[queue].move_jobs()
-
-                        # app.logger.debug('Processing queues...')
-                        worker.work(burst=True)
-                        enqueue_missing_monitor_jobs(app.app)
-                        time.sleep(interval)
-                except rq.worker.StopRequested:
-                    app.logger.info("Worker exiting gracefully.")
-
-                    return
+                    self.loop_once()
+                    time.sleep(interval)
+                except Exception:
+                    error = traceback.format_exc()
+                    app.logger.error("Failed to process job.", error=error)

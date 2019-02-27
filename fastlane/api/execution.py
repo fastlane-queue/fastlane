@@ -9,7 +9,6 @@ from flask import (
     request,
     url_for,
 )
-from rq_scheduler import Scheduler
 
 # Fastlane
 from fastlane.api.helpers import return_error
@@ -167,15 +166,9 @@ def perform_stop_job_execution(job, execution, logger, stop_schedule=True):
         job.metadata["retry_count"] = job.metadata["retries"] + 1
         job.save()
 
-    scheduler = Scheduler("jobs", connection=current_app.redis)
-
-    if (
-        stop_schedule
-        and "enqueued_id" in job.metadata
-        and job.metadata["enqueued_id"] in scheduler
-    ):
+    if stop_schedule and "enqueued_id" in job.metadata:
         logger.info("Removed job from scheduling.")
-        scheduler.cancel(job.metadata["enqueued_id"])
+        current_app.jobs_queue.deschedule(job.metadata["enqueued_id"])
         job.scheduled = False
 
     if execution is not None:

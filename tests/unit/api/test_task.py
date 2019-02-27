@@ -123,7 +123,17 @@ def test_get_task_details(client):
 
 def test_search_tasks1(client):
     """Tests search task by task_id."""
-    pytest.skip("Not implemented")
+
+    task_id = f"task-search-{str(uuid4())}"
+    Task.create_task(task_id)
+    Task.create_task(str(uuid4()))
+    Task.create_task(str(uuid4()))
+
+    resp = client.get("/search/?query=search")
+    expect(resp.status_code).to_equal(200)
+
+    data = loads(resp.data)
+    expect(data["items"]).to_length(1)
 
 
 def test_search_tasks2(client):

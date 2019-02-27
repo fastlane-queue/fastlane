@@ -9,6 +9,7 @@ from tests.fixtures.models import JobExecutionFixture
 
 # Fastlane
 from fastlane.models import JobExecution
+from fastlane.queue import Queue
 
 import tests.unit.api.helpers  # NOQA isort:skip pylint:disable=unused-import
 
@@ -298,23 +299,9 @@ def test_get_execution_logs3(client):
 def test_stop_execution1(client):
     with client.application.app_context():
 
-        # def test_method():
-        # pass
-
-        # scheduler = Scheduler("jobs", connection=client.application.redis)
-        # scheduler.enqueue_at(datetime(2020, 1, 1), test_method)
-
-        # enqueued_jobs = client.application.redis.zrange(
-        # b"rq:scheduler:scheduled_jobs", 0, -1
-        # )
-
-        # expect(enqueued_jobs).to_length(1)
-        # enqueued_job_id = enqueued_jobs[0].decode("utf-8")
-
         task, job, execution = JobExecutionFixture.new_defaults(
             status=JobExecution.Status.running
         )
-        # job.metadata["enqueued_id"] = enqueued_job_id
         job.metadata["retries"] = 3
         job.metadata["retry_count"] = 0
         job.save()
@@ -351,10 +338,8 @@ def test_stop_execution1(client):
         job.reload()
         expect(job.metadata["retry_count"]).to_equal(4)
 
-        # enqueued_jobs = client.application.redis.zrange(
-        # b"rq:scheduler:scheduled_jobs", 0, -1
-        # )
-        # expect(enqueued_jobs).to_length(0)
+        enqueued_jobs = client.application.redis.zcard(Queue.SCHEDULED_QUEUE_NAME)
+        expect(enqueued_jobs).to_equal(0)
 
 
 def test_stop_execution2(client):

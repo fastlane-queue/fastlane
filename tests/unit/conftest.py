@@ -1,2 +1,3 @@
 # Fastlane
-from tests.fixtures import client  # NOQA
+# 3rd Party
+from tests.fixtures import client, worker  # NOQA
