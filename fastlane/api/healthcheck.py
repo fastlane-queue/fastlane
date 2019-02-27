@@ -4,13 +4,20 @@ from flask import Blueprint, current_app, jsonify
 # Fastlane
 from fastlane.models import db
 
-bp = Blueprint(  # pylint: disable=invalid-name
-    "healthcheck", __name__, url_prefix="/healthcheck"
-)
+bp = Blueprint("healthcheck", __name__)  # pylint: disable=invalid-name
+
+
+@bp.route("/healthcheck", methods=("GET",))
+def healthcheck():
+    return do_healthcheck()
 
 
 @bp.route("/", methods=("GET",))
-def healthcheck():
+def root_healthcheck():
+    return do_healthcheck()
+
+
+def do_healthcheck():
     status = {"redis": True, "mongo": True, "errors": []}
     try:
         res = current_app.redis.ping()

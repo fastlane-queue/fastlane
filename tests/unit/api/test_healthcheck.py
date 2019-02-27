@@ -12,10 +12,18 @@ from fastlane.models import db
 def test_healthcheck1(client):
     """Test healthcheck works if redis is live"""
 
-    rv = client.get("/healthcheck", follow_redirects=True)
-    expect(rv.status_code).to_equal(200)
+    response = client.get("/healthcheck", follow_redirects=True)
+    expect(response.status_code).to_equal(200)
 
-    obj = loads(rv.data)
+    obj = loads(response.data)
+    expect(obj["redis"]).to_be_true()
+    expect(obj["mongo"]).to_be_true()
+    expect(obj["errors"]).to_be_empty()
+
+    response = client.get("/", follow_redirects=True)
+    expect(response.status_code).to_equal(200)
+
+    obj = loads(response.data)
     expect(obj["redis"]).to_be_true()
     expect(obj["mongo"]).to_be_true()
     expect(obj["errors"]).to_be_empty()
@@ -26,10 +34,10 @@ def test_healthcheck2(client):
 
     client.application.redis.disconnect()
 
-    rv = client.get("/healthcheck", follow_redirects=True)
-    expect(rv.status_code).to_equal(500)
+    response = client.get("/healthcheck", follow_redirects=True)
+    expect(response.status_code).to_equal(500)
 
-    obj = loads(rv.data)
+    obj = loads(response.data)
     expect(obj["redis"]).to_be_false()
     expect(obj["mongo"]).to_be_true()
     expect(obj["errors"]).to_length(1)
@@ -55,10 +63,10 @@ def test_healthcheck3(client):
         db.connection.fastlane.jobs = MagicMock()
         db.connection.fastlane.jobs.find = find_mock
 
-        rv = client.get("/healthcheck", follow_redirects=True)
-        expect(rv.status_code).to_equal(500)
+        response = client.get("/healthcheck", follow_redirects=True)
+        expect(response.status_code).to_equal(500)
 
-        obj = loads(rv.data)
+        obj = loads(response.data)
         expect(obj["redis"]).to_be_true()
         expect(obj["mongo"]).to_be_false()
         expect(obj["errors"]).to_length(1)
