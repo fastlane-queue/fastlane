@@ -6,24 +6,24 @@ services:
     ports:
       - "10101:27017"
     volumes:
-      - /tmp/fastlane/mongo:/data/db
+      - mongo-data:/data/db
   redis:
     image: redis
     ports:
       - "10100:6379"
     volumes:
-      - /tmp/fastlane/redis:/data
+      - redis-data:/data
   redis2:
     image: redis:3.2-alpine
     volumes:
-      - /tmp/fastlane/redis2:/data
+      - redis2-data:/data
     ports:
       - "10102:6379"
   redis-sentinel:
     build:
       context: ./redis-sentinel
     volumes:
-      - /tmp/fastlane/redis-sentinel:/data
+      - redis-sentinel-data:/data
     links:
       - redis2
     ports:
@@ -33,3 +33,9 @@ services:
     privileged: true
     ports:
       - "1234:2375"
+
+volumes:
+  redis-data:
+  redis2-data:
+  redis-sentinel-data:
+  mongo-data:

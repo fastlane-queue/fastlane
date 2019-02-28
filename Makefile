@@ -24,7 +24,6 @@ setup-ci:
 	@poetry develop
 
 deps:
-	@mkdir -p /tmp/fastlane/{mongo,redis,redis2}
 ifdef COMPOSE
 	@echo "Starting dependencies..."
 	@docker-compose --project-name fastlane up -d
@@ -41,20 +40,16 @@ endif
 stop-deps:
 ifdef COMPOSE
 	@echo "Stopping dependencies..."
-	@docker-compose --project-name fastlane stop
-	@docker-compose --project-name fastlane rm -f
+	@docker-compose --project-name fastlane rm --stop --force
 endif
 
 stop-deps-func:
 ifdef COMPOSE
 	@echo "Stopping func tests dependencies..."
-	@docker-compose --project-name fastlane-tests -f ./docker-compose-func-tests.yml stop
-	@docker-compose --project-name fastlane-tests -f ./docker-compose-func-tests.yml rm -f
+	@docker-compose --project-name fastlane-tests -f ./docker-compose-func-tests.yml down -v
 endif
 
 deps-func: stop-deps stop-deps-func
-	@sudo rm -rf /tmp/fastlane-tests
-	@mkdir -p /tmp/fastlane-tests/{mongo,redis}
 ifdef COMPOSE
 	@echo "Starting func tests dependencies..."
 	@docker-compose --project-name fastlane-tests -f ./docker-compose-func-tests.yml up -d
@@ -104,11 +99,9 @@ else
 endif
 
 sample:
-	@rm -rf /tmp/fastlane
-	@mkdir -p /tmp/fastlane/{mongo,redis}
 ifdef COMPOSE
 	@echo "Starting fastlane..."
-	@docker-compose -f ./docker-compose-sample.yml --project-name fastlane up -d
+	@docker-compose -f ./docker-compose-sample.yml --project-name fastlane-sample up -d
 	@echo "fastlane started successfully."
 endif
 

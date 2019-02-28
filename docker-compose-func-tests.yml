@@ -1,4 +1,4 @@
-version: '2'
+version: '3'
 
 services:
   mongo:
@@ -6,11 +6,11 @@ services:
     ports:
       - "27355:27017"
     volumes:
-      - /tmp/fastlane-tests/mongo:/data/db
+      - mongo-test-data:/data/db
   redis:
     image: redis
     volumes:
-      - /tmp/fastlane-tests/redis:/data
+      - redis-test-data:/data
   docker-host:
     image: docker:stable-dind
     privileged: true
@@ -24,3 +24,7 @@ services:
       - mongo
       - redis
       - docker-host
+
+volumes:
+  redis-test-data:
+  mongo-test-data:
