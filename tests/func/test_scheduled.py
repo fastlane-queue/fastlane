@@ -1,8 +1,8 @@
 # Standard Library
+import calendar
+from datetime import datetime
 from json import loads
 from uuid import uuid4
-from datetime import datetime
-import calendar
 
 # 3rd Party
 from preggy import expect
@@ -23,11 +23,8 @@ def test_scheduled1(client):
 
     status, body, _ = client.post(
         f"/tasks/{task_id}/",
-        data={
-            "image": "ubuntu",
-            "command": "echo 'it works'",
-            "startAt": unixtime + 5,
-        })
+        data={"image": "ubuntu", "command": "echo 'it works'", "startAt": unixtime},
+    )
 
     expect(status).to_equal(200)
     result = loads(body)
@@ -35,13 +32,14 @@ def test_scheduled1(client):
     job_url = result["jobUrl"]
 
     meta = {}
-    expect(job_url).to_have_execution(cli=client, execution=meta, timeout=30)
+    expect(job_url).to_have_execution(cli=client, execution=meta)
 
-    expect(meta).to_include('url')
-    expect(meta).to_include('executionId')
+    expect(meta).to_include("url")
+    expect(meta).to_include("executionId")
 
-    expect(meta['url']).to_have_finished_with(
-        status='done', log='it works', exitCode=0, cli=client)
+    expect(meta["url"]).to_have_finished_with(
+        status="done", log="it works", exitCode=0, cli=client
+    )
 
 
 def test_scheduled2(client):
@@ -55,11 +53,8 @@ def test_scheduled2(client):
 
     status, body, _ = client.post(
         f"/tasks/{task_id}/",
-        data={
-            "image": "ubuntu",
-            "command": "echo 'it works'",
-            "startIn": '2s',
-        })
+        data={"image": "ubuntu", "command": "echo 'it works'", "startIn": "1s"},
+    )
 
     expect(status).to_equal(200)
     result = loads(body)
@@ -67,10 +62,11 @@ def test_scheduled2(client):
     job_url = result["jobUrl"]
 
     meta = {}
-    expect(job_url).to_have_execution(cli=client, execution=meta, timeout=30)
+    expect(job_url).to_have_execution(cli=client, execution=meta)
 
-    expect(meta).to_include('url')
-    expect(meta).to_include('executionId')
+    expect(meta).to_include("url")
+    expect(meta).to_include("executionId")
 
-    expect(meta['url']).to_have_finished_with(
-        status='done', log='it works', exitCode=0, cli=client)
+    expect(meta["url"]).to_have_finished_with(
+        status="done", log="it works", exitCode=0, cli=client
+    )

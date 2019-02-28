@@ -103,7 +103,9 @@ def enqueue_job(task, job, image, command, start_at, start_in, cron, logger):
 
     if start_at is not None:
         logger.debug("Enqueuing job execution in the future...", start_at=start_at)
-        enqueued_id = current_app.jobs_queue.enqueue_at(int(start_at), Categories.Job)
+        enqueued_id = current_app.jobs_queue.enqueue_at(
+            int(start_at), Categories.Job, *args
+        )
         #  future_date = datetime.utcfromtimestamp(int(start_at))
         #  result = scheduler.enqueue_at(future_date, run_job, *args)
         job.metadata["enqueued_id"] = enqueued_id
@@ -113,7 +115,7 @@ def enqueue_job(task, job, image, command, start_at, start_in, cron, logger):
     elif start_in is not None:
         #  future_date = datetime.now(tz=timezone.utc) + start_in
         logger.debug("Enqueuing job execution in the future...", start_in=start_in)
-        enqueued_id = current_app.jobs_queue.enqueue_in(start_in, Categories.Job)
+        enqueued_id = current_app.jobs_queue.enqueue_in(start_in, Categories.Job, *args)
         #  result = scheduler.enqueue_at(future_date, run_job, *args)
         job.metadata["enqueued_id"] = enqueued_id
         queue_job_id = enqueued_id
@@ -121,15 +123,7 @@ def enqueue_job(task, job, image, command, start_at, start_in, cron, logger):
         logger.info("Job execution enqueued successfully.", start_in=start_in)
     elif cron is not None:
         logger.debug("Enqueuing job execution using cron...", cron=cron)
-        #  result = scheduler.cron(
-        #  cron,  # A cron string (e.g. "0 0 * * 0")
-        #  func=run_job,
-        #  args=args,
-        #  repeat=None,
-        #  queue_name="jobs",
-        #  )
-
-        enqueued_id = current_app.jobs_queue.enqueue_cron(cron, Categories.Job)
+        enqueued_id = current_app.jobs_queue.enqueue_cron(cron, Categories.Job, *args)
         job.metadata["enqueued_id"] = enqueued_id
         queue_job_id = enqueued_id
         job.metadata["cron"] = cron

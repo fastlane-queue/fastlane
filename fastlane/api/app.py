@@ -69,9 +69,8 @@ class Application:
         if (
             isinstance(enable_cors, (str, bytes)) and enable_cors.lower() == "true"
         ) or (isinstance(enable_cors, (bool)) and enable_cors):
-            self.app.logger.info(
-                f'Configured CORS to allow access from \'{self.app.config["CORS_ORIGINS"]}\'.'
-            )
+            origin = self.app.config["CORS_ORIGINS"]
+            self.app.logger.info(f"Configured CORS to allow access from '{origin}'.")
             CORS(self.app)
 
         metrics.init_app(self.app)
@@ -169,11 +168,11 @@ class Application:
             QueueNames.Notify,
             QueueNames.Webhook,
         ]:
-            queue = Queue(self.app.redis, queue_name)
+            queue = Queue(self.app.logger, self.app.redis, queue_name)
             setattr(self.app, f"{queue_name}_queue", queue)
             queues.append(queue)
 
-        self.app.queue_group = QueueGroup(self.app.redis, queues)
+        self.app.queue_group = QueueGroup(self.logger, self.app.redis, queues)
 
     def connect_db(self):
         settings = self.app.config["MONGODB_CONFIG"]

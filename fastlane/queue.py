@@ -55,7 +55,8 @@ class Message:
 
 
 class QueueGroup:
-    def __init__(self, redis, queues):
+    def __init__(self, logger, redis, queues):
+        self.logger = logger
         self.queues = queues
         self.redis = redis
 
@@ -77,6 +78,8 @@ class QueueGroup:
         return Message.deserialize(item.decode("utf-8"))
 
     def move_jobs(self):
+        logger = self.logger.bind(operation="move_jobs")
+
         lock = self.redis.lock(
             Queue.MOVE_JOBS_LOCK_NAME,
             timeout=5,
@@ -86,6 +89,8 @@ class QueueGroup:
         )
 
         if not lock.acquire():
+            logger.info("Lock could not be acquired. Trying to move jobs again later.")
+
             return None
 
         moved_items = []
@@ -98,15 +103,30 @@ class QueueGroup:
             pipe.zremrangebyscore(Queue.SCHEDULED_QUEUE_NAME, "-inf", timestamp)
             items, _ = pipe.execute()
 
+            if not items:
+                logger.info("No jobs in need of moving right now.")
+
+                return moved_items
+
+            logger.info("Found jobs in need of moving.", job_count=len(items))
+
             for message_id in items:
                 key = Queue.get_message_name(message_id.decode("utf-8"))
                 data = self.redis.get(key)
                 msg = Message.deserialize(data.decode("utf-8"))
+                logger.info(
+                    "Moving job to queue.",
+                    queue_name=msg.queue,
+                    job_id=msg.id,
+                    msg=msg.serialize(),
+                )
                 pipe = self.redis.pipeline()
                 pipe.lpush(msg.queue, msg.serialize())
                 pipe.delete(key)
                 pipe.execute()
                 moved_items.append(msg)
+
+            logger.info("Moved jobs successfully.")
 
             return moved_items
         finally:
@@ -119,13 +139,18 @@ class Queue:
     MOVE_JOBS_LOCK_NAME = "fastlane:move-jobs-lock"
     SCHEDULED_MESSAGE_NAME = "fastlane:scheduled-message"
 
-    def __init__(self, redis, queue_name="main"):
+    def __init__(self, logger, redis, queue_name="main"):
         self.redis = redis
         self.queue_id = queue_name
         self.queue_name = f"{Queue.QUEUE_NAME}:{queue_name}"
+        self.logger = logger.bind(queue_id=self.queue_id, queue_name=self.queue_name)
 
     def enqueue(self, category, *args, **kw):
         msg = Message(self.queue_name, category, *args, **kw)
+
+        self.logger.info(
+            "Sending message to queue.", operation="enqueue", category=category
+        )
 
         return self.__enqueue(msg)
 
@@ -157,6 +182,12 @@ class Queue:
     def __enqueue_at_timestamp(self, timestamp, category, *args, **kw):
         msg = Message(self.queue_name, category, *args, **kw)
 
+        self.logger.info(
+            "Scheduling message to run at future time.",
+            operation="schedule",
+            timestamp=timestamp,
+            category=category,
+        )
         pipe = self.redis.pipeline()
         pipe.set(self.get_message_name(msg.id), msg.serialize())
         pipe.zadd(Queue.SCHEDULED_QUEUE_NAME, timestamp, msg.id)
@@ -183,9 +214,16 @@ class Queue:
         return self.redis.exists(self.get_message_name(message_id))
 
     def deschedule(self, message_id):
+        logger = self.logger.bind(operation="deschedule", message_id=message_id)
+        logger.info("Descheduling job from queue.")
         pipe = self.redis.pipeline()
         pipe.zrem(Queue.SCHEDULED_QUEUE_NAME, message_id)
         pipe.delete(self.get_message_name(message_id))
         results = pipe.execute()
+
+        if results[0] == 1:
+            logger.info("Descheduling job successful.")
+        else:
+            logger.info("Descheduling job failed (maybe job was not found).")
 
         return results[0] == 1

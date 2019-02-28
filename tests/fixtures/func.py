@@ -109,7 +109,7 @@ def __validate(topic, execution, **arguments):
 
 
 @assertion
-def to_have_finished_with(topic, cli, timeout=60, **kw):
+def to_have_finished_with(topic, cli, timeout=10, **kw):
     start = time.time()
 
     last_obj = None
@@ -128,13 +128,13 @@ def to_have_finished_with(topic, cli, timeout=60, **kw):
         except AssertionError:
             pass
 
-        time.sleep(0.5)
+        time.sleep(0.1)
 
     __validate(topic, last_obj["execution"], **kw)
 
 
 @assertion
-def to_have_execution(topic, cli, execution, timeout=60):
+def to_have_execution(topic, cli, execution, timeout=10):
     start = time.time()
 
     last_obj = None

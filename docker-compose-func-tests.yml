@@ -9,13 +9,15 @@ services:
       - mongo-test-data:/data/db
   redis:
     image: redis
+    ports:
+      - "27356:6379"
     volumes:
       - redis-test-data:/data
   docker-host:
     image: docker:stable-dind
     privileged: true
-  fastlane:
-    image: heynemann/fastlane:latest
+  fastlane-api:
+    image: fastlane
     ports:
       - "10000:10000"
     env_file:
@@ -24,6 +26,17 @@ services:
       - mongo
       - redis
       - docker-host
+    command: poetry run fastlane api -vvv
+  fastlane-worker:
+    image: fastlane
+    env_file:
+      - docker-compose-func-tests.env
+    depends_on:
+      - mongo
+      - redis
+      - docker-host
+      - fastlane-api
+    command: poetry run fastlane worker -vvv
 
 volumes:
   redis-test-data:

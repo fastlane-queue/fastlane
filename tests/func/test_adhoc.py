@@ -18,11 +18,8 @@ def test_adhoc1(client):
     task_id = uuid4()
 
     status, body, _ = client.post(
-        f"/tasks/{task_id}/",
-        data={
-            "image": "ubuntu",
-            "command": "echo 'it works'"
-        })
+        f"/tasks/{task_id}/", data={"image": "ubuntu", "command": "echo 'it works'"}
+    )
 
     expect(status).to_equal(200)
     result = loads(body)
@@ -30,7 +27,8 @@ def test_adhoc1(client):
     execution_url = result["executionUrl"]
 
     expect(execution_url).to_have_finished_with(
-        status='done', log='it works', exitCode=0, cli=client)
+        status="done", log="it works", exitCode=0, cli=client
+    )
 
 
 def test_adhoc2(client):
@@ -47,7 +45,8 @@ def test_adhoc2(client):
         data={
             "image": "ubuntu",
             "command": """bash -c 'echo "it failed" && exit 123'""",
-        })
+        },
+    )
 
     expect(status).to_equal(200)
     result = loads(body)
@@ -55,7 +54,8 @@ def test_adhoc2(client):
     execution_url = result["executionUrl"]
 
     expect(execution_url).to_have_finished_with(
-        status='failed', log='it failed', error='', exitCode=123, cli=client)
+        status="failed", log="it failed", error="", exitCode=123, cli=client
+    )
 
 
 def test_adhoc3(client):
@@ -68,11 +68,8 @@ def test_adhoc3(client):
     task_id = uuid4()
 
     status, body, _ = client.post(
-        f"/tasks/{task_id}/",
-        data={
-            "image": "ubuntu",
-            "command": """bash -c 'qwe'""",
-        })
+        f"/tasks/{task_id}/", data={"image": "ubuntu", "command": """bash -c 'qwe'"""}
+    )
 
     expect(status).to_equal(200)
     result = loads(body)
@@ -80,8 +77,9 @@ def test_adhoc3(client):
     execution_url = result["executionUrl"]
 
     expect(execution_url).to_have_finished_with(
-        status='failed',
-        log='',
-        error='bash: qwe: command not found',
+        status="failed",
+        log="",
+        error="bash: qwe: command not found",
         exitCode=127,
-        cli=client)
+        cli=client,
+    )
