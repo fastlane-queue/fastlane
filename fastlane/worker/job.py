@@ -298,7 +298,7 @@ def _webhook_dispatch(task, job, execution, collection, logger):
 
         hook_logger.debug("Enqueueing webhook...")
         args = [task_id, job_id, execution_id, method, url, headers, retries, 0]
-        current_app.webhook_queue.enqueue(Categories.Webhook, *args)
+        current_app.webhooks_queue.enqueue(Categories.Webhook, *args)
         hook_logger.info("Webhook enqueued successfully.")
 
 
@@ -784,7 +784,7 @@ def send_webhook(
                 datetime.utcnow()
                 + timedelta(seconds=math.pow(factor, retry_count) * min_backoff)
             )
-            current_app.webhook_queue.enqueue_at(delta, Categories.Webhook, *args)
+            current_app.webhooks_queue.enqueue_at(delta, Categories.Webhook, *args)
             logger.info("Webhook dispatch retry scheduled.", date=delta)
 
     return True
