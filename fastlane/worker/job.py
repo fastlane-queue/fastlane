@@ -430,6 +430,9 @@ def monitor_job(task_id, job_id, execution_id):
             )
             job.save()
 
+            send_webhooks(job.task, job, execution, logger)
+            notify_users(job.task, job, execution, logger)
+
             return False
 
         logger.info(
@@ -476,6 +479,9 @@ def monitor_job(task_id, job_id, execution_id):
                 )
                 job.save()
                 logger.info("Job execution timed out.", status=execution.status)
+
+                send_webhooks(job.task, job, execution, logger)
+                notify_users(job.task, job, execution, logger)
 
                 return False
 
