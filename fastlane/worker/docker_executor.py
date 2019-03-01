@@ -401,8 +401,14 @@ class Executor:
             try:
                 container_name = f"{JOB_PREFIX}-{execution.execution_id}"
                 envs = job.metadata.get("envs", {})
-                additional_dns_entries = dict(job.metadata.get("additional_dns_entries", []))
-                logger = logger.bind(container_name=container_name, envs=envs, additional_dns_entries=additional_dns_entries)
+                additional_dns_entries = dict(
+                    job.metadata.get("additional_dns_entries", [])
+                )
+                logger = logger.bind(
+                    container_name=container_name,
+                    envs=envs,
+                    additional_dns_entries=additional_dns_entries,
+                )
                 logger.debug("Running the Job in Docker Host...")
                 container = client.containers.run(
                     image=f"{image}:{tag}",
@@ -410,7 +416,7 @@ class Executor:
                     command=command,
                     detach=True,
                     environment=envs,
-                    extra_hosts=additional_dns_entries
+                    extra_hosts=additional_dns_entries,
                 )
                 execution.metadata["container_id"] = container.id
                 logger.info(
@@ -581,9 +587,7 @@ class Executor:
         @circuit
         def run():
             running = []
-            containers = client.containers.list(
-                sparse=False, filters={"status": "running"}
-            )
+            containers = client.containers.list(sparse=False)
 
             for container in containers:
                 if not container.name.startswith(JOB_PREFIX):

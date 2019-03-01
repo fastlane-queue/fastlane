@@ -23,9 +23,14 @@ def do_healthcheck():
         res = current_app.redis.ping()
 
         if not res:
-            raise RuntimeError(f"Connection to redis failed ({res}).")
+            raise RuntimeError(f"ping returned {res}")
     except Exception as err:
-        status["errors"].append({"source": "redis", "message": str(err)})
+        status["errors"].append(
+            {
+                "source": "redis",
+                "message": f"Connection to redis failed (error: {str(err)}).",
+            }
+        )
         status["redis"] = False
 
     try:

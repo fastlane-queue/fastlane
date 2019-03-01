@@ -78,12 +78,14 @@ class Task(db.Document):
 
         return cls.objects(task_id=task_id).no_dereference().first()
 
-    def create_job(self):
+    def create_job(self, image, command):
         from fastlane.models.job import Job
 
         job_id = uuid4()
         j = Job(task_id=str(self.task_id), job_id=str(job_id))
         j.task = self
+        j.image = image
+        j.command = command
         j.save()
 
         self.jobs.append(j)
@@ -91,7 +93,7 @@ class Task(db.Document):
 
         return j
 
-    def create_or_update_job(self, job_id):
+    def create_or_update_job(self, job_id, image, command):
         from fastlane.models.job import Job
 
         jobs = list(filter(lambda job: str(job.job_id) == job_id, self.jobs))
@@ -99,10 +101,15 @@ class Task(db.Document):
         if not jobs:
             j = Job(task_id=str(self.task_id), job_id=str(job_id))
             j.task = self
+            j.image = image
+            j.command = command
             j.save()
             self.jobs.append(j)
             self.save()
         else:
             j = jobs[0]
+            j.image = image
+            j.command = command
+            j.save()
 
         return j

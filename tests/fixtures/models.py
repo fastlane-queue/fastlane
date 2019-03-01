@@ -12,7 +12,15 @@ class TaskFixture:
 
 class JobFixture:
     @staticmethod
-    def new(job_id=None, task_id=None, task=None, metadata=None, scheduled=False):
+    def new(
+        job_id=None,
+        task_id=None,
+        task=None,
+        metadata=None,
+        scheduled=False,
+        image="ubuntu",
+        command="ls -lah",
+    ):
         if task_id is None:
             task_id = str(uuid4())
 
@@ -22,7 +30,7 @@ class JobFixture:
         if metadata is None:
             metadata = {}
 
-        job = task.create_job()
+        job = task.create_job(image, command)
 
         if job_id is not None:
             job.job_id = job_id
@@ -56,7 +64,7 @@ class JobExecutionFixture:
             if task is None:
                 task = TaskFixture.new(task_id)
 
-            job = JobFixture.new(task=task)
+            job = JobFixture.new(task=task, image=image, command=command)
 
         if metadata is None:
             metadata = {}

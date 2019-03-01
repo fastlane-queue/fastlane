@@ -9,22 +9,33 @@ from fastlane.queue import Categories, Message, Queue
 from fastlane.utils import get_next_cron_timestamp, to_unix
 
 
+def assert_queue_message(queue, expected_size, message_id):
+    redis = queue.redis
+
+    expect(redis.llen(queue.queue_name)).to_equal(expected_size)
+
+    if expected_size > 0:
+        retrieved_id = redis.lpop(queue.queue_name).decode("utf-8")
+        expect(retrieved_id).to_equal(message_id)
+
+        message_str = redis.get(Queue.get_message_name(message_id))
+        expect(message_str).not_to_be_null()
+
+        message = Message.deserialize(message_str)
+        expect(message.id).to_equal(message_id)
+    else:
+        message_exists = redis.exists(Queue.get_message_name(message_id))
+        expect(message_exists).to_be_false()
+
+
 def test_queueing(client):
-    """Test enqueueing a new job"""
+    """Test enqueueing a new message"""
 
     queue = client.application.jobs_queue
     expect(queue).not_to_be_null()
 
     enqueued_id = queue.enqueue(Categories.Job)
-
-    redis = client.application.redis
-    expect(redis.llen(queue.queue_name)).to_equal(1)
-
-    job_str = redis.lpop(queue.queue_name)
-    expect(job_str).not_to_be_null()
-
-    job = Message.deserialize(job_str)
-    expect(job.id).to_equal(enqueued_id)
+    assert_queue_message(queue, 1, enqueued_id)
 
 
 def test_dequeue1(client):
@@ -40,16 +51,14 @@ def test_dequeue1(client):
         expect(redis.llen(queue.queue_name)).to_equal(1)
 
         job = queue.dequeue(**test_case)
-
-        redis = client.application.redis
-        expect(redis.llen(queue.queue_name)).to_equal(0)
-
         expect(job.id).to_equal(enqueued_id)
         expect(job.category).to_equal(Categories.Job)
         expect(job.args).to_length(1)
         expect(job.args[0]).to_equal("something")
         expect(job.kwargs).to_include("other")
         expect(job.kwargs["other"]).to_equal("öther")
+
+        assert_queue_message(queue, 0, enqueued_id)
 
 
 def test_dequeue2(client):
@@ -216,10 +225,7 @@ def test_move_jobs(client):
     expect(redis.llen(jobs_queue.queue_name)).to_equal(5)
     expect(redis.zcard(Queue.SCHEDULED_QUEUE_NAME)).to_equal(5)
 
-    for enqueued_id in enqueued_ids[:5]:
-        expect(redis.exists(Queue.get_message_name(enqueued_id))).to_be_false()
-
-    for enqueued_id in enqueued_ids[5:]:
+    for enqueued_id in enqueued_ids:
         expect(redis.exists(Queue.get_message_name(enqueued_id))).to_be_true()
 
 
@@ -236,8 +242,7 @@ def test_queue_group1(client):
 
     job = client.application.queue_group.dequeue()
 
-    redis = client.application.redis
-    expect(redis.llen(queue.queue_name)).to_equal(0)
+    assert_queue_message(queue, 0, enqueued_id)
 
     expect(job.id).to_equal(enqueued_id)
     expect(job.queue).to_equal("fastlane:message-queue:monitor")
@@ -252,16 +257,50 @@ def test_is_enqueued1(client):
     """Test is enqueued returns False for an invalid job."""
     queue = client.application.jobs_queue
 
-    expect(queue.is_scheduled("invalid-id")).to_be_false()
+    expect(queue.is_enqueued("invalid-id")).to_be_false()
 
 
 def test_is_enqueued2(client):
-    """Test is enqueued returns True for an existing job."""
+    """Test is enqueued returns True for an enqueued job."""
+    queue = client.application.jobs_queue
+    expect(queue).not_to_be_null()
+
+    enqueued_id = queue.enqueue(Categories.Job, "something", other="öther")
+    expect(queue.is_enqueued(enqueued_id)).to_be_true()
+
+
+def test_is_enqueued3(client):
+    """Test is enqueued returns False for a scheduled job."""
+    queue = client.application.jobs_queue
+    expect(queue).not_to_be_null()
+
+    enqueued_id = queue.enqueue_in("5s", Categories.Job, "something", other="öther")
+    expect(queue.is_enqueued(enqueued_id)).to_be_false()
+
+
+def test_is_scheduled1(client):
+    """Test is scheduled returns False for an invalid job."""
+    queue = client.application.jobs_queue
+
+    expect(queue.is_scheduled("invalid-id")).to_be_false()
+
+
+def test_is_scheduled2(client):
+    """Test is scheduled returns True for a scheduled job."""
     queue = client.application.jobs_queue
     expect(queue).not_to_be_null()
 
     enqueued_id = queue.enqueue_in("5s", Categories.Job, "something", other="öther")
     expect(queue.is_scheduled(enqueued_id)).to_be_true()
+
+
+def test_is_scheduled3(client):
+    """Test is scheduled returns False for an enqueued job."""
+    queue = client.application.jobs_queue
+    expect(queue).not_to_be_null()
+
+    enqueued_id = queue.enqueue(Categories.Job, "something", other="öther")
+    expect(queue.is_scheduled(enqueued_id)).to_be_false()
 
 
 def test_deschedule1(client):

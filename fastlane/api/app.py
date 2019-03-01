@@ -141,21 +141,12 @@ class Application:
     def connect_redis(self):
         self.logger.debug("Connecting to redis...")
 
-        if self.app.testing:
-            self.logger.info("Configuring Fake Redis...")
-            import fakeredis
-
-            self.app.redis = fakeredis.FakeStrictRedis()
-            self.app.redis.connect = self._mock_redis(True)
-            self.app.redis.disconnect = self._mock_redis(False)
-        else:
-            redis_url = self.app.config["REDIS_URL"]
-            self.logger.info("Configuring Redis...", redis_url=redis_url)
-            sentinel, client = redis_sentinel_url.connect(redis_url)
-            self.app.sentinel = sentinel
-            self.app.redis = client
-
-            self.logger.info("Connection to redis successful")
+        redis_url = self.app.config["REDIS_URL"]
+        self.logger.info("Configuring Redis...", redis_url=redis_url)
+        sentinel, client = redis_sentinel_url.connect(redis_url)
+        self.app.sentinel = sentinel
+        self.app.redis = client
+        self.logger.info("Connection to redis successful")
 
     def configure_queue(self):
         self.logger.debug("Configuring queue...")

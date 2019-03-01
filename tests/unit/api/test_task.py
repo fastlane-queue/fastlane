@@ -104,7 +104,7 @@ def test_get_task_details(client):
     task_id = str(uuid4())
     job_id = str(uuid4())
     task = Task.create_task(task_id)
-    task.create_or_update_job(job_id)
+    task.create_or_update_job(job_id, "ubuntu", "command")
 
     resp = client.get(f"/tasks/{task_id}/")
     expect(resp.status_code).to_equal(200)

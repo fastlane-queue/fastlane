@@ -3,10 +3,11 @@ from uuid import uuid4
 
 # 3rd Party
 from preggy import expect
-from tests.fixtures.models import JobExecutionFixture
+from tests.fixtures.models import JobExecutionFixture, JobFixture
 
 # Fastlane
 from fastlane.models import Job, JobExecution, Task
+from fastlane.utils import dumps, loads
 
 
 # Must inject client to connect to redis and DB
@@ -16,11 +17,13 @@ def test_job_create(client):  # pylint: disable=unused-argument
     task_id = str(uuid4())
 
     task = Task.create_task(task_id)
-    job = task.create_job()
+    job = task.create_job("image", "command")
 
     expect(job.created_at).not_to_be_null()
     expect(job.last_modified_at).not_to_be_null()
     expect(job.executions).to_be_empty()
+    expect(job.image).to_equal("image")
+    expect(job.command).to_equal("command")
 
 
 def test_job_create_or_update1(client):  # pylint: disable=unused-argument
@@ -30,7 +33,7 @@ def test_job_create_or_update1(client):  # pylint: disable=unused-argument
     job_id = str(uuid4())
 
     task = Task.create_task(task_id)
-    job = task.create_or_update_job(job_id)
+    job = task.create_or_update_job(job_id, "image", "command")
 
     expect(job.job_id).to_equal(str(job_id))
     expect(job.created_at).not_to_be_null()
@@ -44,10 +47,10 @@ def test_job_create_or_update2(client):  # pylint: disable=unused-argument
     task_id = str(uuid4())
 
     task = Task.create_task(task_id)
-    job = task.create_job()
+    job = task.create_job("image", "command")
 
     job_id = str(job.job_id)
-    new_job = task.create_or_update_job(job_id)
+    new_job = task.create_or_update_job(job_id, "image", "command")
 
     expect(str(new_job.id)).to_equal(str(job.id))
     expect(new_job.created_at).not_to_be_null()
@@ -61,7 +64,7 @@ def test_job_get_by_job_id(client):  # pylint: disable=unused-argument
     task_id = str(uuid4())
     task = Task.create_task(task_id)
 
-    job = task.create_job()
+    job = task.create_job("image", "command")
 
     topic = Job.get_by_id(task_id, job.job_id)
     expect(topic).not_to_be_null()
@@ -87,7 +90,7 @@ def test_get_unfinished_executions(client):
             execution.status = status
             job.save()
 
-        topic = Job.get_unfinished_executions()
+        topic = Job.get_unfinished_executions(app)
         expect(topic).to_length(2)
 
         for (_, execution) in topic:
@@ -96,3 +99,26 @@ def test_get_unfinished_executions(client):
                 execution.status
                 in [JobExecution.Status.pulling, JobExecution.Status.running]
             ).to_be_true()
+
+
+def test_get_unscheduled_jobs1(client):
+    """Test gets unscheduled job without enqueued_id"""
+
+    with client.application.app_context():
+        task_id = str(uuid4())
+        data = {"image": "ubuntu", "command": "ls", "cron": "* * * * *"}
+        response = client.post(
+            f"/tasks/{task_id}/", data=dumps(data), follow_redirects=True
+        )
+
+        expect(response.status_code).to_equal(200)
+        obj = loads(response.data)
+        job_id = obj["jobId"]
+        Job.get_by_id(task_id, job_id)
+
+        job = JobFixture.new(metadata={"cron": "* * * * *"})
+
+        unscheduled_jobs = Job.get_unscheduled_jobs(client.application)
+
+        expect(unscheduled_jobs).to_length(1)
+        expect(unscheduled_jobs[0].job_id).to_equal(job.job_id)

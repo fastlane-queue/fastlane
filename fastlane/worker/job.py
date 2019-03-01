@@ -28,9 +28,10 @@ def validate_max_concurrent(
         logger.debug(
             "Maximum number of global container executions reached. Enqueuing job execution..."
         )
-        args = [task_id, job.id, execution_id, image, command]
-        result = current_app.job_queue.enqueue(Categories.Job, *args)
-        job.metadata["enqueued_id"] = result
+        enqueued_id = job.enqueue(
+            current_app, execution_id, image=image, command=command
+        )
+        job.metadata["enqueued_id"] = enqueued_id
         job.save()
         logger.info(
             "Job execution re-enqueued successfully due to max number of container executions."
@@ -88,6 +89,9 @@ def download_image(executor, job, ex, image, tag, command, logger):
             "Image downloaded successfully.", image=image, tag=tag, ellapsed=ellapsed
         )
     except HostUnavailableError:
+        error = traceback.format_exc()
+        logger.error("Host is unavailable.", error=error)
+
         enqueued_id = reenqueue_job_due_to_break(
             job.task.task_id, str(job.job_id), ex.execution_id, image, command
         )
@@ -142,6 +146,9 @@ def run_container(executor, job, ex, image, tag, command, logger):
             ellapsed=ellapsed,
         )
     except HostUnavailableError:
+        error = traceback.format_exc()
+        logger.error("Host is unavailable.", error=error)
+
         enqueued_id = reenqueue_job_due_to_break(
             job.task.task_id, str(job.job_id), ex.execution_id, image, command
         )
@@ -399,6 +406,8 @@ def monitor_job(task_id, job_id, execution_id):
         try:
             result = executor.get_result(job.task, job, execution)
         except HostUnavailableError as err:
+            error = traceback.format_exc()
+            logger.error("Failed to get results.", error=error)
             current_app.report_error(
                 err,
                 metadata=dict(
@@ -455,6 +464,8 @@ def monitor_job(task_id, job_id, execution_id):
                 try:
                     executor.stop_job(job.task, job, execution)
                 except HostUnavailableError as err:
+                    error = traceback.format_exc()
+                    logger.error("Failed to stop job.", error=error)
                     current_app.report_error(
                         err,
                         metadata=dict(
@@ -564,6 +575,8 @@ def monitor_job(task_id, job_id, execution_id):
         try:
             executor.mark_as_done(job.task, job, execution)
         except HostUnavailableError:
+            error = traceback.format_exc()
+            logger.error("Failed to mark job as done.", error=error)
             reenqueue_monitor_due_to_break(task_id, job_id, execution_id)
 
             logger.warn("Job monitor re-enqueued successfully.")
@@ -798,7 +811,7 @@ def send_webhook(
 
 def enqueue_missing_monitor_jobs(app):
     # find running/created executions
-    executions = Job.get_unfinished_executions()
+    executions = Job.get_unfinished_executions(app)
 
     queue = app.monitor_queue
 

@@ -40,6 +40,7 @@ endif
 stop-deps:
 ifdef COMPOSE
 	@echo "Stopping dependencies..."
+	@docker-compose --project-name fastlane down -v --remove-orphans
 	@docker-compose --project-name fastlane rm --stop --force
 endif
 

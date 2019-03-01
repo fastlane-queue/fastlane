@@ -73,7 +73,8 @@ def create_job(details, task, logger, get_new_job_fn):
         timeout, hard_limit
     )  # ensure  jobs can't specify more than hard limit
 
-    j = get_new_job_fn(task)
+    j = get_new_job_fn(task, details.get("image"), details.get("command"))
+
     j.metadata["retries"] = retries
     j.metadata["notify"] = notify
     j.metadata["webhooks"] = webhooks
@@ -95,62 +96,24 @@ def create_job(details, task, logger, get_new_job_fn):
 
 def enqueue_job(task, job, image, command, start_at, start_in, cron, logger):
     execution = None
-    #  scheduler = Scheduler("jobs", connection=current_app.redis)
-
-    args = [task.task_id, str(job.job_id), None, image, command]
-
     queue_job_id = None
 
-    if start_at is not None:
-        logger.debug("Enqueuing job execution in the future...", start_at=start_at)
-        enqueued_id = current_app.jobs_queue.enqueue_at(
-            int(start_at), Categories.Job, *args
+    if any([start_at, start_in, cron]):
+        queue_job_id = job.schedule_job(
+            current_app, dict(startAt=start_at, startIn=start_in, cron=cron)
         )
-        #  future_date = datetime.utcfromtimestamp(int(start_at))
-        #  result = scheduler.enqueue_at(future_date, run_job, *args)
-        job.metadata["enqueued_id"] = enqueued_id
-        queue_job_id = enqueued_id
-        job.save()
-        logger.info("Job execution enqueued successfully.", start_at=start_at)
-    elif start_in is not None:
-        #  future_date = datetime.now(tz=timezone.utc) + start_in
-        logger.debug("Enqueuing job execution in the future...", start_in=start_in)
-        enqueued_id = current_app.jobs_queue.enqueue_in(start_in, Categories.Job, *args)
-        #  result = scheduler.enqueue_at(future_date, run_job, *args)
-        job.metadata["enqueued_id"] = enqueued_id
-        queue_job_id = enqueued_id
-        job.save()
-        logger.info("Job execution enqueued successfully.", start_in=start_in)
-    elif cron is not None:
-        logger.debug("Enqueuing job execution using cron...", cron=cron)
-        enqueued_id = current_app.jobs_queue.enqueue_cron(cron, Categories.Job, *args)
-        job.metadata["enqueued_id"] = enqueued_id
-        queue_job_id = enqueued_id
-        job.metadata["cron"] = cron
-        job.scheduled = True
-        job.save()
-        logger.info("Job execution enqueued successfully.", cron=cron)
-    else:
-        logger.debug("Enqueuing job execution...")
-        execution = job.create_execution(image, command)
-        execution.request_ip = get_ip_addr()
-        execution.status = JobExecution.Status.enqueued
-        job.save()
 
-        args = [
-            task.task_id,
-            str(job.job_id),
-            str(execution.execution_id),
-            image,
-            command,
-        ]
+        return queue_job_id, execution
 
-        #  result = current_app.job_queue.enqueue(run_job, *args, timeout=-1)
-        enqueued_id = current_app.jobs_queue.enqueue(Categories.Job, *args)
-        queue_job_id = enqueued_id
-        job.metadata["enqueued_id"] = enqueued_id
-        job.save()
-        logger.info("Job execution enqueued successfully.")
+    logger.debug("Enqueuing job execution...")
+    execution = job.create_execution(image, command)
+    execution.request_ip = get_ip_addr()
+    execution.status = JobExecution.Status.enqueued
+
+    queue_job_id = job.enqueue(current_app, execution.execution_id)
+    job.metadata["enqueued_id"] = queue_job_id
+    job.save()
+    logger.info("Job execution enqueued successfully.")
 
     return queue_job_id, execution
 
@@ -216,7 +179,12 @@ def create_task(task_id):
     if response is not None:
         return response
 
-    job = create_job(details, task, logger, lambda task: task.create_job())
+    job = create_job(
+        details,
+        task,
+        logger,
+        lambda task, image, command: task.create_job(image, command),
+    )
 
     enqueued_id, execution, response = validate_and_enqueue(details, task, job, logger)
 
@@ -241,7 +209,10 @@ def create_or_update_task(task_id, job_id):
         return response
 
     job = create_job(
-        details, task, logger, lambda task: task.create_or_update_job(job_id)
+        details,
+        task,
+        logger,
+        lambda task, image, command: task.create_or_update_job(job_id, image, command),
     )
 
     if "enqueued_id" in job.metadata:

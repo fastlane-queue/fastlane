@@ -11,6 +11,37 @@ from fastlane.utils import dumps, get_next_cron_timestamp, loads, parse_time, to
 from fastlane.worker.job import monitor_job, run_job, send_email, send_webhook
 
 
+def _dequeue(redis, queue_names, blocking=False, timeout=1):
+    queue = ""
+
+    if isinstance(queue_names, (tuple, list)) or blocking:
+        result = redis.blpop(queue_names, timeout=max(timeout, 1))
+
+        if result is None:
+            return None
+
+        q, item = result
+        queue = q
+    else:
+        item = redis.lpop(queue_names)
+        queue = queue_names[0]
+
+    if item is None:
+        return None
+
+    queue_hash_name = f"{Queue.QUEUE_HASH_NAME}:{queue}"
+    msg_id = item.decode("utf-8")
+
+    pipe = redis.pipeline()
+    key = Queue.get_message_name(msg_id)
+    pipe.zrem(queue_hash_name, msg_id)
+    pipe.get(key)
+    pipe.delete(key)
+    _, message_data, _ = pipe.execute()
+
+    return Message.deserialize(message_data.decode("utf-8"))
+
+
 class Message:
     def __init__(self, queue, category, *args, **kw):
         self.queue = queue
@@ -68,14 +99,7 @@ class QueueGroup:
         else:
             queues_to_pop = [q.queue_name for q in self.queues if q.queue_id in queues]
 
-        result = self.redis.blpop(queues_to_pop, timeout=max(timeout, 1))
-
-        if result is None:
-            return None
-
-        _, item = result
-
-        return Message.deserialize(item.decode("utf-8"))
+        return _dequeue(self.redis, queues_to_pop, blocking=True, timeout=timeout)
 
     def move_jobs(self):
         logger = self.logger.bind(operation="move_jobs")
@@ -120,10 +144,7 @@ class QueueGroup:
                     job_id=msg.id,
                     msg=msg.serialize(),
                 )
-                pipe = self.redis.pipeline()
-                pipe.lpush(msg.queue, msg.serialize())
-                pipe.delete(key)
-                pipe.execute()
+                self.redis.lpush(msg.queue, msg.id)
                 moved_items.append(msg)
 
             logger.info("Moved jobs successfully.")
@@ -135,14 +156,16 @@ class QueueGroup:
 
 class Queue:
     QUEUE_NAME = "fastlane:message-queue"
+    QUEUE_HASH_NAME = "fastlane:message-queue-ids"
     SCHEDULED_QUEUE_NAME = "fastlane:scheduled-messages:items"
     MOVE_JOBS_LOCK_NAME = "fastlane:move-jobs-lock"
-    SCHEDULED_MESSAGE_NAME = "fastlane:scheduled-message"
+    MESSAGE_DETAILS_NAME = "fastlane:scheduled-message"
 
     def __init__(self, logger, redis, queue_name="main"):
         self.redis = redis
         self.queue_id = queue_name
         self.queue_name = f"{Queue.QUEUE_NAME}:{queue_name}"
+        self.queue_hash_name = f"{Queue.QUEUE_HASH_NAME}:{queue_name}"
         self.logger = logger.bind(queue_id=self.queue_id, queue_name=self.queue_name)
 
     def enqueue(self, category, *args, **kw):
@@ -155,13 +178,18 @@ class Queue:
         return self.__enqueue(msg)
 
     def __enqueue(self, msg):
-        self.redis.lpush(self.queue_name, msg.serialize())
+        timestamp = to_unix(datetime.utcnow())
+        pipe = self.redis.pipeline()
+        pipe.set(self.get_message_name(msg.id), msg.serialize())
+        pipe.zadd(self.queue_hash_name, {msg.id: timestamp})
+        pipe.lpush(self.queue_name, msg.id)
+        pipe.execute()
 
         return msg.id
 
     @classmethod
     def get_message_name(cls, message_id):
-        return f"{Queue.SCHEDULED_MESSAGE_NAME}:{message_id}"
+        return f"{Queue.MESSAGE_DETAILS_NAME}:{message_id}"
 
     def enqueue_at(self, timestamp, category, *args, **kw):
         return self.__enqueue_at_timestamp(timestamp, category, *args, **kw)
@@ -190,28 +218,19 @@ class Queue:
         )
         pipe = self.redis.pipeline()
         pipe.set(self.get_message_name(msg.id), msg.serialize())
-        pipe.zadd(Queue.SCHEDULED_QUEUE_NAME, timestamp, msg.id)
+        pipe.zadd(Queue.SCHEDULED_QUEUE_NAME, {msg.id: timestamp})
         pipe.execute()
 
         return msg.id
 
     def dequeue(self, blocking=False, timeout=1):
-        if blocking:
-            result = self.redis.blpop(self.queue_name, timeout=max(timeout, 1))
-
-            if result is None:
-                return None
-            _, item = result
-        else:
-            item = self.redis.lpop(self.queue_name)
-
-        if item is None:
-            return None
-
-        return Message.deserialize(item.decode("utf-8"))
+        return _dequeue(self.redis, self.queue_name, blocking=blocking, timeout=timeout)
 
     def is_scheduled(self, message_id):
-        return self.redis.exists(self.get_message_name(message_id))
+        return self.redis.zrank(Queue.SCHEDULED_QUEUE_NAME, message_id) is not None
+
+    def is_enqueued(self, message_id):
+        return self.redis.zrank(self.queue_hash_name, message_id) is not None
 
     def deschedule(self, message_id):
         logger = self.logger.bind(operation="deschedule", message_id=message_id)

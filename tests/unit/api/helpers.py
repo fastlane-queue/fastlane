@@ -55,19 +55,15 @@ def to_be_enqueued(topic):
             f"Expected job '{queue_job_id}' to exist but it was not found"
         )
 
-    res = [
-        Message.deserialize(data.decode("utf-8"))
+    message_ids = current_app.redis.lrange(hash_key, 0, -1)
 
-        for data in current_app.redis.lrange(hash_key, 0, -1)
-    ]
-
-    for j in res:
-        if j.id == queue_job_id:
+    for message_id in message_ids:
+        if message_id.decode("utf-8") == queue_job_id:
             return
 
     raise AssertionError(
         f"Expected job '{queue_job_id}' to be in the 'jobs' queue, but it was not found("
-        f"found jobs: {','.join([r.id for r in res])})."
+        f"found jobs: {','.join([message_id.decode('utf-8') for message_id in message_ids])})."
     )
 
 

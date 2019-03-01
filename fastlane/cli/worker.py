@@ -64,7 +64,7 @@ class WorkerHandler:
     def loop_once(self):
         self.queue_group.move_jobs()
 
-        if time.time() - self.last_verified_missing_jobs > 30:
+        if time.time() - self.last_verified_missing_jobs > 10:
             enqueue_missing_monitor_jobs(self.app.app)
             self.last_verified_missing_jobs = time.time()
 
