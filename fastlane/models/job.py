@@ -82,8 +82,8 @@ class Job(db.Document):
     task = ReferenceField(
         "Task", required=True, reverse_delete_rule=mongoengine.CASCADE
     )
-    image = StringField(required=True)
-    command = StringField(required=True)
+    image = StringField(required=False)
+    command = StringField(required=False)
     request_ip = StringField(required=False)
     metadata = DictField(required=False)
     scheduled = BooleanField(required=True, default=False)
