@@ -403,6 +403,12 @@ def monitor_job(task_id, job_id, execution_id):
             return False
 
         execution = job.get_execution_by_id(execution_id)
+
+        if execution.status not in (JobExecution.Status.running,):
+            logger.error("Execution result already retrieved. Skipping monitoring...")
+
+            return
+
         try:
             result = executor.get_result(job.task, job, execution)
         except HostUnavailableError as err:

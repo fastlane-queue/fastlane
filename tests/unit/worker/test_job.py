@@ -164,6 +164,51 @@ def test_run_container3(worker):
         pytest.skip("Not implemented")
 
 
+def test_monitor_job1(worker):
+    """Test monitoring a job with result already there"""
+
+    app = worker.app.app
+    with app.app_context():
+        app.redis.flushall()
+
+        task, job, execution = JobExecutionFixture.new_defaults()
+        execution.status = JobExecution.Status.running
+        job.save()
+        job_id = str(job.job_id)
+
+        exec_mock = MagicMock()
+        exec_mock.get_result.return_value = MagicMock(
+            exit_code=0, log="qwe".encode("utf-8"), error="".encode("utf-8")
+        )
+        app.executor = exec_mock
+
+        monitor_queue = app.monitor_queue
+        monitor_queue.enqueue(
+            Categories.Monitor, task.task_id, job_id, execution.execution_id
+        )
+
+        worker.loop_once()
+
+        monitor_queue.enqueue(
+            Categories.Monitor, task.task_id, job_id, execution.execution_id
+        )
+
+        worker.loop_once()
+
+        task.reload()
+        expect(task.jobs).to_length(1)
+
+        job = task.jobs[0]
+        expect(job.executions).to_length(1)
+
+        execution = job.executions[0]
+        expect(execution.image).to_equal("image")
+        expect(execution.command).to_equal("command")
+        expect(execution.status).to_equal(JobExecution.Status.done)
+
+        expect(app.redis.zcard(Queue.SCHEDULED_QUEUE_NAME)).to_equal(0)
+
+
 def test_monitor_job_with_retry(worker):
     """Test monitoring a job for a task that fails"""
 
