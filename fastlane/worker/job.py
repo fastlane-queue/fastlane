@@ -787,6 +787,9 @@ def send_webhook(
                 "error": error,
             }
         )
+        execution.metadata["webhookDispatch"] = execution.metadata["webhookDispatch"][
+            -3:
+        ]
         job.save()
 
         logger.error("Failed to dispatch webhook.", err=error)
