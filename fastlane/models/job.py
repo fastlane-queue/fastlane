@@ -264,6 +264,9 @@ class Job(db.Document):
         if command is None:
             command = self.command
 
+        if image is None or command is None:
+            raise RuntimeError("Can't enqueue job with no image or command.")
+
         logger = app.logger.bind(
             operation="enqueue_job",
             job_id=self.job_id,
