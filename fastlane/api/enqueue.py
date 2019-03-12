@@ -7,7 +7,6 @@ from flask import Blueprint, current_app, g, jsonify, make_response, request, ur
 # Fastlane
 from fastlane.helpers import loads
 from fastlane.models import JobExecution, Task
-from fastlane.queue import Categories
 
 bp = Blueprint("enqueue", __name__)  # pylint: disable=invalid-name
 
@@ -112,6 +111,7 @@ def enqueue_job(task, job, image, command, start_at, start_in, cron, logger):
 
     queue_job_id = job.enqueue(current_app, execution.execution_id)
     job.metadata["enqueued_id"] = queue_job_id
+    execution.save()
     job.save()
     logger.info("Job execution enqueued successfully.")
 

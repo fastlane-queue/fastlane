@@ -6,7 +6,7 @@ from uuid import uuid4
 from preggy import expect
 
 # Fastlane
-from fastlane.worker.docker_executor import BLACKLIST_KEY
+from fastlane.worker.docker import BLACKLIST_KEY
 
 
 def test_docker_blacklist1(client):

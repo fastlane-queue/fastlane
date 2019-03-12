@@ -12,7 +12,7 @@ from tests.fixtures.docker import ClientFixture, ContainerFixture, PoolFixture
 from tests.fixtures.models import JobExecutionFixture
 
 # Fastlane
-from fastlane.worker.docker_executor import BLACKLIST_KEY, STATUS, DockerPool, Executor
+from fastlane.worker.docker import BLACKLIST_KEY, STATUS, DockerPool, Executor
 from fastlane.worker.errors import HostUnavailableError, NoAvailableHostsError
 
 

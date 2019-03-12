@@ -94,7 +94,7 @@ Config.define(
 
 Config.define(
     "EXECUTOR",
-    "fastlane.worker.docker_executor",
+    "fastlane.worker.docker",
     "Module full name where to find the Executor class",
     "Worker",
 )

@@ -9,9 +9,9 @@ import croniter
 REGEX = re.compile(r"((?P<hours>\d+?)h)?((?P<minutes>\d+?)m)?((?P<seconds>\d+?)s)?")
 
 try:
-    from ujson import loads, dumps
+    from ujson import loads, dumps # NOQA pylint: disable=unused-import
 except ImportError:
-    from json import loads, dumps  # NOQA
+    from json import loads, dumps  # NOQA pylint: disable=unused-import
 
 
 def parse_time(time_str):
@@ -41,10 +41,10 @@ def from_unix(string):
 
 
 # to_unix from times.to_unix()
-def to_unix(dt):
+def to_unix(date):
     """Converts a datetime object to unixtime"""
 
-    return calendar.timegm(dt.utctimetuple())
+    return calendar.timegm(date.utctimetuple())
 
 
 def unix_now():

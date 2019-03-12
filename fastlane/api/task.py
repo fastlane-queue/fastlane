@@ -149,7 +149,11 @@ def get_task(task_id):
         url = url_for(
             "task.get_job", task_id=task_id, job_id=str(job.job_id), _external=True
         )
-        job = {"id": str(job.job_id), "url": url}
+        job = {
+            "id": str(job.job_id),
+            "createdAt": job.created_at.isoformat(),
+            "url": url
+        }
         jobs.append(job)
 
     return jsonify({"taskId": task_id, "jobs": jobs})

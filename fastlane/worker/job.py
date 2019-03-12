@@ -82,9 +82,9 @@ def download_image(executor, job, ex, image, tag, command, logger):
     try:
         logger.debug("Changing job status...", status=JobExecution.Status.pulling)
         ex.status = JobExecution.Status.pulling
-        job.save()
+        ex.save()
         logger.debug(
-            "Job status changed successfully.", status=JobExecution.Status.pulling
+            "Job status changed successfully.", status=ex.status
         )
 
         logger.debug("Downloading updated container image...", image=image, tag=tag)
@@ -113,7 +113,7 @@ def download_image(executor, job, ex, image, tag, command, logger):
         logger.error("Failed to download image.", error=error)
         ex.error = error
         ex.status = JobExecution.Status.failed
-        job.save()
+        ex.save()
 
         current_app.report_error(
             err,
@@ -142,16 +142,15 @@ def run_container(executor, job, ex, image, tag, command, logger):
 
         ex.started_at = datetime.utcnow()
         ex.status = JobExecution.Status.running
-        job.save()
+        ex.save()
 
         logger.debug(
-            "Job status changed successfully.", status=JobExecution.Status.running
+            "Job status changed successfully.", status=ex.status
         )
 
         before = time.time()
         executor.run(job.task, job, ex, image, tag, command)
         ellapsed = time.time() - before
-        job.save()
         logger.info(
             "Container started successfully.",
             image=image,
@@ -178,7 +177,7 @@ def run_container(executor, job, ex, image, tag, command, logger):
         logger.error("Failed to run command", error=error)
         ex.error = error
         ex.status = JobExecution.Status.failed
-        job.save()
+        ex.save()
 
         current_app.report_error(
             err,
@@ -230,17 +229,16 @@ def run_job(task_id, job_id, execution_id, image, command):
 
         logger = logger.bind(image=image, tag=tag)
 
-        logger.debug("Changing job status...", status=JobExecution.Status.pulling)
-
+        logger.debug("Changing job status...", status=JobExecution.Status.enqueued)
         if execution_id is None:
             ex = job.create_execution(image=image, command=command)
             ex.status = JobExecution.Status.enqueued
-            job.save()
+            ex.save()
         else:
             ex = job.get_execution_by_id(execution_id)
 
         logger.debug(
-            "Job status changed successfully.", status=JobExecution.Status.pulling
+            "Job status changed successfully.", status=ex.status
         )
         logger = logger.bind(execution_id=ex.execution_id)
     except Exception as err:
@@ -265,6 +263,14 @@ def run_job(task_id, job_id, execution_id, image, command):
         if not run_container(executor, job, ex, image, tag, command, logger):
             return False
 
+        logger.debug("Changing job status...", status=JobExecution.Status.running)
+        ex.status = JobExecution.Status.running
+        ex.save()
+        job.save()
+        logger.debug(
+            "Job status changed successfully.", status=JobExecution.Status.running
+        )
+
         current_app.monitor_queue.enqueue_in(
             "1s", Categories.Monitor, task_id, job_id, ex.execution_id
         )
@@ -275,6 +281,7 @@ def run_job(task_id, job_id, execution_id, image, command):
         logger.error("Failed to run job", error=error)
         ex.status = JobExecution.Status.failed
         ex.error = "Job failed to run with error: %s" % error
+        ex.save()
         job.save()
 
         current_app.report_error(
@@ -414,7 +421,7 @@ def monitor_job(task_id, job_id, execution_id):
         if execution.status not in (JobExecution.Status.running,):
             logger.error("Execution result already retrieved. Skipping monitoring...")
 
-            return
+            return False
 
         try:
             result = executor.get_result(job.task, job, execution)
@@ -450,6 +457,7 @@ def monitor_job(task_id, job_id, execution_id):
                 "Job failed, since container could not be found in host.",
                 status="failed",
             )
+            execution.save()
             job.save()
 
             send_webhooks(job.task, job, execution, logger)
@@ -501,6 +509,7 @@ def monitor_job(task_id, job_id, execution_id):
                     ellapsed=ellapsed,
                     error=result.error,
                 )
+                execution.save()
                 job.save()
                 logger.info("Job execution timed out.", status=execution.status)
 
@@ -582,6 +591,7 @@ def monitor_job(task_id, job_id, execution_id):
             log=result.log,
             error=result.error,
         )
+        execution.save()
         job.save()
         logger.info("Job details stored in mongo db.", status=execution.status)
 
@@ -779,6 +789,7 @@ def send_webhook(
                 "headers": response.headers,
             }
         )
+        execution.save()
         job.save()
         logger.info("Webhook dispatched successfully.")
     except WebhooksDispatchError as err:
@@ -797,6 +808,7 @@ def send_webhook(
         execution.metadata["webhookDispatch"] = execution.metadata["webhookDispatch"][
             -3:
         ]
+        execution.save()
         job.save()
 
         logger.error("Failed to dispatch webhook.", err=error)
@@ -839,7 +851,7 @@ def enqueue_missing_monitor_jobs(app):
             "Lock could not be acquired. Trying to enqueue missing monitor jobs later."
         )
 
-        return None
+        return
 
     try:
         # find running/created executions

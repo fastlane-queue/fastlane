@@ -12,10 +12,10 @@ from fastlane.models import db
 
 
 class Task(db.Document):
-    created_at = DateTimeField(required=True)
-    last_modified_at = DateTimeField(required=True, default=datetime.datetime.now)
     task_id = StringField(required=True)
     jobs = ListField(ReferenceField("Job"))
+    created_at = DateTimeField(required=True)
+    last_modified_at = DateTimeField(required=True, default=datetime.datetime.utcnow)
 
     meta = {
         "indexes": ["task_id", {"fields": ["$task_id"], "default_language": "english"}]
@@ -37,8 +37,8 @@ class Task(db.Document):
         self._validate()
 
         if not self.created_at:
-            self.created_at = datetime.datetime.now()
-        self.last_modified_at = datetime.datetime.now()
+            self.created_at = datetime.datetime.utcnow()
+        self.last_modified_at = datetime.datetime.utcnow()
 
         return super(Task, self).save(*args, **kwargs)
 

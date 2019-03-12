@@ -8,8 +8,6 @@ from mongoengine import (
     BooleanField,
     DateTimeField,
     DictField,
-    EmbeddedDocumentField,
-    IntField,
     ListField,
     ReferenceField,
     StringField,
@@ -19,66 +17,12 @@ from mongoengine import (
 from fastlane.models import db
 from fastlane.models.categories import Categories
 
-
-class JobExecution(db.EmbeddedDocument):  # pylint: disable=no-member
-    class Status:
-        enqueued = "enqueued"
-        pulling = "pulling"
-        running = "running"
-        done = "done"
-        failed = "failed"
-        timedout = "timedout"
-        expired = "expired"
-        stopped = "stopped"
-
-    created_at = DateTimeField(required=True)
-    started_at = DateTimeField(required=False)
-    finished_at = DateTimeField(required=False)
-    execution_id = StringField(required=True)
-    image = StringField(required=True)
-    command = StringField(required=True)
-    request_ip = StringField(required=False)
-    status = StringField(required=True, default=Status.enqueued)
-
-    log = StringField(required=False)
-    error = StringField(required=False)
-    exit_code = IntField(required=False)
-    metadata = DictField(required=False)
-
-    def to_dict(self, include_log=False, include_error=False):
-        s_at = self.started_at.isoformat() if self.started_at is not None else None
-        f_at = self.finished_at.isoformat() if self.finished_at is not None else None
-        res = {
-            "executionId": str(self.execution_id),
-            "createdAt": self.created_at.isoformat(),
-            "requestIPAddress": self.request_ip,
-            "startedAt": s_at,
-            "finishedAt": f_at,
-            "image": self.image,
-            "command": self.command,
-            "metadata": self.metadata,
-            "status": self.status,
-            "exitCode": self.exit_code,
-        }
-
-        if self.finished_at is not None:
-            res["finishedAt"] = self.finished_at.isoformat()
-
-        if include_log:
-            res["log"] = self.log
-
-        if include_error:
-            res["error"] = self.error
-
-        return res
-
-
 class Job(db.Document):
     created_at = DateTimeField(required=True)
-    last_modified_at = DateTimeField(required=True, default=datetime.datetime.now)
+    last_modified_at = DateTimeField(required=True, default=datetime.datetime.utcnow)
     task_id = StringField(required=True)
     job_id = StringField(required=True)
-    executions = ListField(EmbeddedDocumentField(JobExecution))
+    executions = ListField(ReferenceField("JobExecution"))
     task = ReferenceField(
         "Task", required=True, reverse_delete_rule=mongoengine.CASCADE
     )
@@ -104,13 +48,18 @@ class Job(db.Document):
         return super(Job, self).save(*args, **kwargs)
 
     def create_execution(self, image, command):
+        from fastlane.models.job_execution import JobExecution
+
         ex_id = str(uuid4())
         ex = JobExecution(
             execution_id=ex_id,
             image=image,
             command=command,
             created_at=datetime.datetime.utcnow(),
+            task=self.task,
+            job=self
         )
+        ex.save()
         self.executions.append(ex)
         self.save()
 
@@ -197,37 +146,26 @@ class Job(db.Document):
 
     @classmethod
     def get_unfinished_executions(cls, app):
+        from fastlane.models.job_execution import JobExecution
         query = {
-            "executions": {
-                "$elemMatch": {
-                    "$or": [
-                        {"status": JobExecution.Status.pulling},
-                        {"status": JobExecution.Status.running},
-                    ]
-                }
-            }
+            "$or": [
+                {"status": JobExecution.Status.pulling},
+                {"status": JobExecution.Status.running},
+            ]
         }
-        jobs = Job.objects(__raw__=query)
+        executions = JobExecution.objects(__raw__=query)
 
         execs = []
+        for execution in executions:
+            enqueued_id = execution.job.metadata.get("enqueued_id")
 
-        for job in jobs:
-            for execution in job.executions:
-                if execution.status not in [
-                    JobExecution.Status.running,
-                    JobExecution.Status.pulling,
-                ]:
-                    continue
+            if enqueued_id is not None and (
+                app.jobs_queue.is_scheduled(enqueued_id)
+                or app.jobs_queue.is_enqueued(enqueued_id)
+            ):
+                continue
 
-                enqueued_id = job.metadata.get("enqueued_id")
-
-                if enqueued_id is not None and (
-                    app.jobs_queue.is_scheduled(enqueued_id)
-                    or app.jobs_queue.is_enqueued(enqueued_id)
-                ):
-                    continue
-
-                execs.append((job, execution))
+            execs.append((execution.job, execution))
 
         return execs
 
@@ -290,7 +228,7 @@ class Job(db.Document):
         if self.image is None or self.command is None:
             logger.warn("No image or command found in job.")
 
-            return
+            return None
 
         start_at = details.get("startAt", None)
         start_in = details.get("startIn", None)
