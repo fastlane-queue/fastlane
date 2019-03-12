@@ -109,7 +109,7 @@ def __validate(topic, execution, **arguments):
 
 
 @assertion
-def to_have_finished_with(topic, cli, timeout=10, **kw):
+def to_have_finished_with(topic, cli, timeout=30, **kw):
     start = time.time()
 
     last_obj = None
@@ -134,7 +134,7 @@ def to_have_finished_with(topic, cli, timeout=10, **kw):
 
 
 @assertion
-def to_have_execution(topic, cli, execution, timeout=10):
+def to_have_execution(topic, cli, execution, execution_count=1, timeout=10):
     start = time.time()
 
     last_obj = None
@@ -148,6 +148,10 @@ def to_have_execution(topic, cli, execution, timeout=10):
         last_obj = loads(body)
 
         if last_obj["job"]["executions"]:
+            current_execution_count = len(last_obj["job"]["executions"])
+
+            if current_execution_count != execution_count:
+                continue
             ex = last_obj["job"]["executions"][0]
             execution["url"] = ex["url"]
             execution["executionId"] = ex["executionId"]

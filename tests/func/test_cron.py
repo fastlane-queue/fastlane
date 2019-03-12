@@ -28,7 +28,9 @@ def test_cron1(client):
     job_url = result["jobUrl"]
 
     meta = {}
-    expect(job_url).to_have_execution(cli=client, execution=meta, timeout=65)
+    expect(job_url).to_have_execution(
+        cli=client, execution=meta, execution_count=2, timeout=150
+    )
 
     expect(meta).to_include("url")
     expect(meta).to_include("executionId")
