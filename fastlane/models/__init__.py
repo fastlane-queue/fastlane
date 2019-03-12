@@ -5,10 +5,6 @@ from flask_mongoengine import MongoEngine
 
 db = MongoEngine()  # isort:skip pylint: disable=invalid-name
 
-from fastlane.models.task import (  # NOQA pylint: disable=unused-import,wrong-import-position
-    Task,
-)
-from fastlane.models.job import (  # NOQA pylint: disable=unused-import,wrong-import-position
-    JobExecution,
-    Job,
-)
+from fastlane.models.task import Task  # NOQA pylint: disable=unused-import,wrong-import-position
+from fastlane.models.job import Job  # NOQA pylint: disable=unused-import,wrong-import-position
+from fastlane.models.job_execution import JobExecution # NOQA pylint: disable=unused-import,wrong-import-position
