@@ -819,34 +819,52 @@ def send_webhook(
 
 
 def enqueue_missing_monitor_jobs(app):
-    # find running/created executions
-    executions = Job.get_unfinished_executions(app)
-
-    queue = app.monitor_queue
-
-    executions_to_monitor = []
-    for (job, execution) in executions:
-        if "enqueued_id" in job.metadata and queue.is_scheduled(
-            job.metadata["enqueued_id"]
-        ):
-            continue
-
-        executions_to_monitor.append((job, execution))
-
-    if not executions_to_monitor:
-        return
-
-    current_app.logger.info(
-        "Found executions missing monitoring. Enqueueing monitor.",
-        executions=len(executions_to_monitor),
+    lock = app.redis.lock(
+        "EnqueueMissingMonitorJobs",
+        timeout=5,
+        sleep=0.1,
+        blocking_timeout=500,
+        thread_local=False,
     )
 
-    # enqueue if execution not scheduled to be monitored
-    for (job, execution) in executions_to_monitor:
-        current_app.monitor_queue.enqueue_in(
-            "5s",
-            Categories.Monitor,
-            job.task.task_id,
-            job.job_id,
-            execution.execution_id,
+    if not lock.acquire():
+        app.logger.info(
+            "Lock could not be acquired. Trying to enqueue missing monitor jobs later."
         )
+
+        return None
+
+    try:
+        # find running/created executions
+        executions = Job.get_unfinished_executions(app)
+
+        queue = app.monitor_queue
+
+        executions_to_monitor = []
+        for (job, execution) in executions:
+            if "enqueued_id" in job.metadata and queue.is_scheduled(
+                job.metadata["enqueued_id"]
+            ):
+                continue
+
+            executions_to_monitor.append((job, execution))
+
+        if not executions_to_monitor:
+            return
+
+        current_app.logger.info(
+            "Found executions missing monitoring. Enqueueing monitor.",
+            executions=len(executions_to_monitor),
+        )
+
+        # enqueue if execution not scheduled to be monitored
+        for (job, execution) in executions_to_monitor:
+            current_app.monitor_queue.enqueue_in(
+                "5s",
+                Categories.Monitor,
+                job.task.task_id,
+                job.job_id,
+                execution.execution_id,
+            )
+    finally:
+        lock.release()
