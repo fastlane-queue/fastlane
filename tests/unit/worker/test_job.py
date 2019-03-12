@@ -217,6 +217,7 @@ def test_monitor_job_with_retry(worker):
         app.redis.flushall()
 
         task, job, execution = JobExecutionFixture.new_defaults()
+        execution.status = JobExecution.Status.running
         job.metadata["retries"] = 3
         job.metadata["retry_count"] = 0
         job.save()
