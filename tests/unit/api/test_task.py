@@ -155,7 +155,27 @@ def test_search_tasks2(client):
 
 def test_job_details1(client):
     """Tests get job details returns proper details and last 20 execs."""
-    pytest.skip("Not implemented")
+    task_id = str(uuid4())
+    job_id = str(uuid4())
+
+    task = Task.create_task(task_id)
+    job = task.create_or_update_job(job_id, "ubuntu", "command")
+    for _ in range(25):
+        job.create_execution("ubuntu", "command")
+
+    resp = client.get(f"/tasks/{task_id}/jobs/{job_id}/")
+    expect(resp.status_code).to_equal(200)
+
+    data = loads(resp.data)
+    job_data = data["job"]
+    expect(job_data["taskId"]).to_equal(task_id)
+    expect(job_data).to_include("executions")
+
+    job_executions = job_data["executions"]
+    expect(job_executions).to_length(20)
+    expect(job_executions[0]["createdAt"] >
+           job_executions[1]["createdAt"]).to_be_true()
+
 
 
 def test_job_stdout1(client):
