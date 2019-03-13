@@ -88,6 +88,7 @@ def test_get_unfinished_executions(client):
         ]:
             _, job, execution = JobExecutionFixture.new_defaults()
             execution.status = status
+            execution.save()
             job.save()
 
         topic = Job.get_unfinished_executions(app)

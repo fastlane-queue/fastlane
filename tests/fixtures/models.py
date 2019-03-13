@@ -87,6 +87,7 @@ class JobExecutionFixture:
         if exit_code is not None:
             execution.exit_code = exit_code
 
+        execution.save()
         job.save()
 
         return job, execution
