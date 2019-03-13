@@ -150,36 +150,24 @@ class Job(db.Document):
     def get_unfinished_executions(cls, app):
         from fastlane.models.job_execution import JobExecution
         query = {
-            "executions": {
-                "$elemMatch": {
-                    "$or": [
-                        {"status": JobExecution.Status.pulling},
-                        {"status": JobExecution.Status.running},
-                    ]
-                }
-            }
+            "$or": [
+                {"status": JobExecution.Status.pulling},
+                {"status": JobExecution.Status.running},
+            ]
         }
-        jobs = Job.objects(__raw__=query)
+        executions = JobExecution.objects(__raw__=query)
 
         execs = []
+        for execution in executions:
+            enqueued_id = execution.job.metadata.get("enqueued_id")
 
-        for job in jobs:
-            for execution in job.executions:
-                if execution.status not in [
-                    JobExecution.Status.running,
-                    JobExecution.Status.pulling,
-                ]:
-                    continue
+            if enqueued_id is not None and (
+                app.jobs_queue.is_scheduled(enqueued_id)
+                or app.jobs_queue.is_enqueued(enqueued_id)
+            ):
+                continue
 
-                enqueued_id = job.metadata.get("enqueued_id")
-
-                if enqueued_id is not None and (
-                    app.jobs_queue.is_scheduled(enqueued_id)
-                    or app.jobs_queue.is_enqueued(enqueued_id)
-                ):
-                    continue
-
-                execs.append((job, execution))
+            execs.append((execution.job, execution))
 
         return execs
 
