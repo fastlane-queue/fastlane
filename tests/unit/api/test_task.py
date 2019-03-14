@@ -5,9 +5,12 @@ from uuid import uuid4
 # 3rd Party
 import pytest
 from preggy import expect
+from tests.fixtures.models import JobExecutionFixture
 
 # Fastlane
+from fastlane.models.job import JobExecution
 from fastlane.models.task import Task
+from fastlane.utils import from_unix, unix_now
 
 
 def test_get_tasks(client):
@@ -154,38 +157,110 @@ def test_search_tasks2(client):
 
 
 def test_job_details1(client):
-    """Tests get job details returns proper details and last 20 execs."""
-    pytest.skip("Not implemented")
+    """Tests get job details returns proper details and last 20 execs by last updated at."""
+
+    task, job, execution = JobExecutionFixture.new_defaults()
+    now = unix_now()
+
+    for i in range(30):
+        ex = job.create_execution("ubuntu", "ls")
+        ex.created_at = from_unix(now + (i * 10))
+
+    job.save()
+
+    resp1 = client.get(f"/tasks/{task.task_id}/jobs/{job.job_id}/")
+    expect(resp1.status_code).to_equal(200)
+    obj = loads(resp1.data)
+
+    expect(obj["job"]["executions"]).to_length(20)
+    executions = obj["job"]["executions"]
+
+    for i in range(20):
+        ex = executions[i]
+        dt = from_unix(now + (29 - i) * 10)
+        expect(ex["createdAt"]).to_equal(dt.isoformat())
 
 
 def test_job_stdout1(client):
     """Tests get job stdout returns log for last execution."""
-    pytest.skip("Not implemented")
+
+    task, job, execution = JobExecutionFixture.new_defaults()
+    execution.log = "test log"
+    execution.status = JobExecution.Status.done
+    job.save()
+
+    resp1 = client.get(f"/tasks/{task.task_id}/jobs/{job.job_id}/stdout/")
+    expect(resp1.status_code).to_equal(200)
+    expect(resp1.data).to_equal("test log")
 
 
 def test_job_stdout2(client):
     """Tests get job stdout fails if invalid input."""
-    pytest.skip("Not implemented")
+
+    task, job, execution = JobExecutionFixture.new_defaults()
+
+    resp1 = client.get(f"/tasks/{task.task_id}/jobs/invalid-id/stdout/")
+    expect(resp1.status_code).to_equal(404)
+    obj = loads(resp1.data)
+    expect(obj["error"]).to_equal(
+        f"Task ({task.task_id}) or Job (invalid-id) not found."
+    )
+    expect(obj["operation"]).to_equal("retrieve_execution_details")
 
 
 def test_job_stderr1(client):
     """Tests get job stderr returns log for last execution."""
-    pytest.skip("Not implemented")
+
+    task, job, execution = JobExecutionFixture.new_defaults()
+    execution.error = "test error"
+    execution.status = JobExecution.Status.done
+    job.save()
+
+    resp1 = client.get(f"/tasks/{task.task_id}/jobs/{job.job_id}/stderr/")
+    expect(resp1.status_code).to_equal(200)
+    expect(resp1.data).to_equal("test error")
 
 
 def test_job_stderr2(client):
     """Tests get job stderr fails if invalid input."""
-    pytest.skip("Not implemented")
+
+    task, job, execution = JobExecutionFixture.new_defaults()
+
+    resp1 = client.get(f"/tasks/{task.task_id}/jobs/invalid-id/stderr/")
+    expect(resp1.status_code).to_equal(404)
+    obj = loads(resp1.data)
+    expect(obj["error"]).to_equal(
+        f"Task ({task.task_id}) or Job (invalid-id) not found."
+    )
+    expect(obj["operation"]).to_equal("retrieve_execution_details")
 
 
 def test_job_logs1(client):
     """Tests get job logs returns log for last execution."""
-    pytest.skip("Not implemented")
+
+    task, job, execution = JobExecutionFixture.new_defaults()
+    execution.log = "test log"
+    execution.error = "test error"
+    execution.status = JobExecution.Status.done
+    job.save()
+
+    resp1 = client.get(f"/tasks/{task.task_id}/jobs/{job.job_id}/logs/")
+    expect(resp1.status_code).to_equal(200)
+    expect(resp1.data).to_equal("test log\n-=-\ntest error")
 
 
 def test_job_logs2(client):
     """Tests get job logs fails if invalid input."""
-    pytest.skip("Not implemented")
+
+    task, job, execution = JobExecutionFixture.new_defaults()
+
+    resp1 = client.get(f"/tasks/{task.task_id}/jobs/invalid-id/logs/")
+    expect(resp1.status_code).to_equal(404)
+    obj = loads(resp1.data)
+    expect(obj["error"]).to_equal(
+        f"Task ({task.task_id}) or Job (invalid-id) not found."
+    )
+    expect(obj["operation"]).to_equal("retrieve_execution_details")
 
 
 def test_stop_container1(client):

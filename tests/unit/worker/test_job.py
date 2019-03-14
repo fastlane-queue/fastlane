@@ -1,9 +1,7 @@
 # Standard Library
-from datetime import datetime
 from unittest.mock import MagicMock
 
 # 3rd Party
-import pytest
 from preggy import expect
 from tests.fixtures.models import JobExecutionFixture
 

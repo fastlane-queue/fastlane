@@ -160,7 +160,9 @@ class Job(db.Document):
             executions = [
                 ex.to_dict(include_log, include_error)
 
-                for ex in sorted(self.executions, key=lambda ex: ex.created_at)[-20:]
+                for ex in list(
+                    reversed(sorted(self.executions, key=lambda ex: ex.created_at))
+                )[:20]
             ]
             res["executions"] = executions
 
