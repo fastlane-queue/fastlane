@@ -13,6 +13,7 @@ from fastlane.models import JobExecution
 from fastlane.models.categories import Categories
 from fastlane.queue import Queue
 from fastlane.utils import from_unix, unix_now
+from fastlane.worker.errors import HostUnavailableError
 
 
 def test_run_job1(worker):
@@ -191,8 +192,21 @@ def test_downloading_image1(worker):
     """
     Test updating an image works and returns True
     """
-    with worker.app.app.app_context():
-        pytest.skip("Not implemented")
+
+    app = worker.app.app
+    with app.app_context():
+        task, job, execution = JobExecutionFixture.new_defaults()
+
+        exec_mock = MagicMock()
+
+        result = job_mod.download_image(
+            exec_mock, job, execution, job.image, "latest", job.command, app.logger
+        )
+
+        expect(result).to_be_true()
+        exec_mock.update_image.assert_called_with(
+            task, job, execution, job.image, "latest"
+        )
 
 
 def test_downloading_image2(worker):
@@ -200,8 +214,26 @@ def test_downloading_image2(worker):
     Test updating an image when executor raises HostUnavailableError,
     the job is re-enqueued and method returns False
     """
-    with worker.app.app.app_context():
-        pytest.skip("Not implemented")
+
+    app = worker.app.app
+    with app.app_context():
+        task, job, execution = JobExecutionFixture.new_defaults()
+
+        exec_mock = MagicMock()
+        exec_mock.update_image.side_effect = HostUnavailableError(
+            "docker", "9999", "failed"
+        )
+
+        result = job_mod.download_image(
+            exec_mock, job, execution, job.image, "latest", job.command, app.logger
+        )
+
+        expect(result).to_be_false()
+        expect(job.metadata["enqueued_id"]).not_to_be_null()
+
+        expect(app.redis.zcard(Queue.SCHEDULED_QUEUE_NAME)).to_equal(1)
+        item = app.redis.zrank(Queue.SCHEDULED_QUEUE_NAME, job.metadata["enqueued_id"])
+        expect(item).to_equal(0)
 
 
 def test_downloading_image3(worker):
@@ -210,8 +242,24 @@ def test_downloading_image3(worker):
     HostUnavailableError, the job is marked as failed with the proper error
     and method returns False
     """
-    with worker.app.app.app_context():
-        pytest.skip("Not implemented")
+
+    app = worker.app.app
+    with app.app_context():
+        task, job, execution = JobExecutionFixture.new_defaults()
+
+        exec_mock = MagicMock()
+        exec_mock.update_image.side_effect = RuntimeError("test")
+
+        result = job_mod.download_image(
+            exec_mock, job, execution, job.image, "latest", job.command, app.logger
+        )
+
+        expect(result).to_be_false()
+        expect(job.metadata).not_to_include("enqueued_id")
+        expect(execution.status).to_equal(JobExecution.Status.failed)
+        expect(execution.error).to_include("RuntimeError: test")
+
+        expect(app.redis.zcard(Queue.SCHEDULED_QUEUE_NAME)).to_equal(0)
 
 
 def test_run_container1(worker):
