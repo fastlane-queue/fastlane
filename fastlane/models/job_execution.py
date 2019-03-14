@@ -4,12 +4,9 @@ import datetime
 # 3rd Party
 import mongoengine.errors
 from mongoengine import (
-    BooleanField,
     DateTimeField,
     DictField,
-    EmbeddedDocumentField,
     IntField,
-    ListField,
     ReferenceField,
     StringField,
 )

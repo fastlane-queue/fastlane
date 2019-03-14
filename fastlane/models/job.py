@@ -8,8 +8,6 @@ from mongoengine import (
     BooleanField,
     DateTimeField,
     DictField,
-    EmbeddedDocumentField,
-    IntField,
     ListField,
     ReferenceField,
     StringField,
@@ -230,7 +228,7 @@ class Job(db.Document):
         if self.image is None or self.command is None:
             logger.warn("No image or command found in job.")
 
-            return
+            return None
 
         start_at = details.get("startAt", None)
         start_in = details.get("startIn", None)

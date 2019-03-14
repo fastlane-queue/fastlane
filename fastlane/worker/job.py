@@ -423,7 +423,7 @@ def monitor_job(task_id, job_id, execution_id):
         if execution.status not in (JobExecution.Status.running,):
             logger.error("Execution result already retrieved. Skipping monitoring...")
 
-            return
+            return False
 
         try:
             result = executor.get_result(job.task, job, execution)
@@ -853,7 +853,7 @@ def enqueue_missing_monitor_jobs(app):
             "Lock could not be acquired. Trying to enqueue missing monitor jobs later."
         )
 
-        return None
+        return
 
     try:
         # find running/created executions

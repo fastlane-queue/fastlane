@@ -7,7 +7,6 @@ from flask import Blueprint, current_app, g, jsonify, make_response, request, ur
 # Fastlane
 from fastlane.helpers import loads
 from fastlane.models import JobExecution, Task
-from fastlane.queue import Categories
 
 bp = Blueprint("enqueue", __name__)  # pylint: disable=invalid-name
 

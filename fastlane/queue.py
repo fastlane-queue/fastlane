@@ -81,8 +81,7 @@ def _dequeue(redis, queue_names, blocking=False, timeout=1):
         if result is None:
             return None
 
-        q, item = result
-        queue = q
+        queue, item = result
     else:
         item = redis.lpop(queue_names)
         queue = queue_names[0]
