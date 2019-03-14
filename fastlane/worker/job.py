@@ -80,6 +80,13 @@ def reenqueue_job_due_to_break(task_id, job_id, execution_id, image, command):
 
 def download_image(executor, job, ex, image, tag, command, logger):
     try:
+        logger.debug("Changing job status...", status=JobExecution.Status.pulling)
+        ex.status = JobExecution.Status.pulling
+        job.save()
+        logger.debug(
+            "Job status changed successfully.", status=JobExecution.Status.pulling
+        )
+
         logger.debug("Downloading updated container image...", image=image, tag=tag)
         before = time.time()
         executor.update_image(job.task, job, ex, image, tag)
@@ -131,8 +138,15 @@ def run_container(executor, job, ex, image, tag, command, logger):
         "Running command in container...", image=image, tag=tag, command=command
     )
     try:
+        logger.debug("Changing job status...", status=JobExecution.Status.running)
+
         ex.started_at = datetime.utcnow()
+        ex.status = JobExecution.Status.running
         job.save()
+
+        logger.debug(
+            "Job status changed successfully.", status=JobExecution.Status.running
+        )
 
         before = time.time()
         executor.run(job.task, job, ex, image, tag, command)
@@ -249,13 +263,6 @@ def run_job(task_id, job_id, execution_id, image, command):
 
         if not run_container(executor, job, ex, image, tag, command, logger):
             return False
-
-        logger.debug("Changing job status...", status=JobExecution.Status.running)
-        ex.status = JobExecution.Status.running
-        job.save()
-        logger.debug(
-            "Job status changed successfully.", status=JobExecution.Status.running
-        )
 
         current_app.monitor_queue.enqueue_in(
             "1s", Categories.Monitor, task_id, job_id, ex.execution_id
