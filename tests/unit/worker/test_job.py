@@ -1,5 +1,5 @@
 # Standard Library
-from datetime import datetime, timedelta
+from datetime import datetime
 from unittest.mock import MagicMock
 
 # 3rd Party
@@ -11,7 +11,8 @@ from tests.fixtures.models import JobExecutionFixture
 import fastlane.worker.job as job_mod
 from fastlane.models import JobExecution
 from fastlane.models.categories import Categories
-from fastlane.queue import Message, Queue
+from fastlane.queue import Queue
+from fastlane.utils import from_unix, unix_now
 
 
 def test_run_job1(worker):
@@ -61,8 +62,24 @@ def test_validate_max1(worker):
     Test validating max concurent executions for a farm returns True
     if max concurrent executions not reached.
     """
-    with worker.app.app.app_context():
-        pytest.skip("Not implemented")
+    app = worker.app.app
+    with app.app_context():
+        task, job, execution = JobExecutionFixture.new_defaults()
+
+        exec_mock = MagicMock()
+        exec_mock.validate_max_running_executions.return_value = True
+        app.executor = exec_mock
+
+        result = job_mod.validate_max_concurrent(
+            app.executor,
+            task.task_id,
+            job,
+            execution.execution_id,
+            execution.image,
+            execution.command,
+            app.logger,
+        )
+        expect(result).to_be_true()
 
 
 def test_validate_max2(worker):
@@ -70,8 +87,25 @@ def test_validate_max2(worker):
     Test validating max concurent executions for a farm returns False
     if max concurrent executions reached and re-enqueues the Job.
     """
-    with worker.app.app.app_context():
-        pytest.skip("Not implemented")
+    app = worker.app.app
+    with app.app_context():
+        task, job, execution = JobExecutionFixture.new_defaults()
+
+        exec_mock = MagicMock()
+        exec_mock.validate_max_running_executions.return_value = False
+        app.executor = exec_mock
+
+        result = job_mod.validate_max_concurrent(
+            app.executor,
+            task.task_id,
+            job,
+            execution.execution_id,
+            execution.image,
+            execution.command,
+            app.logger,
+        )
+        expect(result).to_be_false()
+        expect(app.redis.llen(app.jobs_queue.queue_name)).to_equal(1)
 
 
 def test_validate_expiration1(worker):
@@ -79,8 +113,12 @@ def test_validate_expiration1(worker):
     Test validating the expiration of a Job returns True if the job
     has no expiration.
     """
-    with worker.app.app.app_context():
-        pytest.skip("Not implemented")
+    app = worker.app.app
+    with app.app_context():
+        task, job, execution = JobExecutionFixture.new_defaults()
+
+        result = job_mod.validate_expiration(job, execution, app.logger)
+        expect(result).to_be_true()
 
 
 def test_validate_expiration2(worker):
@@ -88,8 +126,14 @@ def test_validate_expiration2(worker):
     Test validating the expiration of a Job returns True if the job
     has expiration but not expired.
     """
-    with worker.app.app.app_context():
-        pytest.skip("Not implemented")
+    app = worker.app.app
+    with app.app_context():
+        task, job, execution = JobExecutionFixture.new_defaults()
+        job.metadata["expiration"] = unix_now() + 10
+        job.save()
+
+        result = job_mod.validate_expiration(job, execution, app.logger)
+        expect(result).to_be_true()
 
 
 def test_validate_expiration3(worker):
@@ -98,16 +142,49 @@ def test_validate_expiration3(worker):
     has expiration and has expired. It also tests that the job is marked
     as expired with the proper message as error.
     """
-    with worker.app.app.app_context():
-        pytest.skip("Not implemented")
+
+    app = worker.app.app
+    with app.app_context():
+        task, job, execution = JobExecutionFixture.new_defaults()
+        unow = unix_now()
+        exp = unow - 10
+        job.metadata["expiration"] = exp
+        job.save()
+
+        result = job_mod.validate_expiration(job, execution, app.logger)
+        expect(result).to_be_false()
+        expect(execution.status).to_equal(JobExecution.Status.expired)
+
+        expiration_utc = from_unix(job.metadata["expiration"])
+        error = (
+            f"Job was supposed to be done before {expiration_utc.isoformat()}, "
+            f"but was started at {from_unix(unow).isoformat()}."
+        )
+        expect(execution.error).to_equal(error)
+        expect(execution.finished_at).not_to_be_null()
 
 
 def test_reenqueue_job1(worker):
     """
     Test re-enqueuing a job due to Executor HostUnavailableError.
     """
-    with worker.app.app.app_context():
-        pytest.skip("Not implemented")
+    app = worker.app.app
+    with app.app_context():
+        task, job, execution = JobExecutionFixture.new_defaults()
+
+        expect(app.redis.llen(app.jobs_queue.queue_name)).to_equal(0)
+
+        enqueued_id = job_mod.reenqueue_job_due_to_break(
+            task.task_id,
+            job.job_id,
+            execution.execution_id,
+            execution.image,
+            execution.command,
+        )
+
+        expect(app.redis.zcard(Queue.SCHEDULED_QUEUE_NAME)).to_equal(1)
+        item = app.redis.zrank(Queue.SCHEDULED_QUEUE_NAME, enqueued_id)
+        expect(item).to_equal(0)
 
 
 def test_downloading_image1(worker):

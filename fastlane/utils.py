@@ -47,6 +47,10 @@ def to_unix(dt):
     return calendar.timegm(dt.utctimetuple())
 
 
+def unix_now():
+    return to_unix(datetime.utcnow())
+
+
 def get_next_cron_timestamp(cron):
     itr = croniter.croniter(cron, datetime.utcnow())
     next_dt = itr.get_next(datetime)

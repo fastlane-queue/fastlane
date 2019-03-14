@@ -1,5 +1,4 @@
 # Standard Library
-import calendar
 import math
 import smtplib
 import time
@@ -15,7 +14,7 @@ from flask import current_app, url_for
 from fastlane.helpers import dumps, loads
 from fastlane.models import Job, JobExecution
 from fastlane.models.categories import Categories
-from fastlane.utils import to_unix
+from fastlane.utils import from_unix, to_unix
 from fastlane.worker import ExecutionResult
 from fastlane.worker.errors import HostUnavailableError
 from fastlane.worker.webhooks import WebhooksDispatcher, WebhooksDispatchError
@@ -44,19 +43,19 @@ def validate_max_concurrent(
 
 def validate_expiration(job, ex, logger):
     now = datetime.utcnow()
-    unixtime = calendar.timegm(now.utctimetuple())
+    unixtime = to_unix(now)
 
     if (
         job.metadata.get("expiration") is not None
         and job.metadata["expiration"] < unixtime
     ):
-        expiration_utc = datetime.utcfromtimestamp(job.metadata["expiration"])
+        expiration_utc = from_unix(job.metadata["expiration"])
         ex.status = JobExecution.Status.expired
-        ex.error = "Job was supposed to be done before %s, but was started at %s." % (
-            expiration_utc.isoformat(),
-            now.isoformat(),
+        ex.error = (
+            f"Job was supposed to be done before {expiration_utc.isoformat()}, "
+            f"but was started at {from_unix(unixtime).isoformat()}."
         )
-        ex.finished_at = datetime.utcnow()
+        ex.finished_at = now
         job.save()
         logger.info(
             "Job execution canceled due to being expired.",
@@ -73,7 +72,7 @@ def reenqueue_job_due_to_break(task_id, job_id, execution_id, image, command):
     args = [task_id, job_id, execution_id, image, command]
     delta = timedelta(seconds=1.0)
 
-    future_date = datetime.utcnow() + delta
+    future_date = to_unix(datetime.utcnow() + delta)
     enqueued = current_app.jobs_queue.enqueue_at(future_date, Categories.Job, *args)
 
     return enqueued

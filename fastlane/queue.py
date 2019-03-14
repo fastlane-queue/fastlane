@@ -275,6 +275,11 @@ class Queue:
         return self.__enqueue_at_timestamp(timestamp, category, cron, *args, **kw)
 
     def __enqueue_at_timestamp(self, timestamp, category, cron_str, *args, **kw):
+        if not isinstance(timestamp, (int,)):
+            raise RuntimeError(
+                f"timestamp must be a UTC Unix Timestamp (integer), not {type(timestamp)}"
+            )
+
         return _enqueue_at_timestamp(
             self.redis,
             self.logger,
