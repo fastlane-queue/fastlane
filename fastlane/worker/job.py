@@ -151,6 +151,7 @@ def run_container(executor, job, ex, image, tag, command, logger):
         before = time.time()
         executor.run(job.task, job, ex, image, tag, command)
         ellapsed = time.time() - before
+        job.save()
         logger.info(
             "Container started successfully.",
             image=image,
