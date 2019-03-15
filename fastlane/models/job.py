@@ -19,7 +19,7 @@ from fastlane.models.categories import Categories
 
 class Job(db.Document):
     created_at = DateTimeField(required=True)
-    last_modified_at = DateTimeField(required=True, default=datetime.datetime.now)
+    last_modified_at = DateTimeField(required=True, default=datetime.datetime.utcnow)
     task_id = StringField(required=True)
     job_id = StringField(required=True)
     executions = ListField(ReferenceField("JobExecution"))
