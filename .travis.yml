@@ -21,7 +21,7 @@ jobs:
       before_install:
         - rm -rf /tmp/fastlane-tests
         - mkdir -p /tmp/fastlane-tests/{mongo,redis}
-        - docker-compose --project-name fastlane-tests -f ./docker-compose-func-tests.yml up -d
+        - docker-compose --project-name fastlane-tests -f ./docker-compose-func-ci.yml up -d
       script: make func
 script:
   - make deps unit
