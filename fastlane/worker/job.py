@@ -230,12 +230,11 @@ def run_job(task_id, job_id, execution_id, image, command):
 
         logger = logger.bind(image=image, tag=tag)
 
-        logger.debug("Changing job status...", status=JobExecution.Status.pulling)
+        logger.debug("Changing job status...", status=JobExecution.Status.enqueued)
         if execution_id is None:
             ex = job.create_execution(image=image, command=command)
             ex.status = JobExecution.Status.enqueued
             ex.save()
-            job.save()
         else:
             ex = job.get_execution_by_id(execution_id)
 
