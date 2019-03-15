@@ -27,6 +27,7 @@ class JobExecution(db.Document):  # pylint: disable=no-member
         stopped = "stopped"
 
     created_at = DateTimeField(required=True)
+    last_modified_at = DateTimeField(required=True, default=datetime.datetime.utcnow)
     started_at = DateTimeField(required=False)
     finished_at = DateTimeField(required=False)
     execution_id = StringField(required=True)
