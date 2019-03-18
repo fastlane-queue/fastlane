@@ -8,7 +8,7 @@ from preggy import expect
 from tests.fixtures.models import JobExecutionFixture
 
 # Fastlane
-from fastlane.models.job import JobExecution
+from fastlane.models.job_execution import JobExecution
 from fastlane.models.task import Task
 from fastlane.utils import from_unix, unix_now
 
@@ -165,8 +165,7 @@ def test_job_details1(client):
     for i in range(30):
         ex = job.create_execution("ubuntu", "ls")
         ex.created_at = from_unix(now + (i * 10))
-
-    job.save()
+        ex.save()
 
     resp1 = client.get(f"/tasks/{task.task_id}/jobs/{job.job_id}/")
     expect(resp1.status_code).to_equal(200)
@@ -187,7 +186,7 @@ def test_job_stdout1(client):
     task, job, execution = JobExecutionFixture.new_defaults()
     execution.log = "test log"
     execution.status = JobExecution.Status.done
-    job.save()
+    execution.save()
 
     resp1 = client.get(f"/tasks/{task.task_id}/jobs/{job.job_id}/stdout/")
     expect(resp1.status_code).to_equal(200)
@@ -214,7 +213,7 @@ def test_job_stderr1(client):
     task, job, execution = JobExecutionFixture.new_defaults()
     execution.error = "test error"
     execution.status = JobExecution.Status.done
-    job.save()
+    execution.save()
 
     resp1 = client.get(f"/tasks/{task.task_id}/jobs/{job.job_id}/stderr/")
     expect(resp1.status_code).to_equal(200)
@@ -242,7 +241,7 @@ def test_job_logs1(client):
     execution.log = "test log"
     execution.error = "test error"
     execution.status = JobExecution.Status.done
-    job.save()
+    execution.save()
 
     resp1 = client.get(f"/tasks/{task.task_id}/jobs/{job.job_id}/logs/")
     expect(resp1.status_code).to_equal(200)
