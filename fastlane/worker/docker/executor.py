@@ -1,23 +1,26 @@
-# Standard Library
-import random
+# # Standard Library
+# import random
 import re
 import traceback
 from json import loads
 
 # 3rd Party
-import docker
 import pybreaker
 import requests
 from dateutil.parser import parse
-from flask import Blueprint, current_app, g, make_response, request
+from flask import current_app
 
 # Fastlane
 from fastlane.worker import ExecutionResult
+from fastlane.worker.docker.api import BLACKLIST_KEY
+from fastlane.worker.docker.pool import DockerPool
 from fastlane.worker.errors import (
     ContainerUnavailableError,
     HostUnavailableError,
-    NoAvailableHostsError,
 )
+
+
+JOB_PREFIX = "fastlane-job"
 
 # http://docs.docker.com/engine/reference/commandline/ps/#examples
 # One of created, restarting, running, removing, paused, exited, or dead
@@ -28,174 +31,8 @@ STATUS = {
     "running": ExecutionResult.Status.running,
 }
 
-bp = Blueprint(  # pylint: disable=invalid-name
-    "docker", __name__, url_prefix="/docker-executor"
-)
-BLACKLIST_KEY = "docker-executor::blacklisted-hosts"
-JOB_PREFIX = "fastlane-job"
-
-
 def convert_date(date_to_parse):
     return parse(date_to_parse)
-
-
-def get_details():
-    details = request.get_json()
-
-    if details is None and request.get_data():
-        details = loads(request.get_data())
-
-    return details
-
-
-@bp.route("/blacklist", methods=["POST", "PUT"])
-def add_to_blacklist():
-    redis = current_app.redis
-
-    data = get_details()
-
-    if data is None or data == "":
-        msg = "Failed to add host to blacklist because JSON body could not be parsed."
-        g.logger.warn(msg)
-
-        return make_response(msg, 400)
-
-    if "host" not in data:
-        msg = "Failed to add host to blacklist because 'host' attribute was not found in JSON body."
-        g.logger.warn(msg)
-
-        return make_response(msg, 400)
-
-    host = data["host"]
-
-    redis.sadd(BLACKLIST_KEY, host)
-
-    return ""
-
-
-@bp.route("/blacklist", methods=["DEL", "DELETE"])
-def remove_from_blacklist():
-    redis = current_app.redis
-
-    data = get_details()
-
-    if data is None or data == "":
-        msg = "Failed to remove host from blacklist because JSON body could not be parsed."
-        g.logger.warn(msg)
-
-        return make_response(msg, 400)
-
-    if "host" not in data:
-        msg = (
-            "Failed to remove host from blacklist because 'host'"
-            " attribute was not found in JSON body."
-        )
-        g.logger.warn(msg)
-
-        return make_response(msg, 400)
-
-    host = data["host"]
-
-    redis.srem(BLACKLIST_KEY, host)
-
-    return ""
-
-
-class DockerPool:
-    def __init__(self, docker_hosts):
-        self.docker_hosts = docker_hosts
-
-        self.max_running = {}
-        self.clients_per_regex = []
-        self.clients = {}
-        self.__init_clients()
-
-    def __init_clients(self):
-        for regex, docker_hosts, max_running in self.docker_hosts:
-            client_list = []
-            clients = (regex, client_list)
-            self.clients_per_regex.append(clients)
-            self.max_running[regex] = max_running
-
-            for address in docker_hosts:
-                host, port = address.split(":")
-                docker_client = docker.DockerClient(base_url=address)
-                self.clients[address] = (host, int(port), docker_client)
-                client_list.append((host, int(port), docker_client))
-
-    @staticmethod
-    def refresh_circuits(executor, clients, blacklisted_hosts, logger):
-        def docker_ps(client):
-            client.containers.list(sparse=False)
-
-        for host, port, client in clients:
-            if f"{host}:{port}" in blacklisted_hosts:
-                continue
-
-            try:
-                logger.debug("Refreshing host...", host=host, port=port)
-                circuit = executor.get_circuit(f"{host}:{port}")
-                circuit.call(docker_ps, client)
-            except (requests.exceptions.ConnectionError, pybreaker.CircuitBreakerError):
-                error = traceback.format_exc()
-                logger.error("Failed to refresh host.", error=error)
-
-    def get_client(self, executor, task_id, host=None, port=None, blacklist=None):
-        logger = current_app.logger.bind(
-            task_id=task_id, host=host, port=port, blacklist=blacklist
-        )
-
-        if host is not None and port is not None:
-            logger.debug("Custom host returned.")
-
-            docker_client = self.clients.get(f"{host}:{port}")
-
-            if docker_client is None:
-                return host, port, None
-
-            return docker_client
-
-        if blacklist is None:
-            blacklist = set()
-
-        for regex, clients in self.clients_per_regex:
-            logger.debug("Trying to retrieve docker client...", regex=regex)
-
-            if regex is not None and not regex.match(task_id):
-                logger.debug("Task ID does not match regex.", regex=regex)
-
-                continue
-
-            DockerPool.refresh_circuits(executor, clients, blacklist, logger)
-            filtered = [
-                (host, port, client)
-
-                for (host, port, client) in clients
-
-                if f"{host}:{port}" not in blacklist
-                and executor.get_circuit(f"{host}:{port}").current_state == "closed"
-            ]
-
-            if not filtered:
-                logger.debug(
-                    "No non-blacklisted and closed circuit clients found for farm.",
-                    regex=regex,
-                )
-
-                continue
-
-            logger.info(
-                "Returning random choice out of the remaining clients.",
-                clients=[f"{host}:{port}" for (host, port, client) in filtered],
-            )
-
-            host, port, client = random.choice(filtered)
-
-            return host, int(port), client
-
-        msg = f"Failed to find a docker host for task id {task_id}."
-        logger.error(msg)
-        raise NoAvailableHostsError(msg)
 
 
 class Executor:
