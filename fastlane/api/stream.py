@@ -1,8 +1,9 @@
 # Standard Library
-import time
-from multiprocessing import Process
+#  import time
+#  from multiprocessing import Process
 
 # 3rd Party
+import geventwebsocket
 from flask import Blueprint, current_app
 
 # Fastlane
@@ -32,10 +33,14 @@ def stream_log(executor, task_id, job, ex, websocket):
 
             return
 
-        for log in executor.get_streaming_logs(task_id, job, ex):
-            if websocket.closed:
-                return
-            websocket.send(log)
+        try:
+            for log in executor.get_streaming_logs(task_id, job, ex):
+                if websocket.closed:
+                    return
+                websocket.send(log)
+        except geventwebsocket.exceptions.WebSocketError:
+            return
+
     except BrokenPipeError:
         websocket.close(message="wsretry")
 
@@ -78,16 +83,17 @@ def process_job_execution_logs(websocket, task_id, job_id, execution_id, logger)
         return
 
     executor = current_app.executor
+    stream_log(executor, task_id, job, execution, websocket)
 
-    process = Process(
-        target=stream_log, args=(executor, task_id, job, execution, websocket)
-    )
-    process.start()
+    #  process = Process(
+    #  target=stream_log, args=(executor, task_id, job, execution, websocket)
+    #  )
+    #  process.start()
 
-    while not websocket.closed:
-        time.sleep(10)
+    #  while not websocket.closed:
+    #  time.sleep(10)
 
-    process.terminate()
+    #  process.terminate()
 
 
 @bp.route("/tasks/<task_id>/jobs/<job_id>/ws/")
