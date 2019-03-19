@@ -111,6 +111,7 @@ def enqueue_job(task, job, image, command, start_at, start_in, cron, logger):
 
     queue_job_id = job.enqueue(current_app, execution.execution_id)
     job.metadata["enqueued_id"] = queue_job_id
+    execution.save()
     job.save()
     logger.info("Job execution enqueued successfully.")
 

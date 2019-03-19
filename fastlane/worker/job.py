@@ -82,9 +82,9 @@ def download_image(executor, job, ex, image, tag, command, logger):
     try:
         logger.debug("Changing job status...", status=JobExecution.Status.pulling)
         ex.status = JobExecution.Status.pulling
-        job.save()
+        ex.save()
         logger.debug(
-            "Job status changed successfully.", status=JobExecution.Status.pulling
+            "Job status changed successfully.", status=ex.status
         )
 
         logger.debug("Downloading updated container image...", image=image, tag=tag)
@@ -113,7 +113,7 @@ def download_image(executor, job, ex, image, tag, command, logger):
         logger.error("Failed to download image.", error=error)
         ex.error = error
         ex.status = JobExecution.Status.failed
-        job.save()
+        ex.save()
 
         current_app.report_error(
             err,
@@ -142,16 +142,15 @@ def run_container(executor, job, ex, image, tag, command, logger):
 
         ex.started_at = datetime.utcnow()
         ex.status = JobExecution.Status.running
-        job.save()
+        ex.save()
 
         logger.debug(
-            "Job status changed successfully.", status=JobExecution.Status.running
+            "Job status changed successfully.", status=ex.status
         )
 
         before = time.time()
         executor.run(job.task, job, ex, image, tag, command)
         ellapsed = time.time() - before
-        job.save()
         logger.info(
             "Container started successfully.",
             image=image,
@@ -178,7 +177,7 @@ def run_container(executor, job, ex, image, tag, command, logger):
         logger.error("Failed to run command", error=error)
         ex.error = error
         ex.status = JobExecution.Status.failed
-        job.save()
+        ex.save()
 
         current_app.report_error(
             err,
@@ -239,7 +238,7 @@ def run_job(task_id, job_id, execution_id, image, command):
             ex = job.get_execution_by_id(execution_id)
 
         logger.debug(
-            "Job status changed successfully.", status=JobExecution.Status.pulling
+            "Job status changed successfully.", status=ex.status
         )
         logger = logger.bind(execution_id=ex.execution_id)
     except Exception as err:
