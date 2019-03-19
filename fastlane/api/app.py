@@ -28,6 +28,7 @@ from fastlane.api.healthcheck import bp as healthcheck
 from fastlane.api.status import bp as status
 from fastlane.api.stream import bp as stream
 from fastlane.api.task import bp as task_api
+from fastlane.api.routes import bp as routes_api
 from fastlane.models import db
 from fastlane.models.categories import QueueNames
 from fastlane.queue import Queue, QueueGroup
@@ -80,6 +81,7 @@ class Application:
         self.app.register_blueprint(task_api)
         self.app.register_blueprint(execution_api)
         self.app.register_blueprint(status)
+        self.app.register_blueprint(routes_api)
 
         self.app.register_blueprint(gzipped.bp)
         gzipped.init_app(self.app)
