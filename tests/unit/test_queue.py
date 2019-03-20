@@ -18,13 +18,13 @@ def assert_queue_message(queue, expected_size, message_id):
         retrieved_id = redis.lpop(queue.queue_name).decode("utf-8")
         expect(retrieved_id).to_equal(message_id)
 
-        message_str = redis.get(Queue.get_message_name(message_id))
+        message_str = redis.get(Message.generate_message_key(message_id))
         expect(message_str).not_to_be_null()
 
         message = Message.deserialize(message_str)
         expect(message.id).to_equal(message_id)
     else:
-        message_exists = redis.exists(Queue.get_message_name(message_id))
+        message_exists = redis.exists(Message.generate_message_key(message_id))
         expect(message_exists).to_be_false()
 
 
@@ -104,7 +104,7 @@ def test_schedule1(client):
     expect(actual_ts).to_equal(timestamp)
     expect(message_id).to_equal(enqueued_id)
 
-    message_key = queue.get_message_name(enqueued_id)
+    message_key = Message.generate_message_key(enqueued_id)
     expect(redis.exists(message_key)).to_be_true()
 
     data = redis.get(message_key)
@@ -140,7 +140,7 @@ def test_schedule2(client):
     expect(actual_ts).to_equal(timestamp)
     expect(message_id).to_equal(enqueued_id)
 
-    message_key = queue.get_message_name(enqueued_id)
+    message_key = Message.generate_message_key(enqueued_id)
     expect(redis.exists(message_key)).to_be_true()
 
     data = redis.get(message_key)
@@ -179,7 +179,7 @@ def test_schedule3(client):
     expect(actual_ts).to_equal(timestamp)
     expect(message_id).to_equal(enqueued_id)
 
-    message_key = queue.get_message_name(enqueued_id)
+    message_key = Message.generate_message_key(enqueued_id)
     expect(redis.exists(message_key)).to_be_true()
 
     data = redis.get(message_key)
@@ -215,7 +215,7 @@ def test_move_jobs(client):
             )
         )
 
-        expect(redis.exists(Queue.get_message_name(enqueued_ids[-1]))).to_be_true()
+        expect(redis.exists(Message.generate_message_key(enqueued_ids[-1]))).to_be_true()
 
     expect(redis.zcard(Queue.SCHEDULED_QUEUE_NAME)).to_equal(10)
 
@@ -226,7 +226,7 @@ def test_move_jobs(client):
     expect(redis.zcard(Queue.SCHEDULED_QUEUE_NAME)).to_equal(5)
 
     for enqueued_id in enqueued_ids:
-        expect(redis.exists(Queue.get_message_name(enqueued_id))).to_be_true()
+        expect(redis.exists(Message.generate_message_key(enqueued_id))).to_be_true()
 
 
 def test_queue_group1(client):
@@ -317,7 +317,7 @@ def test_deschedule1(client):
             Queue.SCHEDULED_QUEUE_NAME, f"[{enqueued_id}", f"[{enqueued_id}"
         )
     ).to_be_empty()
-    key = Queue.get_message_name(enqueued_id)
+    key = Message.generate_message_key(enqueued_id)
     expect(redis.exists(key)).to_equal(False)
 
 
@@ -328,5 +328,5 @@ def test_deschedule2(client):
 
     expect(queue.deschedule("invalid_id")).to_be_false()
     expect(redis.zcard(Queue.SCHEDULED_QUEUE_NAME)).to_equal(0)
-    key = Queue.get_message_name("invalid_id")
+    key = Message.generate_message_key("invalid_id")
     expect(redis.exists(key)).to_equal(False)
