@@ -2,10 +2,10 @@
 
 from flask import Blueprint, jsonify, current_app, abort
 
-bp = Blueprint('routes', __name__) # pylint: disable=invalid-name
+bp = Blueprint('routes', __name__, url_prefix="/routes") # pylint: disable=invalid-name
 
 
-@bp.route('/routes', methods=['GET'])
+@bp.route('/', methods=['GET'])
 def routes():  # pragma: no cover
     """Print available functions."""
     if not current_app.debug:
