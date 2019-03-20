@@ -17,6 +17,7 @@ from mongoengine import (
 from fastlane.models import db
 from fastlane.models.categories import Categories
 
+
 class Job(db.Document):
     created_at = DateTimeField(required=True)
     last_modified_at = DateTimeField(required=True, default=datetime.datetime.utcnow)
@@ -57,7 +58,7 @@ class Job(db.Document):
             command=command,
             created_at=datetime.datetime.utcnow(),
             task=self.task,
-            job=self
+            job=self,
         )
         ex.save()
         self.executions.append(ex)
@@ -72,7 +73,7 @@ class Job(db.Document):
             for key, val in self.metadata["envs"].items():
                 for word in blacklist:
                     if word in key.lower():
-                        val = "*" * len(str(val))
+                        val = "***"
 
                         break
                 envs[key] = val
@@ -147,6 +148,7 @@ class Job(db.Document):
     @classmethod
     def get_unfinished_executions(cls, app):
         from fastlane.models.job_execution import JobExecution
+
         query = {
             "$or": [
                 {"status": JobExecution.Status.pulling},
@@ -156,6 +158,7 @@ class Job(db.Document):
         executions = JobExecution.objects(__raw__=query)
 
         execs = []
+
         for execution in executions:
             enqueued_id = execution.job.metadata.get("enqueued_id")
 
