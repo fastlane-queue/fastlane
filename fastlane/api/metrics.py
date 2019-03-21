@@ -22,7 +22,11 @@ def init_app(app):
             return response
 
         now = datetime.now()
-        duration = int(round((now - g.start).microseconds / 1000, 2))
+
+        if hasattr(g, "start"):
+            duration = int(round((now - g.start).microseconds / 1000, 2))
+        else:
+            duration = -1
 
         user_ip = request.headers.get("X-Forwarded-For", request.remote_addr)
         host = request.host.split(":", 1)[0]
@@ -36,7 +40,7 @@ def init_app(app):
             "host": host,
         }
 
-        request_id = g.request_id
+        request_id = getattr(g, "request_id", None)
 
         if request_id:
             log_params["request_id"] = request_id

@@ -196,3 +196,19 @@ Config.define(
     "Total items per page to be used on api pagination methods",
     "API",
 )
+
+Config.define(
+    "BASIC_AUTH_USERNAME",
+    None,
+    "Basic auth username required by fastlane. If set to 'None', no basic auth is enabled.",
+    "Auth",
+)
+
+Config.define(
+    "BASIC_AUTH_PASSWORD",
+    None,
+    "Basic auth password required by fastlane. If set to 'None', no basic auth is enabled.",
+    "Auth",
+)
+
+Config.define("BASIC_AUTH_REALM", "", "Basic auth realm.", "Auth")

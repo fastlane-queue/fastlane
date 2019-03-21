@@ -30,6 +30,22 @@ def client():
 
 
 @pytest.fixture
+def auth_client():
+    conf = Config.load(ROOT_CONFIG)
+    conf.BASIC_AUTH_USERNAME = "test"
+    conf.BASIC_AUTH_PASSWORD = "auth"
+    app = Application(conf, log_level="ERROR", testing=True)
+    app.config["TESTING"] = True
+    cli = app.app.test_client()
+    cli.application.redis.flushall()
+
+    Task.objects.delete()
+    Job.objects.delete()
+
+    yield cli
+
+
+@pytest.fixture
 def worker():
     conf = Config.load(ROOT_CONFIG)
     app = Application(conf, log_level="ERROR", testing=True)

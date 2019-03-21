@@ -1,3 +1,4 @@
 # Fastlane
 # 3rd Party
-from tests.fixtures import client, worker  # NOQA
+# 3rd Party
+from tests.fixtures import auth_client, client, worker  # NOQA

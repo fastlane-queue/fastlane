@@ -272,6 +272,17 @@ itsdangerous = ">=0.24"
 
 [[package]]
 category = "main"
+description = "HTTP basic access authentication for Flask."
+name = "flask-basicauth"
+optional = false
+python-versions = "*"
+version = "0.2.0"
+
+[package.dependencies]
+Flask = "*"
+
+[[package]]
+category = "main"
 description = "A Flask extension adding a decorator for CORS support"
 name = "flask-cors"
 optional = false
@@ -1224,7 +1235,7 @@ python-versions = "*"
 version = "2.2.1"
 
 [metadata]
-content-hash = "c9c3cd12f42971a01f6f7107d89a6e57f6800a458ea208c54105f369de5cb534"
+content-hash = "429467cefdf1aabdd325ace97c1b01ee6e39355fd86b23013a86af4e3585fdc7"
 python-versions = "^3.6"
 
 [metadata.hashes]
@@ -1255,6 +1266,7 @@ docutils = ["02aec4bd92ab067f6ff27a38a38a41173bf01bed8f89157768c1573f53e474a6", 
 entrypoints = ["589f874b313739ad35be6e0cd7efde2a4e9b6fea91edcc34e58ecbb8dbe56d19", "c70dd71abe5a8c85e55e12c19bd91ccfeec11a6e99044204511f9ed547d48451"]
 flake8 = ["859996073f341f2670741b51ec1e67a01da142831aa1fdc6242dbf88dffbe661", "a796a115208f5c03b18f332f7c11729812c8c3ded6c46319c59b53efd3819da8"]
 flask = ["2271c0070dbcb5275fad4a82e29f23ab92682dc45f9dfbc22c02ba9b9322ce48", "a080b744b7e345ccfcbc77954861cb05b3c63786e93f2b3875e0913d44b43f05"]
+flask-basicauth = ["df5ebd489dc0914c224419da059d991eb72988a01cdd4b956d52932ce7d501ff"]
 flask-cors = ["7ad56ee3b90d4955148fc25a2ecaa1124fc84298471e266a7fea59aeac4405a5", "7e90bf225fdf163d11b84b59fb17594d0580a16b97ab4e1146b1fb2737c1cfec"]
 flask-mongoengine = ["0f426aeafc4be2c37e9b4c0f8b5d02d012b7afc4b3b97a4119024684fe148fc1", "b6376b33cd1e624c09983a0884dc87303e54084f0e6b7f8df6794d56d35fa66f"]
 flask-redis = ["56ebd5e69a42988e9a7a904f07b37cd625a7dbcdfbfe31797885c3c4a92516f5", "ffb8e636c7af0226a3074860200602850a5a871169bc53fcde05b7d973aad714"]

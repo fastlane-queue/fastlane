@@ -25,13 +25,14 @@ import fastlane.api.metrics as metrics
 from fastlane.api.enqueue import bp as enqueue
 from fastlane.api.execution import bp as execution_api
 from fastlane.api.healthcheck import bp as healthcheck
+from fastlane.api.routes import bp as routes_api
 from fastlane.api.status import bp as status
 from fastlane.api.stream import bp as stream
 from fastlane.api.task import bp as task_api
-from fastlane.api.routes import bp as routes_api
 from fastlane.models import db
 from fastlane.models.categories import QueueNames
 from fastlane.queue import Queue, QueueGroup
+from flask_basicauth import BasicAuth
 
 
 class Application:
@@ -61,6 +62,7 @@ class Application:
         self.configure_queue()
         #  self.connect_queue()
 
+        self.configure_basic_auth()
         self.connect_db()
         self.load_executor()
         self.load_error_handlers()
@@ -88,6 +90,16 @@ class Application:
 
         sockets = Sockets(self.app)
         sockets.register_blueprint(stream)
+
+    def configure_basic_auth(self):
+        self.basic_auth = None
+
+        if (
+            self.app.config["BASIC_AUTH_USERNAME"] is not None
+            and self.app.config["BASIC_AUTH_PASSWORD"] is not None
+        ):
+            self.basic_auth = BasicAuth(self.app)
+            self.app.config["BASIC_AUTH_FORCE"] = True
 
     def configure_logging(self):
         if self.app.testing:
