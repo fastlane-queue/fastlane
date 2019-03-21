@@ -5,6 +5,10 @@ To generate a sample configuration file like this one: `fastlane config\.
 ```python
 ################################## General ####################################
 
+# This configuration details if fastlane is running in debug mode.
+# Defaults to: False
+DEBUG = False
+
 # This configuration details the environment fastlane is running in.
 # Defaults to: 'production'
 ENV = 'production'
@@ -14,7 +18,9 @@ ENV = 'production'
 # Defaults to: 'OTNDN0VCRDAtRTMyMS00NUM0LUFFQUYtNEI4QUE4RkFCRjUzCg=='
 SECRET_KEY = 'OTNDN0VCRDAtRTMyMS00NUM0LUFFQUYtNEI4QUE4RkFCRjUzCg=='
 
-# This configuration enabled CORS headers in the API.
+# This configuration enabled CORS headers in the API. CORS is enabled on '*' by
+# default in Fastlane. It's the administrator's job to secure it behind some
+# gateway.
 # Defaults to: True
 ENABLE_CORS = True
 
@@ -39,8 +45,8 @@ REDIS_URL = 'redis://localhost:10100/0'
 ################################### Worker ####################################
 
 # Number of milliseconds that fastlane must sleep before getting the next job
-# Defaults to: 10
-WORKER_SLEEP_TIME_MS = 10
+# Defaults to: 1000
+WORKER_SLEEP_TIME_MS = 1000
 
 # Number of seconds that fastlane must wait before killing an execution
 # Defaults to: 1800
@@ -65,8 +71,8 @@ WEBHOOKS_EXPONENTIAL_BACKOFF_MIN_MS = 5000
 WEBHOOKS_EXPONENTIAL_BACKOFF_FACTOR = 2
 
 # Module full name where to find the Executor class
-# Defaults to: 'fastlane.worker.docker_executor'
-EXECUTOR = 'fastlane.worker.docker_executor'
+# Defaults to: 'fastlane.worker.docker'
+EXECUTOR = 'fastlane.worker.docker'
 
 ###############################################################################
 
@@ -167,6 +173,25 @@ SMTP_PASSWORD = None
 # From E-mail of the SMTP server used to send notifications
 # Defaults to: None
 SMTP_FROM = None
+
+###############################################################################
+
+
+#################################### Auth #####################################
+
+# Basic auth username required by fastlane. If set to 'None', no basic auth is
+# enabled.
+# Defaults to: None
+BASIC_AUTH_USERNAME = None
+
+# Basic auth password required by fastlane. If set to 'None', no basic auth is
+# enabled.
+# Defaults to: None
+BASIC_AUTH_PASSWORD = None
+
+# Basic auth realm.
+# Defaults to: ''
+BASIC_AUTH_REALM = ''
 
 ###############################################################################
 
