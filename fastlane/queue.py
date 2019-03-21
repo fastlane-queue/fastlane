@@ -238,7 +238,7 @@ class QueueExecutor:
             next_dt = get_next_cron_timestamp(message.cron_str)
             timestamp = to_unix(next_dt)
             msg_schedule = Message(message.queue, message.category, message.cron_str,
-                                    *message.args, **message.kw)
+                                    *message.args, **message.kwargs)
 
             self._pipe_at_timestamp(pipe, msg_schedule, timestamp)
 
