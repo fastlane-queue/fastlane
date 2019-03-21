@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fastlane"
-version = "2.0.0"
+version = "2.1.0"
 description = "fastlane is a redis and docker based queueing service."
 authors = ["Bernardo Heynemann <heynemann@gmail.com>"]
 
