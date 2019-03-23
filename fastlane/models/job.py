@@ -16,6 +16,7 @@ from mongoengine import (
 # Fastlane
 from fastlane.models import db
 from fastlane.models.categories import Categories
+from fastlane.utils import words_redacted
 
 
 class Job(db.Document):
@@ -66,19 +67,10 @@ class Job(db.Document):
 
         return ex
 
-    def get_metadata(self, blacklist):
+    def get_metadata(self, blacklist_fn):
         if "envs" in self.metadata:
-            envs = {}
-
-            for key, val in self.metadata["envs"].items():
-                for word in blacklist:
-                    if word in key.lower():
-                        val = "***"
-
-                        break
-                envs[key] = val
-
-            self.metadata["envs"] = envs
+            envs = self.metadata["envs"]
+            self.metadata["envs"] = words_redacted(envs, blacklist_fn)
 
         return self.metadata
 
@@ -87,12 +79,12 @@ class Job(db.Document):
         include_log=False,
         include_error=False,
         include_executions=True,
-        blacklist=None,
+        blacklist_fn=None,
     ):
-        if blacklist is None:
-            blacklist = []
-
-        meta = self.get_metadata(blacklist)
+        if blacklist_fn is None:
+            meta = self.metadata
+        else:
+            meta = self.get_metadata(blacklist_fn)
 
         res = {
             "createdAt": self.created_at.isoformat(),

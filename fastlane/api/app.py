@@ -1,6 +1,7 @@
 # Standard Library
 import logging
 import sys
+import re
 from json import loads
 
 # 3rd Party
@@ -61,6 +62,7 @@ class Application:
         self.connect_redis()
         self.configure_queue()
         #  self.connect_queue()
+        self.config_blacklist_words_fn()
 
         self.configure_basic_auth()
         self.connect_db()
@@ -178,6 +180,12 @@ class Application:
             queues.append(queue)
 
         self.app.queue_group = QueueGroup(self.logger, self.app.redis, queues)
+
+    def config_blacklist_words_fn(self):
+        blacklist_words = map(str.strip, self.app.config["ENV_BLACKLISTED_WORDS"].split(","))
+        blacklist_pattern = r"(%s)" % "|".join(blacklist_words)
+        re_blacklist = re.compile(blacklist_pattern, re.RegexFlag.IGNORECASE)
+        self.app.blacklist_words_fn = re_blacklist.search
 
     def connect_db(self):
         settings = self.app.config["MONGODB_CONFIG"]

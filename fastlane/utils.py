@@ -1,6 +1,7 @@
 # Standard Library
 import calendar
 import re
+import copy
 from datetime import datetime, timedelta
 
 # 3rd Party
@@ -56,3 +57,19 @@ def get_next_cron_timestamp(cron):
     next_dt = itr.get_next(datetime)
 
     return next_dt
+
+
+def words_redacted(data, blacklist_fn, replacements="***"):
+    new_data = copy.deepcopy(data)
+    def redacted(data_redacted):
+        for key, val in data_redacted.items():
+            if blacklist_fn(key):
+                data_redacted[key] = replacements
+                continue
+
+            if isinstance(val, dict):
+                redacted(val)
+
+        return data_redacted
+
+    return redacted(new_data)

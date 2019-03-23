@@ -176,7 +176,7 @@ def get_job(task_id, job_id):
     details = job.to_dict(
         include_log=True,
         include_error=True,
-        blacklist=current_app.config["ENV_BLACKLISTED_WORDS"].lower().split(","),
+        blacklist_fn=current_app.blacklist_words_fn,
     )
 
     for execution in details["executions"]:
