@@ -12,6 +12,7 @@ from fastlane.api.execution import (
 from fastlane.api.helpers import return_error
 from fastlane.models import Job, JobExecution, Task
 from fastlane.models.categories import Categories
+from fastlane import api
 
 bp = Blueprint("task", __name__)  # pylint: disable=invalid-name
 
@@ -130,24 +131,14 @@ def search_tasks():
 
 
 @bp.route("/tasks/<task_id>/", methods=("GET",))
-def get_task(task_id):
-    logger = g.logger.bind(operation="get_task", task_id=task_id)
-
-    logger.debug("Getting job...")
-    task = Task.get_by_task_id(task_id)
-
-    if task is None:
-        return return_error("Task not found.", "get_task", status=404, logger=logger)
-
-    logger.debug("Task retrieved successfully...")
-
+@api.load_parameters(api.PARAMETER_TASK)
+def get_task(task):
     task_jobs = Job.objects(id__in=[str(job_id.id) for job_id in task.jobs])
 
     jobs = []
-
     for job in task_jobs:
         url = url_for(
-            "task.get_job", task_id=task_id, job_id=str(job.job_id), _external=True
+            "task.get_job", task_id=task.task_id, job_id=str(job.job_id), _external=True
         )
         job = {
             "id": str(job.job_id),
@@ -156,22 +147,12 @@ def get_task(task_id):
         }
         jobs.append(job)
 
-    return jsonify({"taskId": task_id, "jobs": jobs})
+    return jsonify({"taskId": task.task_id, "jobs": jobs})
 
 
 @bp.route("/tasks/<task_id>/jobs/<job_id>/", methods=("GET",))
-def get_job(task_id, job_id):
-    logger = g.logger.bind(operation="get_job", task_id=task_id, job_id=job_id)
-
-    logger.debug("Getting job...")
-    job = Job.get_by_id(task_id=task_id, job_id=job_id)
-
-    if job is None:
-        return return_error(
-            "Job not found in task.", "get_task", status=404, logger=logger
-        )
-
-    logger.debug("Job retrieved successfully...")
+@api.load_parameters(api.PARAMETER_TASK_JOB)
+def get_job(task, job):
 
     details = job.to_dict(
         include_log=True,
@@ -182,34 +163,26 @@ def get_job(task_id, job_id):
     for execution in details["executions"]:
         exec_url = url_for(
             "execution.get_job_execution",
-            task_id=task_id,
-            job_id=job_id,
+            task_id=task.task_id,
+            job_id=job.job_id,
             execution_id=execution["executionId"],
             _external=True,
         )
         execution["url"] = exec_url
 
-    task_url = url_for("task.get_task", task_id=task_id, _external=True)
+    task_url = url_for("task.get_task", task_id=task.task_id, _external=True)
 
-    return jsonify({"task": {"id": task_id, "url": task_url}, "job": details})
+    return jsonify({"task": {"id": task.task_id, "url": task_url}, "job": details})
 
 
 @bp.route(
     "/tasks/<task_id>/jobs/<job_id>/stop/", methods=("POST",), strict_slashes=False
 )
-def stop_job(task_id, job_id):
-    logger = g.logger.bind(operation="stop_job", task_id=task_id, job_id=job_id)
-
-    logger.debug("Getting job...")
-    job = Job.get_by_id(task_id=task_id, job_id=job_id)
-
-    if job is None:
-        return return_error(
-            "Job not found in task.", "stop_job", status=404, logger=logger
-        )
+@api.load_parameters(api.PARAMETER_TASK_JOB)
+def stop_job(task, job):
+    logger = g.logger.bind(operation="stop_job", task_id=task.task_id, job_id=job.job_id)
 
     execution = job.get_last_execution()
-
     _, response = perform_stop_job_execution(
         job, execution=execution, logger=logger, stop_schedule=True
     )
@@ -217,25 +190,17 @@ def stop_job(task_id, job_id):
     if response is not None:
         return response
 
-    return get_job_summary(task_id, job_id)
+    return get_job_summary(task.task_id, job.job_id)
 
 
 @bp.route(
     "/tasks/<task_id>/jobs/<job_id>/retry/", methods=("POST",), strict_slashes=False
 )
-def retry_job(task_id, job_id):
-    logger = g.logger.bind(operation="retry", task_id=task_id, job_id=job_id)
-
-    logger.debug("Getting job...")
-    job = Job.get_by_id(task_id=task_id, job_id=job_id)
-
-    if job is None:
-        return return_error(
-            "Job not found in task.", "retry_job", status=404, logger=logger
-        )
+@api.load_parameters(api.PARAMETER_TASK_JOB)
+def retry_job(task, job):
+    logger = g.logger.bind(operation="retry", task_id=task.task_id, job_id=job.job_id)
 
     execution = job.get_last_execution()
-
     if execution is None:
         return return_error(
             "No execution yet to retry.", "retry_job", status=400, logger=logger
@@ -261,13 +226,13 @@ def retry_job(task_id, job_id):
     new_exec.status = JobExecution.Status.enqueued
 
     logger.debug("Enqueuing job execution...")
-    args = [task_id, job_id, new_exec.execution_id, execution.image, execution.command]
+    args = [task.task_id, job.job_id, new_exec.execution_id, execution.image, execution.command]
     result = current_app.jobs_queue.enqueue(Categories.Job, *args)
     job.metadata["enqueued_id"] = result.id
     job.save()
     logger.info("Job execution enqueued successfully.")
 
-    return get_job_summary(task_id, job_id)
+    return get_job_summary(task.task_id, job.job_id)
 
 
 def get_job_summary(task_id, job_id):
@@ -280,29 +245,33 @@ def get_job_summary(task_id, job_id):
 
 
 @bp.route("/tasks/<task_id>/jobs/<job_id>/stream/")
-def stream_job(task_id, job_id):
+@api.load_parameters(api.PARAMETER_TASK_JOB)
+def stream_job(task, job):
     if request.url.startswith("https"):
         protocol = "wss"
     else:
         protocol = "ws"
 
-    url = url_for("task.stream_job", task_id=task_id, job_id=job_id, external=True)
+    url = url_for("task.stream_job", task_id=task.task_id, job_id=job.job_id, external=True)
     url = "/".join(url.split("/")[:-2])
     ws_url = "%s://%s/%s/ws/" % (protocol, request.host.rstrip("/"), url.lstrip("/"))
 
-    return render_template("stream.html", task_id=task_id, job_id=job_id, ws_url=ws_url)
+    return render_template("stream.html", task_id=task.task_id, job_id=job.job_id, ws_url=ws_url)
 
 
 @bp.route("/tasks/<task_id>/jobs/<job_id>/stdout/")
-def stdout(task_id, job_id):
-    return retrieve_execution_details(task_id, job_id, get_data_fn=stdout_func)
+@api.load_parameters(api.PARAMETER_TASK_JOB)
+def stdout(task, job):
+    return retrieve_execution_details(task, job, get_data_fn=stdout_func)
 
 
 @bp.route("/tasks/<task_id>/jobs/<job_id>/stderr/")
-def stderr(task_id, job_id):
-    return retrieve_execution_details(task_id, job_id, get_data_fn=stderr_func)
+@api.load_parameters(api.PARAMETER_TASK_JOB)
+def stderr(task, job):
+    return retrieve_execution_details(task, job, get_data_fn=stderr_func)
 
 
 @bp.route("/tasks/<task_id>/jobs/<job_id>/logs/")
-def logs(task_id, job_id):
-    return retrieve_execution_details(task_id, job_id, get_data_fn=logs_func)
+@api.load_parameters(api.PARAMETER_TASK_JOB)
+def logs(task, job):
+    return retrieve_execution_details(task, job, get_data_fn=logs_func)

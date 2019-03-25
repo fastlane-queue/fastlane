@@ -75,7 +75,7 @@ def test_get_execution2(client):
         resp = client.get(
             f"/tasks/invalid/jobs/{job.job_id}/executions/{execution.execution_id}/"
         )
-        msg = f"Task (invalid) or Job ({job.job_id}) not found."
+        msg = f"Task (invalid) not found."
         expect(resp).to_be_an_error_with(
             status=404, msg=msg, operation="get_job_execution"
         )
@@ -83,7 +83,7 @@ def test_get_execution2(client):
         resp = client.get(
             f"/tasks/{task.task_id}/jobs/invalid/executions/{execution.execution_id}/"
         )
-        msg = f"Task ({task.task_id}) or Job (invalid) not found."
+        msg = f"Job (invalid) with Task ({task.task_id}) not found."
         expect(resp).to_be_an_error_with(
             status=404, msg=msg, operation="get_job_execution"
         )
@@ -141,17 +141,17 @@ def test_get_execution_stdout3(client):
         resp = client.get(
             f"/tasks/invalid/jobs/{job.job_id}/executions/{execution.execution_id}/stdout/"
         )
-        msg = f"Task (invalid) or Job ({job.job_id}) not found."
+        msg = f"Task (invalid) not found."
         expect(resp).to_be_an_error_with(
-            status=404, msg=msg, operation="retrieve_execution_details"
+            status=404, msg=msg, operation="get_job_execution_stdout"
         )
 
         resp = client.get(
             f"/tasks/{task.task_id}/jobs/invalid/executions/{execution.execution_id}/stdout/"
         )
-        msg = f"Task ({task.task_id}) or Job (invalid) not found."
+        msg = f"Job (invalid) with Task ({task.task_id}) not found."
         expect(resp).to_be_an_error_with(
-            status=404, msg=msg, operation="retrieve_execution_details"
+            status=404, msg=msg, operation="get_job_execution_stdout"
         )
 
         resp = client.get(
@@ -207,17 +207,17 @@ def test_get_execution_stderr3(client):
         resp = client.get(
             f"/tasks/invalid/jobs/{job.job_id}/executions/{execution.execution_id}/stderr/"
         )
-        msg = f"Task (invalid) or Job ({job.job_id}) not found."
+        msg = f"Task (invalid) not found."
         expect(resp).to_be_an_error_with(
-            status=404, msg=msg, operation="retrieve_execution_details"
+            status=404, msg=msg, operation="get_job_execution_stderr"
         )
 
         resp = client.get(
             f"/tasks/{task.task_id}/jobs/invalid/executions/{execution.execution_id}/stderr/"
         )
-        msg = f"Task ({task.task_id}) or Job (invalid) not found."
+        msg = f"Job (invalid) with Task ({task.task_id}) not found."
         expect(resp).to_be_an_error_with(
-            status=404, msg=msg, operation="retrieve_execution_details"
+            status=404, msg=msg, operation="get_job_execution_stderr"
         )
 
         resp = client.get(
@@ -274,17 +274,17 @@ def test_get_execution_logs3(client):
             f"/tasks/invalid/jobs/{job.job_id}/executions/{execution.execution_id}/logs/"
         )
 
-        msg = f"Task (invalid) or Job ({job.job_id}) not found."
+        msg = f"Task (invalid) not found."
         expect(resp).to_be_an_error_with(
-            status=404, msg=msg, operation="retrieve_execution_details"
+            status=404, msg=msg, operation="get_job_execution_logs"
         )
 
         resp = client.get(
             f"/tasks/{task.task_id}/jobs/invalid/executions/{execution.execution_id}/logs/"
         )
-        msg = f"Task ({task.task_id}) or Job (invalid) not found."
+        msg = f"Job (invalid) with Task ({task.task_id}) not found."
         expect(resp).to_be_an_error_with(
-            status=404, msg=msg, operation="retrieve_execution_details"
+            status=404, msg=msg, operation="get_job_execution_logs"
         )
 
         resp = client.get(
@@ -353,7 +353,7 @@ def test_stop_execution2(client):
             f"/tasks/invalid/jobs/{job.job_id}/executions/{execution.execution_id}/stop/"
         )
 
-        msg = f"Task (invalid) or Job ({job.job_id}) not found."
+        msg = f"Task (invalid) not found."
         expect(resp).to_be_an_error_with(
             status=404, msg=msg, operation="stop_job_execution"
         )
@@ -361,7 +361,7 @@ def test_stop_execution2(client):
         resp = client.post(
             f"/tasks/{task.task_id}/jobs/invalid/executions/{execution.execution_id}/stop/"
         )
-        msg = f"Task ({task.task_id}) or Job (invalid) not found."
+        msg = f"Job (invalid) with Task ({task.task_id}) not found."
         expect(resp).to_be_an_error_with(
             status=404, msg=msg, operation="stop_job_execution"
         )

@@ -196,15 +196,14 @@ def test_job_stdout1(client):
 def test_job_stdout2(client):
     """Tests get job stdout fails if invalid input."""
 
-    task, job, execution = JobExecutionFixture.new_defaults()
-
+    task, _, _ = JobExecutionFixture.new_defaults()
     resp1 = client.get(f"/tasks/{task.task_id}/jobs/invalid-id/stdout/")
     expect(resp1.status_code).to_equal(404)
     obj = loads(resp1.data)
     expect(obj["error"]).to_equal(
-        f"Task ({task.task_id}) or Job (invalid-id) not found."
+        f"Job (invalid-id) with Task ({task.task_id}) not found."
     )
-    expect(obj["operation"]).to_equal("retrieve_execution_details")
+    expect(obj["operation"]).to_equal("stdout")
 
 
 def test_job_stderr1(client):
@@ -229,9 +228,9 @@ def test_job_stderr2(client):
     expect(resp1.status_code).to_equal(404)
     obj = loads(resp1.data)
     expect(obj["error"]).to_equal(
-        f"Task ({task.task_id}) or Job (invalid-id) not found."
+        f"Job (invalid-id) with Task ({task.task_id}) not found."
     )
-    expect(obj["operation"]).to_equal("retrieve_execution_details")
+    expect(obj["operation"]).to_equal("stderr")
 
 
 def test_job_logs1(client):
@@ -257,9 +256,9 @@ def test_job_logs2(client):
     expect(resp1.status_code).to_equal(404)
     obj = loads(resp1.data)
     expect(obj["error"]).to_equal(
-        f"Task ({task.task_id}) or Job (invalid-id) not found."
+        f"Job (invalid-id) with Task ({task.task_id}) not found."
     )
-    expect(obj["operation"]).to_equal("retrieve_execution_details")
+    expect(obj["operation"]).to_equal("logs")
 
 
 def test_stop_container1(client):

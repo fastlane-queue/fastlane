@@ -12,33 +12,25 @@ from flask import (
 
 # Fastlane
 from fastlane.api.helpers import return_error
-from fastlane.models import Job, JobExecution
+from fastlane.models import JobExecution
+from fastlane import api
 
 bp = Blueprint("execution", __name__)  # pylint: disable=invalid-name
 
 
 @bp.route("/tasks/<task_id>/jobs/<job_id>/executions/<execution_id>/", methods=("GET",))
-def get_job_execution(task_id, job_id, execution_id):
+@api.load_parameters(api.PARAMETER_TASK_JOB)
+def get_job_execution(task, job, execution_id):
     logger = g.logger.bind(
         operation="get_job_execution",
-        task_id=task_id,
-        job_id=job_id,
+        task_id=task.task_id,
+        job_id=job.job_id,
         execution_id=execution_id,
     )
 
-    logger.debug("Getting job...")
-    job = Job.get_by_id(task_id=task_id, job_id=job_id)
-
-    if job is None:
-        msg = f"Task ({task_id}) or Job ({job_id}) not found."
-
-        return return_error(msg, "get_job_execution", status=404, logger=logger)
-
     execution = job.get_execution_by_id(execution_id)
-
     if execution is None:
-        msg = f"Job Execution ({execution_id}) not found in job ({job_id})."
-
+        msg = f"Job Execution ({execution_id}) not found in job ({job.job_id})."
         return return_error(msg, "get_job_execution", status=404, logger=logger)
 
     logger.debug("Job execution retrieved successfully...")
@@ -76,24 +68,14 @@ def format_execution_details(task, job, execution, shallow=False):
     )
 
 
-def retrieve_execution_details(task_id, job_id, execution_id=None, get_data_fn=None):
+def retrieve_execution_details(task, job, execution_id=None, get_data_fn=None):
     if get_data_fn is None:
         get_data_fn = lambda execution: execution.log  # noqa: E731
 
-    logger = g.logger.bind(operation="get_response", task_id=task_id, job_id=job_id)
-
-    logger.debug("Getting job...")
-    job = Job.get_by_id(task_id=task_id, job_id=job_id)
-
-    if job is None:
-        msg = f"Task ({task_id}) or Job ({job_id}) not found."
-
-        return return_error(
-            msg, "retrieve_execution_details", status=404, logger=logger
-        )
+    logger = g.logger.bind(operation="get_response", task_id=task.task_id, job_id=job.job_id)
 
     if not job.executions:
-        msg = f"No executions found in job ({job_id})."
+        msg = f"No executions found in job ({job.job_id})."
 
         return return_error(
             msg, "retrieve_execution_details", status=400, logger=logger
@@ -142,22 +124,25 @@ def logs_func(execution):
 @bp.route(
     "/tasks/<task_id>/jobs/<job_id>/executions/<execution_id>/stdout/", methods=("GET",)
 )
-def get_job_execution_stdout(task_id, job_id, execution_id):
-    return retrieve_execution_details(task_id, job_id, execution_id, stdout_func)
+@api.load_parameters(api.PARAMETER_TASK_JOB)
+def get_job_execution_stdout(task, job, execution_id):
+    return retrieve_execution_details(task, job, execution_id, stdout_func)
 
 
 @bp.route(
     "/tasks/<task_id>/jobs/<job_id>/executions/<execution_id>/stderr/", methods=("GET",)
 )
-def get_job_execution_stderr(task_id, job_id, execution_id):
-    return retrieve_execution_details(task_id, job_id, execution_id, stderr_func)
+@api.load_parameters(api.PARAMETER_TASK_JOB)
+def get_job_execution_stderr(task, job, execution_id):
+    return retrieve_execution_details(task, job, execution_id, stderr_func)
 
 
 @bp.route(
     "/tasks/<task_id>/jobs/<job_id>/executions/<execution_id>/logs/", methods=("GET",)
 )
-def get_job_execution_logs(task_id, job_id, execution_id):
-    return retrieve_execution_details(task_id, job_id, execution_id, logs_func)
+@api.load_parameters(api.PARAMETER_TASK_JOB)
+def get_job_execution_logs(task, job, execution_id):
+    return retrieve_execution_details(task, job, execution_id, logs_func)
 
 
 def perform_stop_job_execution(job, execution, logger, stop_schedule=True):
@@ -195,26 +180,19 @@ def perform_stop_job_execution(job, execution, logger, stop_schedule=True):
     methods=("POST",),
     strict_slashes=False,
 )
-def stop_job_execution(task_id, job_id, execution_id):
+@api.load_parameters(api.PARAMETER_TASK_JOB)
+def stop_job_execution(task, job, execution_id):
     logger = g.logger.bind(
         operation="stop_job_execution",
-        task_id=task_id,
-        job_id=job_id,
+        task_id=task.task_id,
+        job_id=job.job_id,
         execution_id=execution_id,
     )
-
-    logger.debug("Getting job...")
-    job = Job.get_by_id(task_id=task_id, job_id=job_id)
-
-    if job is None:
-        msg = f"Task ({task_id}) or Job ({job_id}) not found."
-
-        return return_error(msg, "stop_job_execution", status=404, logger=logger)
 
     execution = job.get_execution_by_id(execution_id)
 
     if execution is None:
-        msg = f"Job Execution ({execution_id}) not found in Job ({job_id})."
+        msg = f"Job Execution ({execution_id}) not found in Job ({job.job_id})."
 
         return return_error(msg, "stop_job_execution", status=404, logger=logger)
 
@@ -229,7 +207,8 @@ def stop_job_execution(task_id, job_id, execution_id):
 
 
 @bp.route("/tasks/<task_id>/jobs/<job_id>/executions/<execution_id>/stream/")
-def stream_job(task_id, job_id, execution_id):
+@api.load_parameters(api.PARAMETER_TASK_JOB)
+def stream_job(task, job, execution_id):
     if request.url.startswith("https"):
         protocol = "wss"
     else:
@@ -237,8 +216,8 @@ def stream_job(task_id, job_id, execution_id):
 
     url = url_for(
         "execution.stream_job",
-        task_id=task_id,
-        job_id=job_id,
+        task_id=task.task_id,
+        job_id=job.job_id,
         execution_id=execution_id,
         external=True,
     )
@@ -247,8 +226,8 @@ def stream_job(task_id, job_id, execution_id):
 
     return render_template(
         "stream.html",
-        task_id=task_id,
-        job_id=job_id,
+        task_id=task.task_id,
+        job_id=job.job_id,
         execution_id=execution_id,
         ws_url=ws_url,
     )
