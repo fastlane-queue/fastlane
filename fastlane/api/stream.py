@@ -12,6 +12,10 @@ from fastlane.worker.errors import ContainerUnavailableError
 
 bp = Blueprint("stream", __name__)  # pylint: disable=invalid-name
 
+# https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent#Status_codes
+CODE_NOT_FOUND = 1010
+CODE_OK = 1000
+
 
 def stream_log(executor, task_id, job, ex, websocket):
     try:
@@ -24,12 +28,12 @@ def stream_log(executor, task_id, job, ex, websocket):
             websocket.send(ex.log)
             websocket.send("\n-=-\n")
             websocket.send(ex.error)
-            websocket.close(message="wsdone")
+            websocket.close(message="wsdone", code=CODE_NOT_FOUND)
 
             return
 
         if not websocket.closed and ex.status != JobExecution.Status.running:
-            websocket.close(message="wsretry")
+            websocket.close(message="wsretry", code=CODE_NOT_FOUND)
 
             return
 
@@ -67,7 +71,7 @@ def process_job_execution_logs(websocket, task_id, job_id, execution_id, logger)
 
     if job is None:
         logger.error(f"Job ({job_id}) not found in task ({task_id}).")
-        websocket.close()
+        websocket.close(code=CODE_OK)
 
         return
 
@@ -78,7 +82,7 @@ def process_job_execution_logs(websocket, task_id, job_id, execution_id, logger)
 
     if execution is None:
         logger.error("No executions found in job ({execution_id}).")
-        websocket.close(message="wsretry")
+        websocket.close(message="wsretry", code=CODE_OK)
 
         return
 
