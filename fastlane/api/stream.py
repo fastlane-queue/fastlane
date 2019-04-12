@@ -89,16 +89,6 @@ def process_job_execution_logs(websocket, task_id, job_id, execution_id, logger)
     executor = current_app.executor
     stream_log(executor, task_id, job, execution, websocket)
 
-    #  process = Process(
-    #  target=stream_log, args=(executor, task_id, job, execution, websocket)
-    #  )
-    #  process.start()
-
-    #  while not websocket.closed:
-    #  time.sleep(10)
-
-    #  process.terminate()
-
 
 @bp.route("/tasks/<task_id>/jobs/<job_id>/ws/")
 def websocket_listen(websocket, task_id, job_id):

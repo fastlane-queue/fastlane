@@ -9,6 +9,7 @@ import pybreaker
 import requests
 from dateutil.parser import parse
 from flask import current_app
+from docker.errors import NullResource
 
 # Fastlane
 from fastlane.worker import ExecutionResult
@@ -30,6 +31,7 @@ STATUS = {
     "dead": ExecutionResult.Status.failed,
     "running": ExecutionResult.Status.running,
 }
+
 
 def convert_date(date_to_parse):
     return parse(date_to_parse)
@@ -105,6 +107,11 @@ class Executor:
 
             except requests.exceptions.ConnectionError as err:
                 raise HostUnavailableError(host, port, err) from err
+
+            except NullResource:
+                raise ContainerUnavailableError(
+                    f"Container {container_id} was not found in {host}:{port}!"
+                )
 
         try:
             return run(logger)
@@ -291,7 +298,7 @@ class Executor:
             operation="docker_executor.stop_job",
         )
 
-        if "container_id" not in execution.metadata:
+        if "container_id" not in execution.metadata or execution.metadata.get("container_id") is None:
             logger.warn(
                 "Can't stop Job Execution, since it has not been started. Aborting..."
             )
@@ -308,7 +315,7 @@ class Executor:
 
         circuit = self.get_circuit(f"{host}:{port}")
 
-        container_id = execution.metadata["container_id"]
+        container_id = execution.metadata.get("container_id")
         logger = logger.bind(container_id=container_id)
         container = self.get_container_by_id(container_id, host, port, client)
 
@@ -353,7 +360,7 @@ class Executor:
             operation="docker_executor.get_result",
         )
 
-        container_id = execution.metadata["container_id"]
+        container_id = execution.metadata.get("container_id")
         container = self.get_container_by_id(container_id, host, port, client)
 
         if container is None:
@@ -497,7 +504,7 @@ class Executor:
             self, task_id, execution_host, execution_port
         )
 
-        container_id = execution.metadata["container_id"]
+        container_id = execution.metadata.get("container_id")
 
         logger = self.logger.bind(
             task_id=task_id,
@@ -536,7 +543,7 @@ class Executor:
             self, task.task_id, execution_host, execution_port
         )
 
-        container_id = execution.metadata["container_id"]
+        container_id = execution.metadata.get("container_id")
 
         logger = self.logger.bind(
             task_id=task.task_id,
