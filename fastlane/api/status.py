@@ -71,7 +71,10 @@ def status():
     }
 
     for job in scheduled_jobs:
-        j = job.to_dict(include_executions=False)
+        j = job.to_dict(
+            include_executions=False,
+            blacklist_fn=current_app.blacklist_words_fn,
+        )
 
         itr = croniter.croniter(job.metadata["cron"], datetime.utcnow())
         j["nextScheduledAt"] = itr.get_next(datetime).isoformat()
