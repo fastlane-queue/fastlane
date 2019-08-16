@@ -840,8 +840,8 @@ def send_webhook(
 def enqueue_missing_monitor_jobs(app):
     lock = app.redis.lock(
         "EnqueueMissingMonitorJobs",
-        timeout=5,
-        sleep=0.1,
+        timeout=7,
+        sleep=0.2,
         blocking_timeout=500,
         thread_local=False,
     )
@@ -886,4 +886,8 @@ def enqueue_missing_monitor_jobs(app):
                 execution.execution_id,
             )
     finally:
-        lock.release()
+        try:
+            lock.release()
+        except Exception as err:
+            current_app.logger.error("Lock release error", error=err)
+

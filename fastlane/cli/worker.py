@@ -65,8 +65,10 @@ class WorkerHandler:
         self.queue_group.move_jobs()
 
         if time.time() - self.last_verified_missing_jobs > 10:
-            enqueue_missing_monitor_jobs(self.app.app)
-            self.last_verified_missing_jobs = time.time()
+            try:
+                enqueue_missing_monitor_jobs(self.app.app)
+            finally:
+                self.last_verified_missing_jobs = time.time()
 
         item = self.queue_group.dequeue(queues=self.queues, timeout=5)
 
