@@ -390,7 +390,7 @@ version = "0.10.1"
 gevent = "*"
 
 [package.source]
-reference = "902d82b4de6e369e7ad2626d8853f7e1c7bc3e7"
+reference = "902d82b4de6e369e7ad2626d8853f7e1c7bc3e7c"
 type = "git"
 url = "https://github.com/lrezek/gevent-websocket.git"
 [[package]]
