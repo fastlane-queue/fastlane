@@ -30,6 +30,20 @@ def add_to_blacklist():
         return make_response(msg, 400)
 
     host = data["host"]
+    host_for_validate = host.split(':')
+    if len(host_for_validate) != 2:
+        msg = "Failed to add host to blacklist, we did not identify the formed 'host: port'"
+        g.logger.warn(msg)
+
+        return make_response(msg, 400)
+    else:
+        try:
+            int(host_for_validate[1])
+        except ValueError:
+            msg = "Failed to add host to blacklist, the port is not an integer."
+            g.logger.warn(msg)
+
+            return make_response(msg, 400)
 
     redis.sadd(BLACKLIST_KEY, host)
 
