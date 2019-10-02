@@ -1,4 +1,4 @@
-version: '2'
+version: "2"
 
 services:
   mongo:
@@ -17,7 +17,7 @@ services:
     image: docker:stable-dind
     privileged: true
   fastlane-api:
-    image: heynemann/fastlane:2.2.4
+    image: heynemann/fastlane:latest
     ports:
       - "10000:10000"
     environment:
@@ -28,7 +28,7 @@ services:
       - docker-host
     command: poetry run fastlane api -vvv
   fastlane-worker:
-    image: heynemann/fastlane:2.2.4
+    image: heynemann/fastlane:latest
     environment:
       - DOCKER_HOSTS=[{"match":"","hosts":["docker-host:2375"],"maxRunning":2}]
     depends_on:
