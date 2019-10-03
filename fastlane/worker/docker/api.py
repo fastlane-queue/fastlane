@@ -11,6 +11,31 @@ bp = Blueprint(  # pylint: disable=invalid-name
 BLACKLIST_KEY = "docker-executor::blacklisted-hosts"
 
 
+def validate_host(host):
+    """
+    Validate if host follows desired standards.
+    'host:port'
+    :param host:
+    :return: true if host are ok
+    :return: make_response if are not ok
+    """
+    host_for_validate = host.split(':')
+    if len(host_for_validate) != 2:
+        msg = "Failed to add host to blacklist, we did not identify the formed 'host: port'"
+        g.logger.warn(msg)
+
+        return make_response(msg, 400)
+    else:
+        try:
+            int(host_for_validate[1])
+        except ValueError:
+            msg = "Failed to add host to blacklist, the port is not an integer."
+            g.logger.warn(msg)
+
+            return make_response(msg, 400)
+    return True
+
+
 @bp.route("/blacklist", methods=["POST", "PUT"])
 def add_to_blacklist():
     redis = current_app.redis
@@ -30,22 +55,9 @@ def add_to_blacklist():
         return make_response(msg, 400)
 
     host = data["host"]
-    host_for_validate = host.split(':')
-    if len(host_for_validate) != 2:
-        msg = "Failed to add host to blacklist, we did not identify the formed 'host: port'"
-        g.logger.warn(msg)
 
-        return make_response(msg, 400)
-    else:
-        try:
-            int(host_for_validate[1])
-        except ValueError:
-            msg = "Failed to add host to blacklist, the port is not an integer."
-            g.logger.warn(msg)
-
-            return make_response(msg, 400)
-
-    redis.sadd(BLACKLIST_KEY, host)
+    if validate_host(host):
+        redis.sadd(BLACKLIST_KEY, host)
 
     return ""
 
@@ -73,7 +85,8 @@ def remove_from_blacklist():
 
     host = data["host"]
 
-    redis.srem(BLACKLIST_KEY, host)
+    if validate_host(host):
+        redis.srem(BLACKLIST_KEY, host)
 
     return ""
 
