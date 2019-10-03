@@ -29,7 +29,7 @@ def version():
 
 
 @click.command()
-@click.option("-b", "--host", default="0.0.0.0")
+@click.option("-b", "--host", default="0.0.0.0") # nosec
 @click.option("-p", "--port", default=10000)
 @click.option("-v", "--verbose", default=0, count=True)
 @click.option(
