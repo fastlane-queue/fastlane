@@ -32,7 +32,7 @@ Flask-Sockets==0.2.1
 Flask-WTF==0.14.2
 future==0.17.1
 gevent==1.3.7
-# -e git@github.com:lrezek/gevent-websocket.git@902d82b4de6e369e7ad2626d8853f7e1c7bc3e7c#egg=gevent-websocket
+-e git@github.com:lrezek/gevent-websocket.git@902d82b4de6e369e7ad2626d8853f7e1c7bc3e7c#egg=gevent-websocket
 greenlet==0.4.15
 idna==2.7
 imagesize==1.1.0
