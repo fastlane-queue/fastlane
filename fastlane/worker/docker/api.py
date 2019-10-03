@@ -13,11 +13,7 @@ BLACKLIST_KEY = "docker-executor::blacklisted-hosts"
 
 def validate_host(host):
     """
-    Validate if host follows desired standards.
-    'host:port'
-    :param host:
-    :return: true if host are ok
-    :return: make_response if are not ok
+    Validate if host follows desired standards. ('host:port')
     """
     host_for_validate = host.split(':')
     if len(host_for_validate) != 2:

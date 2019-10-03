@@ -114,11 +114,38 @@ def test_docker_blacklist5(client):
     """
     Test insert/remove a server in blacklist with invalid host, not following the model host:port
     """
-    pass
+
+    def ensure_blacklist(method):
+        data = {"host": '000.000.000.000'}
+        response = getattr(client, method)(
+            "/docker-executor/blacklist", data=dumps(data), follow_redirects=True
+        )
+
+        expect(response.status_code).to_equal(400)
+        expect(response.data).to_be_like(
+            "Failed to add host to blacklist, we did not identify the formed 'host: port'"
+        )
+
+    for method in ["post", "put"]:
+        ensure_blacklist(method)
 
 
 def test_docker_blacklist6(client):
     """
     Test insert/remove a server with invalid port
     """
-    pass
+
+    def ensure_blacklist(method):
+
+        data = {"host": '000.000.000.000:000a'}
+        response = getattr(client, method)(
+            "/docker-executor/blacklist", data=dumps(data), follow_redirects=True
+        )
+
+        expect(response.status_code).to_equal(400)
+        expect(response.data).to_be_like(
+            "Failed to add host to blacklist, the port is not an integer."
+        )
+
+    for method in ["post", "put"]:
+        ensure_blacklist(method)
