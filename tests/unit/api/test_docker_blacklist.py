@@ -108,3 +108,17 @@ def test_docker_blacklist4(client):
     expect(response.data).to_be_like(
         "Failed to remove host from blacklist because 'host' attribute was not found in JSON body."
     )
+
+
+def test_docker_blacklist5(client):
+    """
+    Test insert/remove a server in blacklist with invalid host, not following the model host:port
+    """
+    pass
+
+
+def test_docker_blacklist6(client):
+    """
+    Test insert/remove a server with invalid port
+    """
+    pass
