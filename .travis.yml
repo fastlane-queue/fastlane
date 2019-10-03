@@ -25,4 +25,4 @@ jobs:
         - docker-compose --project-name fastlane-tests -f ./docker-compose-func-ci.yml up -d
       script: make func
 script:
-  - make deps unit
+  - make check-sec deps unit
