@@ -23,6 +23,14 @@ setup-ci:
 	@pip install poetry
 	@poetry develop
 
+check-sec:
+ifdef COMPOSE
+	@echo "Installing Bandit..."
+	@pip install bandit
+	@echo "Running Bandit..."
+	@bandit -r .
+endif
+
 deps:
 ifdef COMPOSE
 	@echo "Starting dependencies..."
