@@ -1,4 +1,3 @@
-
 # Standard Library
 import random
 import traceback
@@ -81,9 +80,7 @@ class DockerPool:
             DockerPool.refresh_circuits(executor, clients, blacklist, logger)
             filtered = [
                 (host, port, client)
-
                 for (host, port, client) in clients
-
                 if f"{host}:{port}" not in blacklist
                 and executor.get_circuit(f"{host}:{port}").current_state == "closed"
             ]
@@ -101,7 +98,7 @@ class DockerPool:
                 clients=[f"{host}:{port}" for (host, port, client) in filtered],
             )
 
-            host, port, client = random.choice(filtered)
+            host, port, client = random.choice(filtered)  # nosec
 
             return host, int(port), client
 
