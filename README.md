@@ -92,7 +92,11 @@ After that you can start using [fastlane](https://github.com/fastlane-queue/fast
 ## Documentation
 
 Read more about fastlane at [read the docs](https://fastlane.readthedocs.io/en/latest/).
- 
+
 ## Contributing
 
 Logo was created by [Artur Sousa](https://github.com/arturfsousa).
+
+## License
+
+Fastlane is licensed under the [MIT license](LICENSE).
