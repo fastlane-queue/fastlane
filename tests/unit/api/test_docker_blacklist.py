@@ -1,5 +1,6 @@
 # Standard Library
 from json import dumps
+from random import randrange
 from uuid import uuid4
 
 # 3rd Party
@@ -13,7 +14,10 @@ def test_docker_blacklist1(client):
     """Test blacklisting a docker server"""
 
     def ensure_blacklist(method):
-        docker_host = str(uuid4())
+        docker_host = "{domain}:{port}".format(
+            domain=str(uuid4()).replace("-", "."),
+            port=int(randrange(10,99999))
+        )
 
         data = {"host": docker_host}
         response = getattr(client, method)(
@@ -62,7 +66,10 @@ def test_docker_blacklist2(client):
 
 def test_docker_blacklist3(client):
     """Test removing from blacklist a docker server"""
-    docker_host = str(uuid4())
+    docker_host = "{domain}:{port}".format(
+        domain=str(uuid4()).replace("-", "."),
+        port=int(randrange(10,99999))
+    )
 
     data = {"host": docker_host}
     response = client.post(
