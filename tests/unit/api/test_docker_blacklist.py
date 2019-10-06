@@ -16,7 +16,7 @@ def test_docker_blacklist1(client):
     def ensure_blacklist(method):
         docker_host = "{domain}:{port}".format(
             domain=str(uuid4()).replace("-", "."),
-            port=int(randrange(10,99999))  # nosec
+            port=int(randrange(10, 99999))  # nosec
         )
 
         data = {"host": docker_host}
@@ -68,7 +68,7 @@ def test_docker_blacklist3(client):
     """Test removing from blacklist a docker server"""
     docker_host = "{domain}:{port}".format(
         domain=str(uuid4()).replace("-", "."),
-        port=int(randrange(10,99999))  # nosec
+        port=int(randrange(10, 99999))  # nosec
     )
 
     data = {"host": docker_host}
