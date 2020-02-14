@@ -31,6 +31,13 @@ ifdef COMPOSE
 	@bandit -r .
 endif
 
+ps:
+ifdef COMPOSE
+	@echo "Listing dependencies..."
+	@docker-compose --project-name fastlane ps
+endif
+
+
 deps:
 ifdef COMPOSE
 	@echo "Starting dependencies..."
@@ -80,7 +87,7 @@ unit:
 	@poetry run pytest -sv --quiet --nf --cov=fastlane tests/unit/
 
 focus:
-	@poetry run pytest -sv --quiet --nf -m focus --cov=fastlane tests/unit/
+	@poetry run pytest -sv --quiet --nf -m focus tests/unit/
 
 watch:
 	@poetry run ptw -c -w -- --quiet --nf --cov=fastlane tests/unit/
