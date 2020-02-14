@@ -29,6 +29,7 @@ Redis-Sentinel-Url = "^1.0"
 croniter = "^0.3.29"
 Flask-BasicAuth = "^0.2.0"
 gevent-websocket = {git = "https://github.com/lrezek/gevent-websocket.git", "rev" = "902d82b4de6e369e7ad2626d8853f7e1c7bc3e7c"}
+validators = "^0.14.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^3.0"

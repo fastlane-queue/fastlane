@@ -3,6 +3,7 @@ from json import loads
 
 # 3rd Party
 from flask import Blueprint, current_app, g, make_response, request
+from validators import domain as validate_domain
 
 bp = Blueprint(  # pylint: disable=invalid-name
     "docker", __name__, url_prefix="/docker-executor"
@@ -30,6 +31,15 @@ def add_to_blacklist():
         return make_response(msg, 400)
 
     host = data["host"]
+
+    if not validate_hostname(host):
+        msg = (
+            "Failed to add host to blacklist because 'host'"
+            " attribute had an invalid value."
+        )
+        g.logger.warn(msg)
+
+        return make_response(msg, 400)
 
     redis.sadd(BLACKLIST_KEY, host)
 
@@ -59,6 +69,15 @@ def remove_from_blacklist():
 
     host = data["host"]
 
+    if not validate_hostname(host):
+        msg = (
+            "Failed to remove host to blacklist because 'host'"
+            " attribute had an invalid value."
+        )
+        g.logger.warn(msg)
+
+        return make_response(msg, 400)
+
     redis.srem(BLACKLIST_KEY, host)
 
     return ""
@@ -71,3 +90,12 @@ def get_details():
         details = loads(request.get_data())
 
     return details
+
+
+def validate_hostname(value):
+    values = value.split(':')
+
+    if len(values) != 2:
+        return False
+
+    return validate_domain(values[0]) and values[1].isdigit()
