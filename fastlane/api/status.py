@@ -72,8 +72,7 @@ def status():
 
     for job in scheduled_jobs:
         j = job.to_dict(
-            include_executions=False,
-            blacklist_fn=current_app.blacklist_words_fn,
+            include_executions=False, blacklist_fn=current_app.blacklist_words_fn
         )
 
         itr = croniter.croniter(job.metadata["cron"], datetime.utcnow())
@@ -82,12 +81,12 @@ def status():
         task_id = job.task.task_id
 
         job_url = url_for(
-            "task.get_job", task_id=task_id, job_id=str(job.id), _external=True
+            "task.get_job", task_id=task_id, job_id=str(job.job_id), _external=True
         )
         j["url"] = job_url
 
         stop_job_url = url_for(
-            "task.stop_job", task_id=task_id, job_id=str(job.id), _external=True
+            "task.stop_job", task_id=task_id, job_id=str(job.job_id), _external=True
         )
         j["stopUrl"] = stop_job_url
 
