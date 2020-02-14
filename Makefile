@@ -93,7 +93,7 @@ run: deps
 
 worker:
 	@#This env must be set in MacOS to ensure that docker py works
-	@OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES fastlane worker -vv -c ./fastlane/config/local.conf
+	@OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES poetry run fastlane worker -vv -c ./fastlane/config/local.conf
 
 publish: docker-push
 	@poetry build
