@@ -1,7 +1,7 @@
 import bson
 from fastapi import HTTPException
 
-from newlane.db import db
+from newlane.settings.db import db
 from newlane.models import Task, Job, Execution
 
 

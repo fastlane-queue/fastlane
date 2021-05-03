@@ -1,17 +1,13 @@
-import logging
 from datetime import datetime
 
 import bson
-import docker
 
-from .db import db
-from .models import Execution, Status
-from newlane.settings import settings
-
-client = docker.DockerClient(base_url=settings.docker)
+from newlane.models import Execution, Status
+from newlane.settings.db import db
+from newlane.settings.docker import client
 
 
-async def execute(id: str, image: str, command: str):
+async def run_container(id: str, image: str, command: str):
     id = bson.ObjectId(id)
     execution = await db.find_one(Execution, Execution.id == id)
 
