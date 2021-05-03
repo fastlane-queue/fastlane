@@ -23,6 +23,7 @@ services:
     environment: 
       - MONGO=mongodb://mongo:27017
       - REDIS=redis://redis:6379
+      - DOCKER=tcp://docker:2375
     command: rq worker --with-scheduler --verbose --url redis://redis:6379
     depends_on: 
       - mongo
@@ -42,3 +43,4 @@ services:
       - mongo
       - redis
       - docker
+    restart: always

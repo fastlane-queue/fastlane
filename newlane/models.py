@@ -44,8 +44,8 @@ class Execution(Model):
 
     job: Job = Reference()
     
-    log: str = ''
-    error: str = ''
-    exit_code: int = 0  
+    log: Optional[str]
+    error: Optional[str]
+    exit_code: Optional[int]
     metadata: dict = {}
     status: Status = Status.enqueued
