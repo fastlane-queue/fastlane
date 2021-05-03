@@ -16,31 +16,4 @@ services:
     ports:
       - 2375:2375
     privileged: true
-    command: dockerd --host=tcp://0.0.0.0:2375
-
-  worker:
-    build: ./
-    environment: 
-      - MONGO=mongodb://mongo:27017
-      - REDIS=redis://redis:6379
-      - DOCKER=tcp://docker:2375
-    command: rq worker --with-scheduler --verbose --url redis://redis:6379
-    depends_on: 
-      - mongo
-      - redis
-      - docker
-      
-  app:
-    build: ./
-    ports:
-      - 8000:8000
-    environment: 
-      - MONGO=mongodb://mongo:27017
-      - REDIS=redis://redis:6379
-      - DOCKER=tcp://docker:2375
-    command: uvicorn newlane:app --host 0.0.0.0
-    depends_on: 
-      - mongo
-      - redis
-      - docker
-    restart: always
+    command: dockerd --host=tcp://0.0.0.0:2375 --tls=false
