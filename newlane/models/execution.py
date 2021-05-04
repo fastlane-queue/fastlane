@@ -1,28 +1,10 @@
-from enum import Enum, auto
+from enum import Enum
+from typing import Optional
 from datetime import datetime
-from typing import List, Optional
 
-from bson import ObjectId
 from odmantic import Model, Field, Reference
 
-
-class Task(Model):
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    last_modified_at: datetime = Field(default_factory=datetime.utcnow)
-
-    name: str
-
-
-class Job(Model):
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    last_modified_at: datetime = Field(default_factory=datetime.utcnow)
-
-    task: Task = Reference()
-    
-    image: str
-    command: str
-    metadata: dict = {}
-    scheduled: bool = False
+from .job import Job
 
 
 class Status(str, Enum):
@@ -39,13 +21,13 @@ class Status(str, Enum):
 class Execution(Model):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     last_modified_at: datetime = Field(default_factory=datetime.utcnow)
-    started_at: Optional[datetime]
-    finished_at: Optional[datetime]
 
     job: Job = Reference()
-    
+
     log: Optional[str]
     error: Optional[str]
     exit_code: Optional[int]
     metadata: dict = {}
     status: Status = Status.enqueued
+    started_at: Optional[datetime]
+    finished_at: Optional[datetime]

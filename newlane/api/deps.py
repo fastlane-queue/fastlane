@@ -1,12 +1,12 @@
 import bson
 from fastapi import HTTPException
 
-from newlane.settings.db import db
+from newlane import crud
 from newlane.models import Task, Job, Execution
 
 
 async def get_task(task: str) -> Task:
-    task = await db.find_one(Task, Task.name == task)
+    task = await crud.task.get(name=task)
 
     if task is None:
         detail = f"Task '{task}' not found"
@@ -33,8 +33,8 @@ async def get_execution(task: str, job: str, execution: str) -> Execution:
 
     execution = bson.ObjectId(execution)
     execution = await db.find_one(
-        Execution, 
-        Execution.task == task.id, 
+        Execution,
+        Execution.task == task.id,
         Execution.id == execution
     )
 
