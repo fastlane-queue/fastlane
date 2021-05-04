@@ -1,45 +1,36 @@
-import bson
-from fastapi import HTTPException
+from uuid import UUID
+
+from fastapi import HTTPException, Depends
 
 from newlane import crud
 from newlane.models import Task, Job, Execution
 
 
 async def get_task(task: str) -> Task:
-    task = await crud.task.get(name=task)
+    model = await crud.task.get(name=task)
 
-    if task is None:
+    if model is None:
         detail = f"Task '{task}' not found"
         raise HTTPException(status_code=404, detail=detail)
 
-    return task
+    return model
 
 
-async def get_job(task: str, job: str) -> Job:
-    task = await get_task(task)
+async def get_job(job: UUID, task: Task = Depends(get_task)) -> Job:
+    model = await crud.job.get(task=task.id, id=job)
 
-    job = bson.ObjectId(job)
-    job = await db.find_one(Job, Job.task == task.id, Job.id == job)
-
-    if job is None:
+    if model is None:
         detail = f"Job '{job}' not found"
         raise HTTPException(status_code=404, detail=detail)
 
-    return job
+    return model
 
 
-async def get_execution(task: str, job: str, execution: str) -> Execution:
-    job = await get_job(task, job)
+async def get_execution(execution: UUID, job: Job = Depends(get_job)) -> Execution:  # noqa
+    model = await crud.execution.get(job=job.id, id=execution)
 
-    execution = bson.ObjectId(execution)
-    execution = await db.find_one(
-        Execution,
-        Execution.task == task.id,
-        Execution.id == execution
-    )
-
-    if execution is None:
+    if model is None:
         detail = f"Execution '{execution}' not found"
         raise HTTPException(status_code=404, detail=detail)
 
-    return execution
+    return model

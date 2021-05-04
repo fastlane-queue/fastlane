@@ -1,14 +1,12 @@
+from uuid import UUID
 from datetime import datetime
-
-import bson
 
 from newlane import crud
 from newlane.models import Execution, Status
 from newlane.core.docker import docker
 
 
-async def run_container(id: str, image: str, command: str):
-    id = bson.ObjectId(id)
+async def run_container(id: UUID, image: str, command: str):
     execution = await crud.execution.get(id=id)
 
     # Start

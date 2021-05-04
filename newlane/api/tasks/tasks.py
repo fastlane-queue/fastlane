@@ -24,7 +24,7 @@ async def post_task(name: str, body: payloads.Job) -> dict:
     execution = await crud.execution.create(job=job)
 
     message = services.queue.enqueue_exec(
-        str(execution.id),
+        execution.id,
         body.image,
         body.command
     )
@@ -43,9 +43,11 @@ async def post_task(name: str, body: payloads.Job) -> dict:
 @router.get('/{task}')
 async def get_task(task: Task = Depends(deps.get_task)) -> dict:
     jobs = await crud.job.find(task=task.id)
+    jobs = [{'id': str(j.id), 'url': 'TODO'} for j in jobs]
+
     return {
         'taskId': task.name,
-        'jobs': [{'id': str(j.id)} for j in jobs]
+        'jobs': jobs
     }
 
 
