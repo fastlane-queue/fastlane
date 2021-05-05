@@ -3,7 +3,7 @@ from typing import Optional
 from uuid import uuid4, UUID
 from datetime import datetime
 
-from odmantic import Model, Field, Reference
+from odmantic import Model, Field, Reference, EmbeddedModel
 
 from .job import Job
 
@@ -17,6 +17,10 @@ class Status(str, Enum):
     stopped = 'stopped'
     enqueued = 'enqueued'
     timedout = 'timedout'
+
+
+class Message(EmbeddedModel):
+    id: Optional[UUID]
 
 
 class Execution(Model):
@@ -35,4 +39,4 @@ class Execution(Model):
     started_at: Optional[datetime]
     finished_at: Optional[datetime]
 
-    message_id: Optional[UUID]
+    message: Message = Field(default_factory=Message)

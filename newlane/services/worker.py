@@ -19,9 +19,10 @@ async def pull(id: UUID):
     docker.images.pull(execution.job.image)
 
     # Next
-    queue.enqueue(run, id)
+    message = queue.enqueue(run, id)
+    execution.message.id = message.id
 
-    return execution
+    return await crud.execution.save(execution)
 
 
 async def run(id: UUID):
@@ -44,6 +45,7 @@ async def run(id: UUID):
     execution.stdout = stdout
     execution.exit = 0
     execution.finished_at = datetime.utcnow()
+    execution.updated_at = datetime.utcnow()
     execution.status = Status.done
 
     return await crud.execution.save(execution)
