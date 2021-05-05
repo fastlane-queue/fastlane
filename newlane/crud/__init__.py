@@ -23,6 +23,6 @@ class Crud(Base):
         return model
 
 
-job = Crud(Job)
 task = Crud(Task)
-execution = Crud(Execution)
+job = Crud(Job, sort=Job.created_at.desc())
+execution = Crud(Execution, sort=Execution.created_at.desc())

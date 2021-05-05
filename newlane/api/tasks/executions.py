@@ -1,12 +1,7 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
-from starlette.responses import PlainTextResponse
-
 from . import router
 from newlane import crud
-from newlane.api import deps
-from newlane.models import Task, Job, Execution
 
 
 @router.post('/{task}/jobs/{job}/executions')

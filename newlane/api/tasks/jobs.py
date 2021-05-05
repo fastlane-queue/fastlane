@@ -1,14 +1,8 @@
 from uuid import UUID
 
-import bson
-from fastapi import APIRouter, Depends
-from starlette.responses import PlainTextResponse
-
 from . import router
-from newlane import crud, services
-from newlane.api import deps, payloads
-from newlane.core import db
-from newlane.models import Task, Job, Execution
+from newlane import crud
+from newlane.api import payloads
 
 
 @router.post('/{task}/jobs')
