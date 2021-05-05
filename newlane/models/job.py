@@ -17,7 +17,7 @@ class Job(Model):
 
     image: Optional[str]
     command: Optional[str]
-    envs: dict = {}
-    metadata: dict = {}
-    scheduled: bool = False
+    environment: dict = {}
+
     cron: Optional[str]
+    metadata: dict = {}

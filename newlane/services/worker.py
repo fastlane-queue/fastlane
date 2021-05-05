@@ -37,7 +37,8 @@ async def run(id: UUID):
     # Run
     stdout = docker.containers.run(
         image=execution.job.image,
-        command=execution.job.command
+        command=execution.job.command,
+        environment=execution.job.environment
     )
 
     # Finish

@@ -1,7 +1,9 @@
 import sys
 from typing import List
+from datetime import timedelta
 
-from pydantic import BaseModel
+import croniter
+from pydantic import BaseModel, validator
 
 
 class Task(BaseModel):
@@ -11,16 +13,23 @@ class Task(BaseModel):
 class Job(BaseModel):
     image: str
     command: str
-    envs: dict = {}
-    # startIn: str = '1s'
-    # startAt: int = None
-    # cron: str = None
+    environment: dict = {}
+    cron: str = None
+    start_in: timedelta = None
     # metadata: dict = {}
     # notify: dict = {}
     # webhooks: dict = {}
     # retries: int = 0
     # expiration: int = sys.maxsize
     # timeout: int = sys.maxsize
+
+    @validator('cron')
+    def validate_cron(cls, v):
+        try:
+            croniter.croniter(v)
+            return v
+        except Exception as e:
+            raise ValueError(e)
 
 
 class Execution(BaseModel):
