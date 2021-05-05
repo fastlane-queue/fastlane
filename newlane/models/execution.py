@@ -21,15 +21,18 @@ class Status(str, Enum):
 
 class Execution(Model):
     id: UUID = Field(primary_field=True, default_factory=uuid4)
+
     created_at: datetime = Field(default_factory=datetime.utcnow)
-    last_modified_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
 
     job: Job = Reference()
 
-    log: Optional[str]
-    error: Optional[str]
-    exit_code: Optional[int]
-    metadata: dict = {}
+    exit: Optional[int]
+    stdout: Optional[str]
+    stderr: Optional[str]
     status: Status = Status.enqueued
+
     started_at: Optional[datetime]
     finished_at: Optional[datetime]
+
+    message_id: Optional[UUID]
