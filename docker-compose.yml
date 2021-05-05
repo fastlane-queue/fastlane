@@ -17,3 +17,10 @@ services:
       - 2375:2375
     privileged: true
     command: dockerd --host=tcp://0.0.0.0:2375 --tls=false
+
+  scheduler:
+    image: python:alpine
+    command: >
+      sh -c "pip install rq-scheduler && rqscheduler -v -i 1 -u redis://redis:6379"
+    depends_on:
+      - redis
