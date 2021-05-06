@@ -1,2 +1,0 @@
-api: poetry run fastlane api -p 27356 -vvv -c ./tests/func/fastlane.conf
-worker: poetry run fastlane worker -vv -c ./tests/func/fastlane.conf

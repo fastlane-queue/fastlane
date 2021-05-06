@@ -1,0 +1,4 @@
+{
+    "python.linting.pylintEnabled": true,
+    "python.pythonPath": "/Users/joao.meyer/wrk/fastlane/fastlane/.venv/bin/python3"
+}
