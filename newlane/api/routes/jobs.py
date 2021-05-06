@@ -20,7 +20,7 @@ async def post_job(task: str, body: payloads.Job):
 
     if body.start_in:
         execution = await crud.execution.create(job=job)
-        message = queue.enqueue_in(body.start_in, worker.pull, execution.id)
+        message = scheduler.enqueue_in(body.start_in, worker.pull, execution.id)
         execution.message.id = message.id
         await crud.execution.save(execution)
     
