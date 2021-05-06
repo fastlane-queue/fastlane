@@ -7,6 +7,17 @@ from newlane.core.docker import docker
 from newlane.core.queue import queue, scheduler
 
 
+async def cron(id: UUID):
+    job = await crud.job.get(id=id)
+
+    execution = await crud.execution.create(job=job)
+    
+    message = queue.enqueue(pull, execution.id)
+    execution.message.id = message.id
+
+    return await crud.execution.save(execution)
+
+
 async def pull(id: UUID):
     execution = await crud.execution.get(id=id)
 
