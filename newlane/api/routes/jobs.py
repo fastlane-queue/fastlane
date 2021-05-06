@@ -25,9 +25,7 @@ async def post_job(task: str, body: payloads.Job):
         await crud.execution.save(execution)
     
     if job.cron:
-        execution = await crud.execution.create(job=job)
-        cron = scheduler.cron(job.cron, func=worker.pull, args=[execution.id])
-        print(cron)
+        cron = scheduler.cron(job.cron, func=worker.cron, args=[job.id])
     
     return job
 
