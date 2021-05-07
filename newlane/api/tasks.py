@@ -1,7 +1,10 @@
-from . import router
+from fastapi import APIRouter
+
 from newlane import crud
-from newlane import services
 from newlane.api import payloads
+
+
+router = APIRouter(prefix='/tasks')
 
 
 @router.post('/')

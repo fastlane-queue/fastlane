@@ -1,28 +1,9 @@
 from fastapi import HTTPException
 
-from .base import Base
-from newlane.models import Task, Job, Execution
+from .crud import Crud
+from newlane import models
 
 
-class Crud(Base):
-    async def get_or_404(self, **kwargs):
-        model = await self.get(**kwargs)
-
-        if model is None:
-            detail = f'{self.model.__name__} not found'
-            raise HTTPException(status_code=404, detail=detail)
-
-        return model
-
-    async def get_or_create(self, **kwargs):
-        model = await self.get(**kwargs)
-
-        if model is None:
-            return await self.create(**kwargs)
-
-        return model
-
-
-task = Crud(Task)
-job = Crud(Job, sort=Job.created_at.desc())
-execution = Crud(Execution, sort=Execution.created_at.desc())
+task = Crud(models.Task)
+job = Crud(models.Job, sort=models.Job.created_at.desc())
+execution = Crud(models.Execution, sort=models.Execution.created_at.desc())

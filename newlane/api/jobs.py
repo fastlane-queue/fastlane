@@ -1,13 +1,17 @@
 from uuid import UUID
 
-from . import router
+from fastapi import APIRouter
+
+from newlane import core
 from newlane import crud
+from newlane import worker
 from newlane.api import payloads
-from newlane.services import worker
-from newlane.core.queue import queue, scheduler
 
 
-@router.post('/{task}/jobs')
+router = APIRouter(prefix='/tasks/{task}/jobs')
+
+
+@router.post('/')
 async def post_job(task: str, body: payloads.Job):
     task = await crud.task.get_or_404(name=task)
     job = await crud.job.create(
@@ -17,6 +21,8 @@ async def post_job(task: str, body: payloads.Job):
         environment=body.environment,
         cron=body.cron
     )
+
+    scheduler = core.get_scheduler()
 
     if body.start_in:
         execution = await crud.execution.create(job=job)
@@ -30,14 +36,13 @@ async def post_job(task: str, body: payloads.Job):
     return job
 
 
-
-@router.get('/{task}/jobs/{job}')
+@router.get('/{job}')
 async def get_job(task: str, job: UUID):
     task = await crud.task.get_or_404(name=task)
     return await crud.job.get_or_404(task=task.id, id=job)
 
 
-@router.get('/{task}/jobs')
+@router.get('/')
 async def get_jobs(task: str, page: int = 1, size: int = 10):
     task = await crud.task.get_or_404(name=task)
     return await crud.job.page(task=task.id, page=page, size=size)

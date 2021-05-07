@@ -1,6 +1,10 @@
 from fastapi import APIRouter
 
-from .routes import router as tasks_router
+from . import tasks
+from . import jobs
+from . import executions
 
 router = APIRouter()
-router.include_router(tasks_router)
+router.include_router(tasks.router)
+router.include_router(jobs.router)
+router.include_router(executions.router)

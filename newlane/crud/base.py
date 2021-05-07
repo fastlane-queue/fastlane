@@ -1,4 +1,4 @@
-from newlane.core.db import db
+from newlane import core
 
 
 class Base(object):
@@ -6,6 +6,10 @@ class Base(object):
         super(Base, self).__init__()
         self.model = model
         self.sort = sort
+
+    @property
+    def db(self):
+        return core.get_db()
 
     def filters(self, **kwargs: dict) -> list:
         return [getattr(self.model, k) == v for k, v in kwargs.items()]
@@ -16,20 +20,20 @@ class Base(object):
 
     async def get(self, **kwargs: dict):
         queries = self.filters(**kwargs)
-        return await db.find_one(self.model, *queries)
+        return await self.db.find_one(self.model, *queries)
 
     async def find(self, **kwargs: dict):
         queries = self.filters(**kwargs)
-        return await db.find(self.model, *queries, sort=self.sort)
+        return await self.db.find(self.model, *queries, sort=self.sort)
 
     async def count(self, **kwargs: dict):
         queries = self.filters(**kwargs)
-        return await db.count(self.model, *queries)
+        return await self.db.count(self.model, *queries)
 
     async def page(self, page: int = 1, size: int = 10, **kwargs: dict):
         skip = (page - 1) * size
         queries = self.filters(**kwargs)
-        return await db.find(
+        return await self.db.find(
             self.model,
             *queries,
             skip=skip,
@@ -38,5 +42,5 @@ class Base(object):
         )
 
     async def save(self, model):
-        await db.save(model)
+        await self.db.save(model)
         return model
