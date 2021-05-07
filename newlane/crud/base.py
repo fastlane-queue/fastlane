@@ -6,7 +6,7 @@ class Base(object):
         super(Base, self).__init__()
         self.model = model
         self.sort = sort
-
+    
     @property
     def db(self):
         return core.get_db()
