@@ -1,0 +1,1 @@
+from newlane.app import app # noqa
