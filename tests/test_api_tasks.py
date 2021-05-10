@@ -7,7 +7,6 @@ from fastapi.testclient import TestClient
 from newlane import app
 from newlane import core
 from newlane import crud
-from newlane import worker
 
 
 class TestApiTasks(TestCase):

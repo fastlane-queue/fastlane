@@ -15,7 +15,7 @@ router = APIRouter(prefix='/tasks/{task}/jobs')
 async def post_job(task: str, body: payloads.Job):
     task = await crud.task.get_or_404(name=task)
     job = await crud.job.create(
-        task=task, 
+        task=task,
         image=body.image,
         command=body.command,
         environment=body.environment,
@@ -29,10 +29,10 @@ async def post_job(task: str, body: payloads.Job):
         message = scheduler.enqueue_in(body.start_in, worker.pull, execution.id)
         execution.message.id = message.id
         await crud.execution.save(execution)
-    
-    if job.cron:
-        scheduler.cron(job.cron, func=worker.cron, args=[job.id])
-    
+
+    if body.cron:
+        scheduler.cron(body.cron, func=worker.cron, args=[job.id])
+
     return job
 
 
