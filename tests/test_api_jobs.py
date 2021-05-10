@@ -12,7 +12,7 @@ from newlane import core
 from newlane import crud
 
 
-class TestApiTasks(TestCase):
+class TestApiJobs(TestCase):
     def setUp(self):
         self.core_patch = mock.patch('newlane.api.jobs.core')
         self.crud_patch = mock.patch('newlane.api.jobs.crud')
