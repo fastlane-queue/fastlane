@@ -18,8 +18,8 @@ class TestCrudBase(IsolatedAsyncioTestCase):
 
     def test_filters(self):
         """ Creates filters """
-        self.model.a = 'nice'
-        self.model.b = 'not nice'
+        self.crud.model.a = 'nice'
+        self.crud.model.b = 'not nice'
         result = self.crud.filters(a='nice', b=123)
         expected = [True, False]
         self.assertListEqual(result, expected)
