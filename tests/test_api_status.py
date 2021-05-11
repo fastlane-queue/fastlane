@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 from newlane import app
 
 
-@mock.patch('newlane.api.status.core', autospec=True)
+@mock.patch('newlane.api.status.core')
 class TestApiStatus(TestCase):
     def setUp(self):
         self.app = TestClient(app.app)
