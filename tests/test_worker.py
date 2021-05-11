@@ -3,50 +3,43 @@ from unittest import IsolatedAsyncioTestCase
 
 from newlane import worker
 
+
+@mock.patch('newlane.worker.crud', autospec=worker.crud)
+@mock.patch('newlane.worker.core', autospec=worker.core)
 class TestWorker(IsolatedAsyncioTestCase):
-    def setUp(self):
-        worker.core = mock.Mock()
-
-        worker.crud = mock.Mock()
-        worker.crud.job = mock.AsyncMock()
-        worker.crud.execution = mock.AsyncMock()
-
-    async def test_cron(self):
+    async def test_cron(self, core, crud):
         """ Creates new execution and enqueues it """
         await worker.cron('nice')
-        worker.crud.job.get.assert_called_once_with(id='nice')
-        worker.crud.job.get.assert_awaited()
-        worker.crud.execution.create.assert_called_once_with(job=mock.ANY)
-        worker.crud.execution.create.assert_awaited()
-        worker.core.get_queue.assert_called_once_with()
-        worker.core.get_queue().enqueue\
-            .assert_called_once_with(mock.ANY, mock.ANY)
-        worker.crud.execution.save.assert_called_once_with(mock.ANY)
-        worker.crud.execution.save.assert_awaited()
+        crud.job.get.assert_called_once_with(id='nice')
+        crud.job.get.assert_awaited()
+        crud.execution.create.assert_called_once_with(job=mock.ANY)
+        crud.execution.create.assert_awaited()
+        core.get_queue.assert_called_once_with()
+        core.get_queue().enqueue.assert_called_once_with(mock.ANY, mock.ANY)
+        crud.execution.save.assert_called_once_with(mock.ANY)
+        crud.execution.save.assert_awaited()
 
-    async def test_pull(self):
+    async def test_pull(self, core, crud):
         """ Pulls docker image and updates execution """
         await worker.pull('nice')
-        worker.crud.execution.get.assert_called_once_with(id='nice')
-        worker.crud.execution.get.assert_awaited()
-        worker.core.get_queue.assert_called_once_with()
-        worker.core.get_queue().enqueue\
-            .assert_called_once_with(mock.ANY, 'nice')
-
+        crud.execution.get.assert_called_once_with(id='nice')
+        crud.execution.get.assert_awaited()
+        core.get_queue.assert_called_once_with()
+        core.get_queue().enqueue.assert_called_once_with(mock.ANY, 'nice')
         calls = [mock.call(mock.ANY), mock.call(mock.ANY)]
-        self.assertListEqual(worker.crud.execution.save.call_args_list, calls)
+        self.assertListEqual(crud.execution.save.call_args_list, calls)
 
-    async def test_run(self):
+    async def test_run(self, core, crud):
         """ Executes command inside docker image and updates execution """
         await worker.run('nice')
-        worker.crud.execution.get.assert_called_once_with(id='nice')
-        worker.crud.execution.get.assert_awaited()
-        worker.core.get_docker.assert_called_once_with()
-        worker.core.get_docker().containers.run.assert_called_once_with(
+        crud.execution.get.assert_called_once_with(id='nice')
+        crud.execution.get.assert_awaited()
+        core.get_docker.assert_called_once_with()
+        core.get_docker().containers.run.assert_called_once_with(
             image=mock.ANY,
             command=mock.ANY,
             environment=mock.ANY
         )
 
         calls = [mock.call(mock.ANY), mock.call(mock.ANY)]
-        self.assertListEqual(worker.crud.execution.save.call_args_list, calls)
+        self.assertListEqual(crud.execution.save.call_args_list, calls)

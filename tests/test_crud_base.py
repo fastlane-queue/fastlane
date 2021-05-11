@@ -4,19 +4,27 @@ from unittest import IsolatedAsyncioTestCase
 from newlane.crud.base import Base
 
 
+class MockDb(object):
+    """ Used to mock the `odmantic.AIOEngine` instance """
+    async def find(): pass
+    async def find_one(): pass
+    async def save(): pass
+    async def count(): pass
+
+
+def Mock():
+    """ Just a callable to return a new mock """
+    return mock.Mock(MockDb)
+
+
+@mock.patch('newlane.crud.base.Base.db', new_callable=Mock)
 class TestCrudBase(IsolatedAsyncioTestCase):
     def setUp(self):
-        Base.db = mock.Mock()
-        Base.db.find = mock.AsyncMock()
-        Base.db.save = mock.AsyncMock()
-        Base.db.count = mock.AsyncMock()
-        Base.db.find_one = mock.AsyncMock()
-
         self.sort = mock.Mock()
         self.model = mock.Mock()
         self.crud = Base(self.model, self.sort)
 
-    def test_filters(self):
+    def test_filters(self, _):
         """ Creates filters """
         self.crud.model.a = 'nice'
         self.crud.model.b = 'not nice'
@@ -24,48 +32,45 @@ class TestCrudBase(IsolatedAsyncioTestCase):
         expected = [True, False]
         self.assertListEqual(result, expected)
 
-    async def test_create(self):
+    async def test_create(self, db):
         """ Calls db.save with new object """
         await self.crud.create(nice='value')
         self.model.assert_called_once_with(nice='value')
-        self.crud.db.save.assert_called_once()
-        self.crud.db.save.assert_awaited()
+        db.save.assert_called_once_with(mock.ANY)
+        db.save.assert_awaited()
 
-    async def test_get(self):
+    async def test_get(self, db):
         """ Calls db.find_one  """
         await self.crud.get(nice='value')
-        self.crud.db.find_one.assert_called_once_with(self.model, mock.ANY)
-        self.crud.db.find_one.assert_awaited()
+        db.find_one.assert_called_once_with(self.model, mock.ANY)
+        db.find_one.assert_awaited()
 
-    async def test_find(self):  
+    async def test_find(self, db):
         """ Calls db.find """
         await self.crud.find(nice='value')
-        self.crud.db.find\
-            .assert_called_once_with(self.model, mock.ANY, sort=self.sort)
-        self.crud.db.find.assert_awaited()
+        db.find.assert_called_once_with(self.model, mock.ANY, sort=self.sort)
+        db.find.assert_awaited()
 
-    async def test_count(self):  
+    async def test_count(self, db):
         """ Calls db.count """
-        self.crud.db.count = mock.AsyncMock()
-
         await self.crud.count(nice='value')
-        self.crud.db.count.assert_called_once_with(self.model, mock.ANY)
-        self.crud.db.count.assert_awaited()
+        db.count.assert_called_once_with(self.model, mock.ANY)
+        db.count.assert_awaited()
 
-    async def test_page(self):  
+    async def test_page(self, db):
         """ Calls db.find with paged args """
         await self.crud.page(nice='value', page=2, size=5)
-        self.crud.db.find.assert_called_once_with(
-            self.model, 
-            mock.ANY, 
-            skip=5, 
+        db.find.assert_called_once_with(
+            self.model,
+            mock.ANY,
+            skip=5,
             limit=5,
             sort=self.sort
         )
-        self.crud.db.find.assert_awaited()
+        db.find.assert_awaited()
 
-    async def test_save(self):
+    async def test_save(self, db):
         """ Calls db.save """
         await self.crud.save(123)
-        self.crud.db.save.assert_called_once_with(123)
-        self.crud.db.save.assert_awaited()
+        db.save.assert_called_once_with(123)
+        db.save.assert_awaited()
