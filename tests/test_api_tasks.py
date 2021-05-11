@@ -5,25 +5,17 @@ from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
 from newlane import app
-from newlane import core
-from newlane import crud
 
 
 class TestApiTasks(TestCase):
     def setUp(self):
-        self.crud_patch = mock.patch('newlane.api.tasks.crud')
-
-        self.crud = self.crud_patch.start()
-
-        self.crud.task = mock.Mock()
-        self.crud.task.page = mock.AsyncMock()
-        self.crud.task.get_or_404 = mock.AsyncMock()
-        self.crud.task.get_or_create = mock.AsyncMock()
-
+        self.crud = mock\
+            .patch('newlane.api.tasks.crud', autospec=True)\
+            .start()
         self.app = TestClient(app.app)
 
     def tearDown(self):
-        self.crud_patch.stop()
+        mock.patch.stopall()
 
     def test_post_task(self):
         """ Posts task """

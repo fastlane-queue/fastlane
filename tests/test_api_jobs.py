@@ -2,36 +2,25 @@ import uuid
 from unittest import mock
 from unittest import TestCase
 from datetime import timedelta
-from collections import namedtuple
 
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
 from newlane import app
-from newlane import core
-from newlane import crud
 
 
 class TestApiJobs(TestCase):
     def setUp(self):
-        self.core_patch = mock.patch('newlane.api.jobs.core')
-        self.crud_patch = mock.patch('newlane.api.jobs.crud')
-
-        self.core = self.core_patch.start()
-        self.crud = self.crud_patch.start()
-
-        self.crud.task.get_or_404 = mock.AsyncMock()
-        self.crud.job.get_or_404 = mock.AsyncMock()
-        self.crud.job.create = mock.AsyncMock()
-        self.crud.job.page = mock.AsyncMock()
-        self.crud.execution.create = mock.AsyncMock()
-        self.crud.execution.save = mock.AsyncMock()
-
+        self.core = mock\
+            .patch('newlane.api.jobs.core', autospec=True)\
+            .start()
+        self.crud = mock\
+            .patch('newlane.api.jobs.crud', autospec=True)\
+            .start()
         self.app = TestClient(app.app)
 
     def tearDown(self):
-        self.core_patch.stop()
-        self.crud_patch.stop()
+        mock.patch.stopall()
 
     def test_post_job(self):
         """ Posts job """

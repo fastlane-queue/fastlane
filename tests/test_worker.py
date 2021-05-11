@@ -4,8 +4,8 @@ from unittest import IsolatedAsyncioTestCase
 from newlane import worker
 
 
-@mock.patch('newlane.worker.crud', autospec=worker.crud)
-@mock.patch('newlane.worker.core', autospec=worker.core)
+@mock.patch('newlane.worker.crud', autospec=True)
+@mock.patch('newlane.worker.core', autospec=True)
 class TestWorker(IsolatedAsyncioTestCase):
     async def test_cron(self, core, crud):
         """ Creates new execution and enqueues it """
