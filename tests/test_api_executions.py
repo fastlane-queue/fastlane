@@ -1,85 +1,64 @@
 import uuid
 from unittest import mock
-from unittest import TestCase
-from datetime import timedelta
+from unittest import IsolatedAsyncioTestCase
 
 from fastapi import HTTPException
-from fastapi.testclient import TestClient
 
-from newlane import app
+from newlane.api import executions
 
 
-class TestApiExecutions(TestCase):
-    def setUp(self):
-        self.core = mock\
-            .patch('newlane.api.executions.core', autospec=True)\
-            .start()
-        self.crud = mock\
-            .patch('newlane.api.executions.crud', autospec=True)\
-            .start()
-        self.app = TestClient(app.app)
-
-    def tearDown(self):
-        mock.patch.stopall()
-
-    def test_post_execution(self):
+@mock.patch('newlane.api.executions.core', autospec=True)
+@mock.patch('newlane.api.executions.crud', autospec=True)
+class TestApiExecutions(IsolatedAsyncioTestCase):
+    async def test_post_execution(self, crud, core):
         """ Posts execution """
-        self.crud.execution.save.return_value = {}
+        crud.execution.save.return_value = {}
 
         job = uuid.uuid4()
-        response = self.app.post(f'/tasks/nice/jobs/{job}/executions/')
+        await executions.post_execution('nice', job)
 
-        self.assertEqual(response.status_code, 200)
+        crud.task.get_or_404.assert_called_once_with(name='nice')
+        crud.task.get_or_404.assert_awaited()
+        crud.job.get_or_404.assert_called_once_with(task=mock.ANY, id=job)
+        crud.job.get_or_404.assert_awaited()
+        core.get_queue.assert_called_once_with()
+        core.get_queue().enqueue.assert_called_once_with(mock.ANY, mock.ANY)
+        crud.execution.save.assert_called_once_with(mock.ANY)
+        crud.execution.save.assert_awaited()
 
-        self.crud.task.get_or_404.assert_called_once_with(name='nice')
-        self.crud.task.get_or_404.assert_awaited()
-        self.crud.job.get_or_404.assert_called_once_with(task=mock.ANY, id=job)
-        self.crud.job.get_or_404.assert_awaited()
-        self.core.get_queue.assert_called_once_with()
-        self.core.get_queue().enqueue\
-            .assert_called_once_with(mock.ANY, mock.ANY)
-        self.crud.execution.save.assert_called_once_with(mock.ANY)
-        self.crud.execution.save.assert_awaited()
-
-    def test_get_execution(self):
+    async def test_get_execution(self, crud, core):
         """ Gets execution """
-        self.crud.execution.get_or_404.return_value = {}
+        crud.execution.get_or_404.return_value = {}
 
         job = uuid.uuid4()
         uid = uuid.uuid4()
-        response = self.app.get(f'/tasks/nice/jobs/{job}/executions/{uid}')
+        await executions.get_execution('nice', job, uid)
 
-        self.assertEqual(response.status_code, 200)
+        crud.execution.get_or_404.assert_called_once_with(job=mock.ANY, id=uid)
+        crud.execution.get_or_404.assert_awaited()
 
-        self.crud.execution.get_or_404\
-            .assert_called_once_with(job=mock.ANY, id=uid)
-        self.crud.execution.get_or_404.assert_awaited()
-
-    def test_get_execution_404(self):
+    async def test_get_execution_404(self, crud, core):
         """ Gets execution, 404 """
-        self.crud.execution.get_or_404.side_effect = HTTPException(404)
+        crud.execution.get_or_404.side_effect = HTTPException(404)
 
         job = uuid.uuid4()
         uid = uuid.uuid4()
-        response = self.app.get(f'/tasks/nice/jobs/{job}/executions/{uid}')
 
-        self.assertEqual(response.status_code, 404)
+        with self.assertRaises(HTTPException):
+            await executions.get_execution('nice', job, uid)
 
-        self.crud.execution.get_or_404\
-            .assert_called_once_with(job=mock.ANY, id=uid)
-        self.crud.execution.get_or_404.assert_awaited()
+        crud.execution.get_or_404.assert_called_once_with(job=mock.ANY, id=uid)
+        crud.execution.get_or_404.assert_awaited()
 
-    def test_get_executions(self):
+    async def test_get_executions(self, crud, core):
         """ Gets executions """
-        self.crud.execution.page.return_value = {}
+        crud.execution.page.return_value = {}
 
         job = uuid.uuid4()
         query = {'page': 7, 'size': 4}
-        response = self.app\
-            .get(f'/tasks/nice/jobs/{job}/executions', params=query)
 
-        self.assertEqual(response.status_code, 200)
+        await executions.get_executions('nice', job, page=7, size=4)
 
-        self.crud.execution.page\
+        crud.execution.page\
             .assert_called_once_with(job=mock.ANY, page=7, size=4)
-        self.crud.execution.page.assert_awaited()
+        crud.execution.page.assert_awaited()

@@ -1,64 +1,54 @@
 from unittest import mock
-from unittest import TestCase
+from unittest import IsolatedAsyncioTestCase
 
 from fastapi import HTTPException
-from fastapi.testclient import TestClient
 
-from newlane import app
+from newlane.api import tasks
+from newlane.api import payloads
 
 
-class TestApiTasks(TestCase):
-    def setUp(self):
-        self.crud = mock\
-            .patch('newlane.api.tasks.crud', autospec=True)\
-            .start()
-        self.app = TestClient(app.app)
-
-    def tearDown(self):
-        mock.patch.stopall()
-
-    def test_post_task(self):
+@mock.patch('newlane.api.tasks.crud', autospec=True)
+class TestApiTasks(IsolatedAsyncioTestCase):
+    async def test_post_task(self, crud):
         """ Posts task """
-        self.crud.task.get_or_create.return_value = {}
+        crud.task.get_or_create.return_value = {}
 
-        body = {'name': 'nice'}
-        response = self.app.post('/tasks/', json=body)
+        data = payloads.Task(name='nice')
+        response = await tasks.post_task(data)
 
-        self.assertEqual(response.status_code, 200)
+        self.assertDictEqual(response, {})
 
-        self.crud.task.get_or_create.assert_called_once_with(name='nice')
-        self.crud.task.get_or_create.assert_awaited()
+        crud.task.get_or_create.assert_called_once_with(name='nice')
+        crud.task.get_or_create.assert_awaited()
 
-    def test_get_task(self):
+    async def test_get_task(self, crud):
         """ Gets task """
-        self.crud.task.get_or_404.return_value = {}
+        crud.task.get_or_404.return_value = {}
 
-        response = self.app.get('/tasks/nice')
+        response = await tasks.get_task('nice')
 
-        self.assertEqual(response.status_code, 200)
+        self.assertDictEqual(response, {})
 
-        self.crud.task.get_or_404.assert_called_once_with(name='nice')
-        self.crud.task.get_or_404.assert_awaited()
+        crud.task.get_or_404.assert_called_once_with(name='nice')
+        crud.task.get_or_404.assert_awaited()
 
-    def test_get_task_404(self):
+    async def test_get_task_404(self, crud):
         """ Gets task, 404 """
-        self.crud.task.get_or_404.side_effect = HTTPException(404)
+        crud.task.get_or_404.side_effect = HTTPException(404)
 
-        response = self.app.get('/tasks/nice')
+        with self.assertRaises(HTTPException):
+            await tasks.get_task('nice')
 
-        self.assertEqual(response.status_code, 404)
+        crud.task.get_or_404.assert_called_once_with(name='nice')
+        crud.task.get_or_404.assert_awaited()
 
-        self.crud.task.get_or_404.assert_called_once_with(name='nice')
-        self.crud.task.get_or_404.assert_awaited()
-
-    def test_get_tasks(self):
+    async def test_get_tasks(self, crud):
         """ Gets tasks """
-        self.crud.task.page.return_value = {}
+        crud.task.page.return_value = {}
 
-        params = {'page': 7, 'size': 4}
-        response = self.app.get('/tasks', params=params)
+        response = await tasks.get_tasks(page=7, size=4)
 
-        self.assertEqual(response.status_code, 200)
+        self.assertDictEqual(response, {})
 
-        self.crud.task.page.assert_called_once_with(page=7, size=4)
-        self.crud.task.page.assert_awaited()
+        crud.task.page.assert_called_once_with(page=7, size=4)
+        crud.task.page.assert_awaited()
