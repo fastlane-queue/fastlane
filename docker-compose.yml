@@ -19,8 +19,42 @@ services:
     command: dockerd --host=tcp://0.0.0.0:2375 --tls=false
 
   scheduler:
-    image: python:alpine
-    command: >
-      sh -c "pip install rq-scheduler && rqscheduler -v -i 1 -u redis://redis:6379"
+    image: rqscheduler
+    build:
+      context: ./
+      dockerfile: Dockerfile.scheduler
+    command: rqscheduler -v -i 5 -u redis://redis:6379
     depends_on:
       - redis
+
+  worker:
+    image: fastlane
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    environment:
+      - MONGO=mongodb://mongo:27017
+      - REDIS=redis://redis:6379
+      - DOCKER=tcp://docker:2375
+    command: rq worker -v -u redis://redis:6379
+    depends_on:
+      - redis
+      - mongo
+      - docker
+
+  fastlane:
+    image: fastlane
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    environment:
+      - MONGO=mongodb://mongo:27017
+      - REDIS=redis://redis:6379
+      - DOCKER=tcp://docker:2375
+    ports:
+      - 8000:8000
+    command: uvicorn main:app --host 0.0.0.0
+    depends_on:
+      - redis
+      - mongo
+      - docker

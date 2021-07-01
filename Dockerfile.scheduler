@@ -1,0 +1,5 @@
+FROM python:alpine
+
+RUN pip install rq-scheduler
+
+CMD rqscheduler
