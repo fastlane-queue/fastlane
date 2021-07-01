@@ -36,7 +36,7 @@ async def post_job(task: str, body: payloads.Job):
     return job
 
 
-@router.get('/{job}')
+@router.get('/{job}/')
 async def get_job(task: str, job: UUID):
     task = await crud.task.get_or_404(name=task)
     return await crud.job.get_or_404(task=task.id, id=job)

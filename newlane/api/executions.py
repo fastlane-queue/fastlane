@@ -21,7 +21,7 @@ async def post_execution(task: str, job: UUID):
     return await crud.execution.save(execution)
 
 
-@router.get('/{execution}')
+@router.get('/{execution}/')
 async def get_execution(task: str, job: UUID, execution: UUID):
     task = await crud.task.get_or_404(name=task)
     job = await crud.job.get_or_404(task=task.id, id=job)

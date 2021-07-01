@@ -24,7 +24,7 @@ class Job(BaseModel):
     # timeout: int = sys.maxsize
 
     @validator('cron')
-    def validate_cron(cls, v):
+    def validate_cron(cls, v) -> str:
         try:
             croniter.croniter(v)
             return v

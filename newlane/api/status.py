@@ -6,7 +6,7 @@ router = APIRouter(prefix='/status')
 
 
 @router.get('/')
-async def get_status():
+async def get_status() -> dict:
     docker = core.get_docker().info()
     redis = core.get_queue().connection.ping()
     db = await core.get_db().client.server_info()
