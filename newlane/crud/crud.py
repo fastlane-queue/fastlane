@@ -20,4 +20,3 @@ class Crud(Base):
             return await self.create(**kwargs)
 
         return model
-

@@ -6,7 +6,7 @@ class Base(object):
         super(Base, self).__init__()
         self.model = model
         self.sort = sort
-    
+
     @property
     def db(self):
         return core.get_db()
@@ -44,3 +44,6 @@ class Base(object):
     async def save(self, model):
         await self.db.save(model)
         return model
+
+    async def delete(self, model):
+        return await self.db.remove(model)
