@@ -45,5 +45,5 @@ class Base(object):
         await self.db.save(model)
         return model
 
-    async def delete(self, model):
-        return await self.db.remove(model)
+    async def remove(self, model):
+        return await self.db.delete(model)
