@@ -11,7 +11,7 @@ from newlane.api import payloads
 router = APIRouter(prefix='/tasks/{task}/jobs')
 
 
-@router.post('/')
+@router.post('/', status_code=201)
 async def post_job(task: str, body: payloads.Job):
     task = await crud.task.get_or_404(name=task)
     job = await crud.job.create(
