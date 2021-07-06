@@ -10,7 +10,7 @@ async def cron(id: UUID):
     job = await crud.job.get(id=id)
 
     execution = await crud.execution.create(job=job)
-    
+
     queue = core.get_queue()
     message = queue.enqueue(pull, execution.id)
     execution.message.id = message.id

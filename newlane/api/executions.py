@@ -8,7 +8,7 @@ from newlane import worker
 router = APIRouter(prefix='/tasks/{task}/jobs/{job}/executions')
 
 
-@router.post('/')
+@router.post('/', status_code=201)
 async def post_execution(task: str, job: UUID):
     task = await crud.task.get_or_404(name=task)
     job = await crud.job.get_or_404(task=task.id, id=job)

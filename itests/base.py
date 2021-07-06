@@ -16,6 +16,6 @@ class BaseTest(TestCase):
         client = pymongo.MongoClient()
         self.db = client[self.DATABASE]
 
-        self.db.task.delete_many({}),
-        self.db.job.delete_many({}),
         self.db.execution.delete_many({})
+        self.db.job.delete_many({})
+        self.db.task.delete_many({})
