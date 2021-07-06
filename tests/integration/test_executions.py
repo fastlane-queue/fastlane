@@ -1,6 +1,6 @@
 import uuid
 
-from itests.base import BaseTest
+from tests.integration.base import BaseTest
 
 
 class TestExecution(BaseTest):
