@@ -23,7 +23,7 @@ services:
     build:
       context: ./
       dockerfile: Dockerfile.scheduler
-    command: rqscheduler -v -i 5 -u redis://redis:6379
+    command: rqscheduler -v -i 1 -u redis://redis:6379
     depends_on:
       - redis
 

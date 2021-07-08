@@ -13,6 +13,7 @@ class Status(str, Enum):
     failed = 'failed'
     expired = 'expired'
     pulling = 'pulling'
+    pulled = 'pulled'
     running = 'running'
     stopped = 'stopped'
     enqueued = 'enqueued'

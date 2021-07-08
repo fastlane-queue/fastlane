@@ -34,6 +34,7 @@ async def pull(id: UUID):
     queue = core.get_queue()
     message = queue.enqueue(run, id)
     execution.message.id = message.id
+    execution.status = Status.pulled
 
     return await crud.execution.save(execution)
 
