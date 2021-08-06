@@ -1,3 +1,5 @@
+import functools
+
 from rq import Queue
 from redis import Redis
 from docker import DockerClient
@@ -7,42 +9,25 @@ from motor.motor_asyncio import AsyncIOMotorClient
 
 from newlane.config import settings
 
-_db = None
-_docker = None
-_queue = None
-_scheduler = None
 
-
+@functools.cache
 def get_db():
-    global _db
-    if _db is not None:
-        return _db
     client = AsyncIOMotorClient(settings.mongo)
-    _db = AIOEngine(motor_client=client, database='fastlane')
-    return _db
+    return AIOEngine(motor_client=client, database='fastlane')
 
 
+@functools.cache
 def get_docker():
-    global _docker
-    if _docker is not None:
-        return _docker
-    _docker = DockerClient(base_url=settings.docker)
-    return _docker
+    return DockerClient(base_url=settings.docker)
 
 
+@functools.cache
 def get_queue():
-    global _queue
-    if _queue is not None:
-        return _queue
     client = Redis(settings.redis.host, settings.redis.port)
-    _queue = Queue(connection=client)
-    return _queue
+    return Queue(connection=client)
 
 
+@functools.cache
 def get_scheduler():
-    global _scheduler
-    if _scheduler is not None:
-        return _scheduler
     client = Redis(settings.redis.host, settings.redis.port)
-    _scheduler = Scheduler(connection=client)
-    return _scheduler
+    return Scheduler(connection=client)

@@ -7,17 +7,16 @@ from newlane import config
 
 class TestCore(IsolatedAsyncioTestCase):
     def setUp(self):
-        core._db = None
-        core._queue = None
-        core._docker = None
-        core._scheduler = None
+        core.get_db.cache_clear()
+        core.get_queue.cache_clear()
+        core.get_docker.cache_clear()
+        core.get_scheduler.cache_clear()
 
     @mock.patch('newlane.core.AIOEngine')
     @mock.patch('newlane.core.AsyncIOMotorClient')
     def test_get_db(self, client, engine):
         """ Creates db """
         core.get_db()
-        self.assertIsNotNone(core._db)
         client.assert_called_once_with(config.settings.mongo)
         engine.assert_called_once_with(motor_client=client(), database='fastlane')  # noqa
 
@@ -27,7 +26,6 @@ class TestCore(IsolatedAsyncioTestCase):
         """ Creates db only once """
         core.get_db()
         core.get_db()
-        self.assertIsNotNone(core._db)
         self.assertEqual(engine.call_count, 1)
         self.assertEqual(client.call_count, 1)
 
@@ -35,7 +33,6 @@ class TestCore(IsolatedAsyncioTestCase):
     def test_get_docker(self, docker):
         """ Creates docker """
         core.get_docker()
-        self.assertIsNotNone(core._docker)
         docker.assert_called_once_with(base_url=config.settings.docker)
 
     @mock.patch('newlane.core.DockerClient')
@@ -44,7 +41,6 @@ class TestCore(IsolatedAsyncioTestCase):
         core.get_docker()
         core.get_docker()
         self.assertEqual(docker.call_count, 1)
-        self.assertIsNotNone(core._docker)
 
     @mock.patch('newlane.core.Redis')
     @mock.patch('newlane.core.Queue')
@@ -56,7 +52,6 @@ class TestCore(IsolatedAsyncioTestCase):
             config.settings.redis.port
         )
         queue.assert_called_once_with(connection=redis())
-        self.assertIsNotNone(core._queue)
 
     @mock.patch('newlane.core.Redis')
     @mock.patch('newlane.core.Queue')
@@ -66,7 +61,6 @@ class TestCore(IsolatedAsyncioTestCase):
         core.get_queue()
         self.assertEqual(redis.call_count, 1)
         self.assertEqual(queue.call_count, 1)
-        self.assertIsNotNone(core._queue)
 
     @mock.patch('newlane.core.Redis')
     @mock.patch('newlane.core.Scheduler')
@@ -78,7 +72,6 @@ class TestCore(IsolatedAsyncioTestCase):
             config.settings.redis.port
         )
         scheduler.assert_called_once_with(connection=redis())
-        self.assertIsNotNone(core._scheduler)
 
     @mock.patch('newlane.core.Redis')
     @mock.patch('newlane.core.Scheduler')
@@ -88,4 +81,3 @@ class TestCore(IsolatedAsyncioTestCase):
         core.get_scheduler()
         self.assertEqual(redis.call_count, 1)
         self.assertEqual(scheduler.call_count, 1)
-        self.assertIsNotNone(core._scheduler)
