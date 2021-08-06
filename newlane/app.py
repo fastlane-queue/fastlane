@@ -1,11 +1,14 @@
 from fastapi import FastAPI
+from fastapi.middleware.gzip import GZipMiddleware
 
 from newlane import core
 from newlane import models
 from newlane.api import router
 
+
 app = FastAPI()
 app.include_router(router)
+app.add_middleware(GZipMiddleware)
 
 
 @app.on_event('startup')
