@@ -62,3 +62,33 @@ class TestApiExecutions(IsolatedAsyncioTestCase):
         crud.execution.page\
             .assert_called_once_with(job=mock.ANY, page=7, size=4)
         crud.execution.page.assert_awaited()
+
+    @mock.patch('newlane.api.executions.get_execution', autospec=True)
+    async def test_get_execution_logs(self, get_execution, crud, core):
+        """ Gets execution logs """
+        job = uuid.uuid4()
+        uid = uuid.uuid4()
+        await executions.get_execution_logs('nice', job, uid)
+
+        get_execution.assert_called_once_with('nice', job, uid)
+        get_execution.assert_awaited()
+
+    @mock.patch('newlane.api.executions.get_execution', autospec=True)
+    async def test_get_execution_stdout(self, get_execution, crud, core):
+        """ Gets execution stdout """
+        job = uuid.uuid4()
+        uid = uuid.uuid4()
+        await executions.get_execution_stdout('nice', job, uid)
+
+        get_execution.assert_called_once_with('nice', job, uid)
+        get_execution.assert_awaited()
+
+    @mock.patch('newlane.api.executions.get_execution', autospec=True)
+    async def test_get_execution_stderr(self, get_execution, crud, core):
+        """ Gets execution stderr """
+        job = uuid.uuid4()
+        uid = uuid.uuid4()
+        await executions.get_execution_stderr('nice', job, uid)
+
+        get_execution.assert_called_once_with('nice', job, uid)
+        get_execution.assert_awaited()

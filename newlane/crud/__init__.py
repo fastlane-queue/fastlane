@@ -1,5 +1,3 @@
-from fastapi import HTTPException
-
 from .crud import Crud
 from newlane import models
 
