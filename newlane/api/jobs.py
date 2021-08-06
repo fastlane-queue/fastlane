@@ -1,6 +1,7 @@
 from uuid import UUID
 
 from fastapi import APIRouter
+from starlette.requests import Request
 
 from newlane import core
 from newlane import crud
@@ -12,14 +13,15 @@ router = APIRouter(prefix='/tasks/{task}/jobs')
 
 
 @router.post('/', status_code=201)
-async def post_job(task: str, body: payloads.Job):
+async def post_job(task: str, body: payloads.Job, req: Request):
     task = await crud.task.get_or_404(name=task)
     job = await crud.job.create(
         task=task,
         image=body.image,
         command=body.command,
         environment=body.environment,
-        cron=body.cron
+        cron=body.cron,
+        created_by=req.client.host
     )
 
     scheduler = core.get_scheduler()

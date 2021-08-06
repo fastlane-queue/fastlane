@@ -12,13 +12,19 @@ from newlane.api import payloads
 @mock.patch('newlane.api.jobs.core', autospec=True)
 @mock.patch('newlane.api.jobs.crud', autospec=True)
 class TestApiJobs(IsolatedAsyncioTestCase):
+
+    # Mock starlette.requests.Request object
+    class request:
+        class client:
+            host = '127.0.0.1'
+
     async def test_post_job(self, crud, core):
         """ Posts job """
         crud.job.create.return_value = {}
         crud.task.get_or_404.return_value = {}
 
         data = payloads.Job(image='hello-world', command='./hello')
-        response = await jobs.post_job('nice', data)
+        response = await jobs.post_job('nice', data, self.request)
 
         self.assertDictEqual(response, {})
 
@@ -30,7 +36,8 @@ class TestApiJobs(IsolatedAsyncioTestCase):
             image='hello-world',
             command='./hello',
             environment={},
-            cron=None
+            cron=None,
+            created_by=self.request.client.host
         )
         crud.job.create.assert_awaited()
 
@@ -40,7 +47,7 @@ class TestApiJobs(IsolatedAsyncioTestCase):
 
         data = payloads\
             .Job(image='hello-world', command='./hello', start_in=123)
-        response = await jobs.post_job('nice', data)
+        response = await jobs.post_job('nice', data, self.request)
 
         self.assertDictEqual(response, {})
 
@@ -62,7 +69,7 @@ class TestApiJobs(IsolatedAsyncioTestCase):
 
         data = payloads\
             .Job(image='hello-world', command='./hello', cron='* * * * *')
-        response = await jobs.post_job('nice', data)
+        response = await jobs.post_job('nice', data, self.request)
 
         self.assertIs(response, value)
 
