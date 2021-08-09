@@ -1,14 +1,22 @@
 from fastapi import FastAPI
 from fastapi.middleware.gzip import GZipMiddleware
+from opentelemetry.instrumentation.redis import RedisInstrumentor
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+from opentelemetry.instrumentation.pymongo import PymongoInstrumentor
 
 from newlane import core
 from newlane import models
 from newlane.api import router
+import newlane.tracing  # noqa
 
 
 app = FastAPI()
 app.include_router(router)
 app.add_middleware(GZipMiddleware)
+
+FastAPIInstrumentor.instrument_app(app)
+PymongoInstrumentor().instrument()
+RedisInstrumentor().instrument()
 
 
 @app.on_event('startup')
