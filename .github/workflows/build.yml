@@ -7,8 +7,10 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     env:
       OTEL_TRACES_SAMPLER: parentbased_always_off
+
     steps:
       - uses: actions/checkout@v2
 
